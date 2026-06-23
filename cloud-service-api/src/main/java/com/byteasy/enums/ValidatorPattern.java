@@ -11,8 +11,6 @@ public enum ValidatorPattern implements IBaseEnum<Integer> {
     PASSWORD(3, "密码"),
     URL(4, "URL"),
     ID_CARD(5, "身份证"),
-    CUSTOM(6, "自定义正则校验"),
-    REMOTE(7, "远程接口校验"),
     ;
 
     public final int value;

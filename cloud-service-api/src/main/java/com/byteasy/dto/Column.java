@@ -42,8 +42,6 @@ public class Column {
     private YesNo encrypt;
     @Schema(description = "是否脱敏")
     private YesNo desensitize;
-    @Schema(description = "是否SQL注入检查")
-    private YesNo sqlInjectionCheck;
     @Schema(description = "对齐")
     private Align align;
     @Schema(description = "显示宽度")

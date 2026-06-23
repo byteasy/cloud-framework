@@ -1,5 +1,6 @@
 package com.byteasy.service;
 
+import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.TableInfo;
@@ -7,13 +8,12 @@ import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.byteasy.util.EventPublishUtil;
 import com.byteasy.entity.Entity;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
+import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.exception.BizException;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
@@ -25,17 +25,25 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Log4j2
 public abstract class EntityChangeService<ID, M extends BaseMapper<T>, T extends Entity<ID>> extends ServiceImpl<M, T> {
 
-    @Autowired
-    private EventPublishUtil eventPublishUtil;
-
+    private IEntityChangeHandler changeHandler;
     private AtomicBoolean init = new AtomicBoolean(false);
 
-    protected void publishEvent(EntityChangeEvent event) {
-        eventPublishUtil.publishEvent(event);
+    protected IEntityChangeHandler getEntityChangeService() {
+        if (changeHandler == null && !init.get()) {
+            try {
+                changeHandler = SpringUtil.getBean(IEntityChangeHandler.class);
+            } catch (Exception e) {
+                log.warn("getEntityChangeService failed");
+            }
+            init.set(true);
+        }
+        return changeHandler;
     }
 
     protected void doHandleSaveOrUpdate(EntityChangeSource.ChangeType changeType, T before, T after) {
-        publishEvent(new EntityChangeEvent(new EntityChangeSource(changeType, before, after, getEntityClass().getName())));
+        if (getEntityChangeService() != null) {
+            getEntityChangeService().handle(new EntityChangeEvent(new EntityChangeSource<>(changeType, before, after)));
+        }
     }
 
     protected EntityChangeSource.ChangeType getChangeType(T entity) {
@@ -57,11 +65,15 @@ public abstract class EntityChangeService<ID, M extends BaseMapper<T>, T extends
     }
 
     protected void doHandleDelete(T entity) {
-        publishEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, entity, null, getEntityClass().getName())));
+        if (getEntityChangeService() != null) {
+            getEntityChangeService().handle(new EntityChangeEvent(new EntityChangeSource<>(EntityChangeSource.ChangeType.DELETE, entity, null)));
+        }
     }
 
     protected void doHandleDelete(Serializable id) {
-        publishEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, getById(id), null, getEntityClass().getName())));
+        if (getEntityChangeService() != null) {
+            getEntityChangeService().handle(new EntityChangeEvent(new EntityChangeSource<>(EntityChangeSource.ChangeType.DELETE, getById(id), null)));
+        }
     }
 
     @Override

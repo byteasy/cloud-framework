@@ -14,7 +14,6 @@ import com.byteasy.annotations.Authentication;
 import com.byteasy.annotations.Log;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.JacksonUtil;
-import com.byteasy.component.EntityDefineUtil;
 import com.byteasy.component.I18nUtil;
 import com.byteasy.component.SchemaDefineUtil;
 import com.byteasy.dto.Column;
@@ -57,8 +56,6 @@ public class CommonController {
     private ICommonService commonService;
     @Autowired
     private SchemaDefineUtil schemaDefineUtil;
-    @Autowired
-    private EntityDefineUtil entityDefineUtil;
 
     @GetMapping("/{className}")
     @Authentication
@@ -147,7 +144,7 @@ public class CommonController {
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding(CharsetUtil.UTF_8);
-        String encodeFileName = I18nUtil.getLanguageValue(entityDefineUtil.getEntityName(className)) + I18nUtil.getMessage("excel.import.template") + ".xlsx";
+        String encodeFileName = I18nUtil.getLanguageValue(schemaDefineUtil.getEntityName(className)) + I18nUtil.getMessage("excel.import.template") + ".xlsx";
         response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(encodeFileName, StandardCharsets.UTF_8));
 
         writer.flush(response.getOutputStream());
@@ -360,7 +357,7 @@ public class CommonController {
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding(CharsetUtil.UTF_8);
-        String encodeFileName = I18nUtil.getLanguageValue(I18nUtil.getLanguageValue(entityDefineUtil.getEntityName(className))) + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".xlsx";
+        String encodeFileName = I18nUtil.getLanguageValue(I18nUtil.getLanguageValue(schemaDefineUtil.getEntityName(className))) + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".xlsx";
         response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(encodeFileName, StandardCharsets.UTF_8));
 
         writer.flush(response.getOutputStream());

@@ -1,18 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration monitorInterval="5">
-
+<configuration monitorInterval="5">
     <Properties>
-        <Property name="LOG_PATTERN" value="%date{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
-        <Property name="FILE_PATH" value="${sys:LOG_PATH}"/>
+        <!-- 格式化输出：%date表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度 %msg：日志消息，%n是换行符-->
+        <!-- %logger{36} 表示 Logger 名字最长36个字符 -->
+        <property name="LOG_PATTERN" value="%date{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+        <property name="FILE_PATH" value="${sys:LOG_PATH}"/>
     </Properties>
 
-    <Appenders>
-        <Console name="Console" target="SYSTEM_OUT">
+    <appenders>
+
+        <console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="${LOG_PATTERN}"/>
-        </Console>
+            <ThresholdFilter level="debug" onMatch="ACCEPT" onMismatch="DENY"/>
+        </console>
 
         <RollingFile name="RollingFileInfo" fileName="${FILE_PATH}/info.log"
                      filePattern="${FILE_PATH}/INFO-%d{yyyy-MM-dd}_%i.log.gz">
+            <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
             <PatternLayout pattern="${LOG_PATTERN}"/>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
@@ -57,15 +61,22 @@
                 </Delete>
             </DefaultRolloverStrategy>
         </RollingFile>
-    </Appenders>
 
-    <Loggers>
-        <Root level="info">
-            <AppenderRef ref="Console"/>
-            <AppenderRef ref="RollingFileInfo"/>
-            <AppenderRef ref="RollingFileWarn"/>
-            <AppenderRef ref="RollingFileError"/>
-        </Root>
-    </Loggers>
+    </appenders>
 
-</Configuration>
+    <loggers>
+        <!--        <logger name="org.mybatis" level="info" additivity="false">-->
+        <!--            <AppenderRef ref="Console"/>-->
+        <!--        </logger>-->
+        <!--        <Logger name="org.springframework" level="info" additivity="false">-->
+        <!--            <AppenderRef ref="Console"/>-->
+        <!--        </Logger>-->
+        <root level="info">
+            <appender-ref ref="Console"/>
+            <appender-ref ref="RollingFileInfo"/>
+            <appender-ref ref="RollingFileWarn"/>
+            <appender-ref ref="RollingFileError"/>
+        </root>
+    </loggers>
+
+</configuration>

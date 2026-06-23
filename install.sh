@@ -1,4 +1,4 @@
-. /etc/profile
+source /etc/profile
 cd parent
 mvn clean install
 cd ../cloud-service-api
@@ -10,6 +10,4 @@ mvn clean install
 cd ../cloud-service-starter
 mvn clean install
 cd ../cloud-redis-service
-mvn clean install
-cd ../mybatis-plus-generator-byteasy
 mvn clean install

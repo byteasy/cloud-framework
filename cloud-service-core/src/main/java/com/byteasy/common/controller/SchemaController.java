@@ -4,7 +4,6 @@ import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.component.SchemaDefineUtil;
 import com.byteasy.dto.Column;
-import com.byteasy.service.ICommonService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +21,6 @@ public class SchemaController {
 
     @Autowired
     private SchemaDefineUtil schemaDefineUtil;
-    @Autowired
-    private ICommonService commonService;
 
     @GetMapping("/{className}")
     @Operation(summary = "查询业务对象的字段信息")
@@ -35,17 +32,5 @@ public class SchemaController {
     @Operation(summary = "查询代码中业务对象的字段信息")
     public Result<Collection<Column>> getSrcSchemaMetaInfo(@PathVariable("className") String className) {
         return Result.success(schemaDefineUtil.getColumns(className, true));
-    }
-
-    @GetMapping("/database/{className}")
-    @Operation(summary = "查询数据库表结构中的字段信息")
-    public Result<Collection<Column>> getDatabaseSchemaMetaInfo(@PathVariable("className") String className) {
-        return Result.success(commonService.getColumns(className));
-    }
-
-    @GetMapping("/database/currentSchema/{tableName}")
-    @Operation(summary = "查询数据库表结构中的字段信息")
-    public Result<Collection<Column>> getCurrentSchemaTableColumns(@PathVariable("tableName") String tableName) {
-        return Result.success(commonService.getColumnsByTableName(tableName));
     }
 }

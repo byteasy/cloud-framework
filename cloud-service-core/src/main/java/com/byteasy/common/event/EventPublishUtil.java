@@ -1,0 +1,89 @@
+package com.byteasy.common.event;
+
+import cn.hutool.core.codec.Base64;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.extra.spring.SpringUtil;
+import com.byteasy.Constant;
+import com.byteasy.common.token.TokenUtil;
+import com.byteasy.common.token.UserInfo;
+import com.byteasy.common.token.UserInfoBuilder;
+import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.OkHttpUtil;
+import com.byteasy.component.ServiceInstanceUtil;
+import com.byteasy.event.EventSource;
+import com.byteasy.event.PlatformEvent;
+import com.byteasy.event.SourceType;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Component
+@Log4j2
+public class EventPublishUtil {
+
+
+    public static void publishEvent(PlatformEvent event) {
+        SpringUtil.publishEvent(event);
+
+        if (!SourceType.SINGLETON.equals(event.getSourceType())) {
+            DiscoveryClient discoveryClient = SpringUtil.getBean(DiscoveryClient.class);
+            ServiceInstanceUtil serviceInstanceUtil = SpringUtil.getBean(ServiceInstanceUtil.class);
+
+            EventSource eventSource = event.getSource();
+
+            String applicationName = SpringUtil.getApplicationName();
+            List<String> serviceIds = discoveryClient.getServices();
+            if (serviceIds.isEmpty()) return;
+            for (String serviceId : serviceIds) {
+                if (!serviceId.equals(applicationName)) {
+                    if (CollectionUtil.isNotEmpty(eventSource.getServiceIds())) {
+                        // 指定的服务发布
+                        if (!eventSource.getServiceIds().contains(serviceId)) {
+                            continue;
+                        }
+                    }
+
+                    Map<String, String> header = new HashMap<>();
+                    UserInfo token = TokenUtil.getUserinfo();
+                    if (token != null) {
+                        header.put(Constant.USER_INFO, Base64.encode(JacksonUtil.toJson(token)));
+                    } else {
+                        header.put(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
+                    }
+                    List<ServiceInstance> instances = discoveryClient.getInstances(serviceId);
+
+                    if (SourceType.ONE_INSTANCE_PER_SERVICE_GROUP.equals(event.getSourceType())) {
+                        ServiceInstance randomService = random(instances);
+                        try {
+                            OkHttpUtil.postJson(randomService.getUri().toString() + serviceInstanceUtil.getServiceInstance(serviceId).getContextPath() + Constant.SAPI + "/platformEvents", JacksonUtil.toJson(event, true), header, null);
+                        } catch (Exception e) {
+                            log.error("publish event err", e);
+                        }
+                    } else if (SourceType.ALL.equals(event.getSourceType())) {
+                        for (ServiceInstance instance : instances) {
+                            try {
+                                OkHttpUtil.postJson(instance.getUri().toString() + serviceInstanceUtil.getServiceInstance(serviceId).getContextPath() + Constant.SAPI + "/platformEvents", JacksonUtil.toJson(event, true), header, null);
+                            } catch (Exception e) {
+                                log.error("publish event err", e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static ServiceInstance random(List<ServiceInstance> list) {
+        if (list.size() == 1) {
+            return list.get(0);
+        }
+        int random = RandomUtil.randomInt(list.size());
+        return list.get(random);
+    }
+}
