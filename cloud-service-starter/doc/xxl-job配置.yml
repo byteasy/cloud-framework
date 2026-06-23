@@ -1,0 +1,9 @@
+xxl:
+  job:
+    admin:
+      addresses: http://192.168.202.21:8085/xxl-job-admin
+    executor:
+      appName: ${spring.application.name}
+      port: 9999
+      logPath: ${LOG_HOME}\\${spring.application.name}\\xxljob
+      logRetentionDays: 15
