@@ -1,4 +1,4 @@
-source /etc/profile
+. /etc/profile
 cd parent
 mvn clean install
 cd ../cloud-service-api
