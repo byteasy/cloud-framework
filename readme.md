@@ -66,7 +66,7 @@
 |-----------------|----------|--------------------------------------------|
 | cloud-framework | 通用共性基础框架 | https://github.com/byteasy/cloud-framework |
 | cloud-platform  | 平台基础服务   | https://github.com/byteasy/cloud-platform  |
-| ui-app          | 前端代码仓    | https://github.com/byteasy/ui-app          |
+| ui-app          | 前端代码仓    | https://github.com/byteasy/ui          |
 
 6.2 Gitee传送地址
 
@@ -74,7 +74,7 @@
 |-----------------|----------|---------------------------------------------|
 | cloud-framework | 通用共性基础框架 | https://gitee.com/byteasy/cloud-framework |
 | cloud-platform  | 平台基础服务   | https://gitee.com/byteasy/cloud-platform  |
-| ui-app          | 前端代码仓    | https://gitee.com/byteasy/ui-app          |
+| ui-app          | 前端代码仓    | https://gitee.com/byteasy/ui          |
 
 ## 七、快速开始
 
