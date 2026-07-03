@@ -1,0 +1,3 @@
+com.byteasy.monitor.MonitorAutoConfiguration
+com.byteasy.monitor.HttpMetricsAutoConfiguration
+com.byteasy.monitor.MethodMetricsAutoConfiguration
