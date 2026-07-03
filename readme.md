@@ -76,7 +76,7 @@
 | cloud-platform  | 平台基础服务   | https://gitee.com/byteasy/cloud-platform  |
 | ui-app          | 前端代码仓    | https://gitee.com/byteasy/ui-app          |
 
-## 七、快速开始（预留模块）
+## 七、快速开始
 
 7.1 环境依赖
 - 前端：nodejs v24.12.0、Vue3
