@@ -6,59 +6,75 @@
     <parent>
         <groupId>org.springframework.cloud</groupId>
         <artifactId>spring-cloud-dependencies-parent</artifactId>
-        <version>4.1.0</version>
+        <version>4.3.0</version>
         <relativePath/>
     </parent>
 
-    <groupId>com.jiuyang</groupId>
+    <groupId>com.byteasy</groupId>
     <artifactId>parent</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>pom</packaging>
-    <name>Spring Cloud Jiu yang Dependencies</name>
-    <description>Spring Cloud Jiu yang Dependencies</description>
+    <name>Software Bom Parent</name>
+    <description>All software dependencies</description>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+        <!-- Spring Cloud Alibaba -->
+        <spring.cloud.alibaba.version>2025.0.0.0</spring.cloud.alibaba.version>
         <!-- Spring Cloud -->
-        <spring.cloud.version>2023.0.3</spring.cloud.version>
+        <spring.cloud.version>2025.0.0</spring.cloud.version>
 
         <!-- Spring Boot -->
-        <spring-boot.version>3.2.9</spring-boot.version>
+        <spring-boot.version>3.5.9</spring-boot.version>
+        <springdoc.version>2.8.15</springdoc.version>
 
+        <!-- pulsar version -->
+        <pulsar.version>4.1.2</pulsar.version>
+        <!-- vertx version 保持依赖的整个netty版本一致 -->
+        <vertx.version>4.5.25</vertx.version>
+        <!-- xxl job -->
+        <xxl-job-version>3.3.2</xxl-job-version>
+        <!-- javacv -->
+        <javacv.version>1.5.12</javacv.version>
+        <ffmpeg.version>7.1.1-1.5.12</ffmpeg.version>
+        <!-- okhttp -->
+        <okhttp.version>5.3.2</okhttp.version>
         <!-- other components -->
         <mysql-connector.version>8.3.0</mysql-connector.version>
-        <mybatis-plus.version>3.5.7</mybatis-plus.version>
+        <pgsql.version>42.7.9</pgsql.version>
+        <mybatis-plus.version>3.5.16</mybatis-plus.version>
         <mybatis-dynamic-datasource-version>4.3.1</mybatis-dynamic-datasource-version>
-        <druid-version>	1.2.23</druid-version>
-        <caffeine-version>3.1.8</caffeine-version>
-        <lombok-version>1.18.34</lombok-version>
-        <freemarker-version>2.3.33</freemarker-version>
+        <druid-version>1.2.27</druid-version>
+        <caffeine-version>3.2.3</caffeine-version>
+        <lombok-version>1.18.42</lombok-version>
+        <jakarta-version>2.2.42</jakarta-version>
+        <freemarker-version>2.3.34</freemarker-version>
+        <commons-io-version>2.21.0</commons-io-version>
+        <commons-lang3-version>3.20.0</commons-lang3-version>
+        <commons-collections4-version>4.5.0</commons-collections4-version>
+        <hutool-version>5.8.43</hutool-version>
+        <guava-version>33.5.0-jre</guava-version>
+        <beanutils-version>1.11.0</beanutils-version>
+        <junit-version>4.13.2</junit-version>
+        <objenesis.version>3.3</objenesis.version>
+        <nacos-client.version>3.1.0</nacos-client.version>
 
-        <!-- Spring Cloud Alibaba -->
-        <spring.cloud.alibaba.version>2023.0.1.2</spring.cloud.alibaba.version>
         <!-- Maven Plugin Versions -->
-        <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
-        <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
-        <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
-        <flatten-maven-plugin.version>1.2.7</flatten-maven-plugin.version>
+        <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
+        <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
+        <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
+        <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
-        <spring-boot-plugin.version>3.3.4</spring-boot-plugin.version>
+        <spring-boot-plugin.version>4.0.2</spring-boot-plugin.version>
+        <maven-compile-plugin.version>3.15.0</maven-compile-plugin.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- Spring Dependencies -->
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
 
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
@@ -77,9 +93,53 @@
             </dependency>
 
             <dependency>
+                <groupId>com.alibaba.nacos</groupId>
+                <artifactId>nacos-client</artifactId>
+                <version>${nacos-client.version}</version>
+            </dependency>
+
+            <!-- Spring Dependencies -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.pulsar</groupId>
+                <artifactId>pulsar-bom</artifactId>
+                <version>${pulsar.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-dependencies</artifactId>
+                <version>${vertx.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>com.mysql</groupId>
                 <artifactId>mysql-connector-j</artifactId>
                 <version>${mysql-connector.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${pgsql.version}</version>
             </dependency>
 
             <dependency>
@@ -100,6 +160,12 @@
                 <version>${mybatis-plus.version}</version>
             </dependency>
 
+            <!--            <dependency>-->
+            <!--                <groupId>com.baomidou</groupId>-->
+            <!--                <artifactId>mybatis-plus-generator-jiuyang</artifactId>-->
+            <!--                <version>${mybatis-plus.version}</version>-->
+            <!--            </dependency>-->
+
             <dependency>
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-annotation</artifactId>
@@ -112,6 +178,11 @@
                 <version>${mybatis-plus.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-jsqlparser</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>com.baomidou</groupId>
@@ -121,8 +192,26 @@
 
             <dependency>
                 <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.byteasy</groupId>
+                <artifactId>mybatis-plus-generator-byteasy</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.baomidou</groupId>
                 <artifactId>dynamic-datasource-spring-boot3-starter</artifactId>
                 <version>${mybatis-dynamic-datasource-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.xuxueli</groupId>
+                <artifactId>xxl-job-core</artifactId>
+                <version>${xxl-job-version}</version>
             </dependency>
 
             <dependency>
@@ -144,11 +233,210 @@
             </dependency>
 
             <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations-jakarta</artifactId>
+                <version>${jakarta-version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.freemarker</groupId>
                 <artifactId>freemarker</artifactId>
                 <version>${freemarker-version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${commons-collections4-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi</artifactId>
+                <version>5.5.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>5.5.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>${beanutils-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>javacv</artifactId>
+                <version>${javacv.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>javacpp</artifactId>
+                <version>${javacv.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>ffmpeg-platform</artifactId>
+                <version>${ffmpeg.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.bytedeco</groupId>
+                <artifactId>ffmpeg</artifactId>
+                <version>${ffmpeg.version}</version>
+                <classifier>windows-x86_64</classifier>
+            </dependency>
+
+            <!-- OkHttp 核心 -->
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+
+            <!-- 日志拦截器 -->
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>logging-interceptor</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+
+            <!-- Open Feign OkHttp -->
+            <dependency>
+                <groupId>io.github.openfeign</groupId>
+                <artifactId>feign-okhttp</artifactId>
+                <version>13.6</version>
+            </dependency>
+
+            <!-- 地理位置算法库 -->
+            <dependency>
+                <groupId>com.uber</groupId>
+                <artifactId>h3</artifactId>
+                <version>4.1.1</version>
+            </dependency>
+
+            <!-- 二维码库 -->
+            <dependency>
+                <groupId>com.google.zxing</groupId>
+                <artifactId>core</artifactId>
+                <version>3.5.3</version>
+            </dependency>
+            <!-- Java 图像工具 -->
+            <dependency>
+                <groupId>com.google.zxing</groupId>
+                <artifactId>javase</artifactId>
+                <version>3.5.3</version>
+            </dependency>
+
+            <!-- sql 调试 -->
+            <dependency>
+                <groupId>com.github.gavlyukovskiy</groupId>
+                <artifactId>p6spy-spring-boot-starter</artifactId>
+                <version>1.12.1</version>
+            </dependency>
+
+            <!-- cxf webservice -->
+            <dependency>
+                <groupId>org.apache.cxf</groupId>
+                <artifactId>cxf-spring-boot-starter-jaxws</artifactId>
+                <version>4.1.4</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-starter-logging</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>asm</artifactId>
+                        <groupId>org.ow2.asm</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>com.hikvision.ga</groupId>
+                <artifactId>artemis-http-client</artifactId>
+                <version>1.1.13.RELEASE</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.fastjson2</groupId>
+                <artifactId>fastjson2</artifactId>
+                <version>2.0.60</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jeasy</groupId>
+                <artifactId>easy-random-core</artifactId>
+                <version>5.0.0</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.objenesis</groupId>
+                        <artifactId>objenesis</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fazecast</groupId>
+                <artifactId>jSerialComm</artifactId>
+                <version>2.10.3</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.hdrhistogram</groupId>
+                <artifactId>HdrHistogram</artifactId>
+                <version>2.1.12</version>
+            </dependency>
+
+            <!-- 地球亮点的球面距离， 某一点是否在多边形内 https://github.com/apache/commons-geometry -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-geometry</artifactId>
+                <version>1.0</version>
+            </dependency>
+
+            <!-- pdf文件内容提取、拆分、合并等 https://pdfbox.apache.org/3.0/getting-started.html -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>3.0.6</version>
+            </dependency>
+
+            <!-- 验证码生成 -->
+            <dependency>
+                <groupId>com.github.penggle</groupId>
+                <artifactId>kaptcha</artifactId>
+                <version>2.3.2</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -158,6 +446,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compile-plugin.version}</version>
                     <configuration>
                         <parameters>true</parameters>
                     </configuration>
@@ -242,5 +531,20 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.*</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </resource>
+        </resources>
     </build>
+
 </project>
