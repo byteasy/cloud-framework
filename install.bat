@@ -16,3 +16,5 @@ rem call mvn source:jar install
 cd ../cloud-redis-service
 call mvn clean install
 rem call mvn source:jar install
+cd ../mybatis-plus-generator-byteasy
+call mvn clean install
