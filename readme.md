@@ -55,32 +55,42 @@
 
 ## 五、在线体验
 
-- administrator/Aa@112233
+- admin/admin123
 - 演示地址:[https://www.byteasy.cn](https://www.byteasy.cn)
 - 文档地址:[https://doc.byteasy.cn](https://doc.byteasy.cn)
 
 ## 六、开源仓库地址
 6.1 Github传送地址
 
-| 模块             | 说明       | 地址                                         |
-|----------------|----------|--------------------------------------------|
-| framework      | 通用共性基础框架 | https://github.com/byteasy/cloud-framework |
-| cloud-platform | 平台基础服务   | https://github.com/byteasy/cloud-platform  |
-| ui-app         | 前端代码仓    | https://github.com/byteasy/ui-app          |
+| 模块              | 说明       | 地址                                         |
+|-----------------|----------|--------------------------------------------|
+| cloud-framework | 通用共性基础框架 | https://github.com/byteasy/cloud-framework |
+| cloud-platform  | 平台基础服务   | https://github.com/byteasy/cloud-platform  |
+| ui-app          | 前端代码仓    | https://github.com/byteasy/ui-app          |
 
 6.2 Gitee传送地址
 
-| 模块             | 说明       | 地址                                          |
-|----------------|----------|---------------------------------------------|
-| framework      | 通用共性基础框架 | https://gitee.com/byteasy/cloud-framework |
-| cloud-platform | 平台基础服务   | https://gitee.com/byteasy/cloud-platform  |
-| ui-app         | 前端代码仓    | https://gitee.com/byteasy/ui-app          |
+| 模块              | 说明       | 地址                                          |
+|-----------------|----------|---------------------------------------------|
+| cloud-framework | 通用共性基础框架 | https://gitee.com/byteasy/cloud-framework |
+| cloud-platform  | 平台基础服务   | https://gitee.com/byteasy/cloud-platform  |
+| ui-app          | 前端代码仓    | https://gitee.com/byteasy/ui-app          |
 
 ## 七、快速开始（预留模块）
-可后续补充：环境依赖、项目克隆、前后端启动步骤、部署教程、配置说明等内容
 
-## 八、贡献指南（预留模块）
+7.1 环境依赖
+- 前端：nodejs v24.12.0、Vue3
+- 后端：java 21 spring boot：3.5.9 spring cloud alibaba：2025.0.0.0 mybatis plus：3.5.16
+- 中间件：Maven、Postgres、Apisix:3.14.1、Nacos:3.1.1
 
-## 九、许可证（预留模块）
+7.2 项目克隆
+- 本项目基础仓库分三个：cloud-framework、cloud-platform、ui-app
 
-## 十、常见问题（FAQ）
+7.3 环境初始化
+- Postgres数据库导出文件：[数据导入文件](https://github.com/byteasy/cloud-platform/doc/schema/pg/byteasy.sql)
+- Postgres数据库自动导入脚本:[脚本](https://github.com/byteasy/cloud-platform/doc/sh/restore.sh),注意其中的域名www.byteasy.cn，要改为自己的域名，如果没有，随便起一个，
+  在host文件中增加一个映射.
+
+7.4 前后端打包
+- [一键打包脚本](https://github.com/byteasy/cloud-platform/doc/sh/autoDeploy.sh) 打包步骤可参照此演示后台的自动部署脚本
+
