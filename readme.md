@@ -87,10 +87,10 @@
 - 本项目基础仓库分三个：cloud-framework、cloud-platform、ui-app
 
 7.3 环境初始化
-- Postgres数据库导出文件：[数据导入文件](https://github.com/byteasy/cloud-platform/doc/schema/pg/byteasy.sql)
-- Postgres数据库自动导入脚本:[脚本](https://github.com/byteasy/cloud-platform/doc/sh/restore.sh),注意其中的域名www.byteasy.cn，要改为自己的域名，如果没有，随便起一个，
+- Postgres数据库导出文件：[数据导入文件](https://github.com/byteasy/cloud-platform/blob/main/doc/schema/pg/byteasy.sql)
+- Postgres数据库自动导入脚本:[脚本](https://github.com/byteasy/cloud-platform/blob/main/doc/sh/restore.sh),注意其中的域名www.byteasy.cn，要改为自己的域名，如果没有，随便起一个，
   在host文件中增加一个映射.
 
 7.4 前后端打包
-- [一键打包脚本](https://github.com/byteasy/cloud-platform/doc/sh/autoDeploy.sh) 打包步骤可参照此演示后台的自动部署脚本
+- [一键打包脚本](https://github.com/byteasy/cloud-platform/blob/main/doc/sh/autoDeploy.sh) 打包步骤可参照此演示后台的自动部署脚本
 
