@@ -19,9 +19,9 @@ public enum ColumnType implements IBaseEnum<Integer> {
     LOCAL_DATE(7, "日期"),
     LOCAL_DATE_TIME(8, "时间"),
     ENUM(9, "自定义枚举"),
-    ARRAY(10, "数组"),
-    JSON(11, "Json对象"),
-    JSON_ARRAY(12, "Json对象数组"),
+    ARRAY(10, "基本类型数组"),
+    JSON(11, "对象"),
+    JSON_ARRAY(12, "对象数组"),
     SPLITTER(13, "分割对象"),
     ;
     public final int value;
