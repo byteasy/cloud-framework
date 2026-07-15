@@ -54,6 +54,8 @@ public class CommonServiceImpl implements ICommonService {
     private SchemaDefineUtil schemaDefineUtil;
     @Autowired
     private EntityServiceFactory entityServiceFactory;
+    @Autowired
+    private IDatabaseMetaService databaseMetaService;
 
     private Set<String> auditEntityPropSet = ColumnUtil.getFieldNames(LogicDeleteEntity.class);
 
@@ -224,6 +226,19 @@ public class CommonServiceImpl implements ICommonService {
             }
         }
         return true;
+    }
+
+    @Override
+    public Collection<Column> getColumns(String className) {
+        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
+        String schema = databaseMetaService.getCurrentSchema();
+        return databaseMetaService.getColumns(className, schema, entityDefineDTO.getTableName());
+    }
+
+    @Override
+    public Collection<Column> getColumnsByTableName(String tableName) {
+        String schema = databaseMetaService.getCurrentSchema();
+        return databaseMetaService.getColumns(null, schema, tableName);
     }
 
     private boolean isLogicDeleteEntity(Map<String, Column> columnMap) {
