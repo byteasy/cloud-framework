@@ -27,17 +27,17 @@ public class JsTestDemoExtended {
         params.put("nullableField", null);
 
         String jsScript = """
-                let output = {
-                    jsNull: null,
-                    jsUndefined: undefined,
-                    calculatedNaN: 0 / 0,
-                    calculatedInfinite: 1 / 0,
-                    inputNull: nullableField
-                };
-                output;
-                """;
+            let output = {
+                jsNull: null,
+                jsUndefined: undefined,
+                calculatedNaN: 0 / 0,
+                calculatedInfinite: 1 / 0,
+                inputNull: params.nullableField
+            };
+            output;
+            """;
 
-        Object result = JsScriptExecutor.runScript(params, jsScript, "test");
+        Object result = JsScriptExecutor.runScript("params", params, jsScript);
         System.out.println(JacksonUtil.toJson(result));
         // 预期输出: {"jsNull":null,"jsUndefined":null,"calculatedNaN":null,"calculatedInfinite":null,"inputNull":null}
         System.out.println("测试用例 1 通过\n");
@@ -54,15 +54,15 @@ public class JsTestDemoExtended {
         params.put("doubleVal", 12.34);
 
         String jsScript = """
-                let output = {
-                    originalLong: bigLong,
-                    floatCalculation: doubleVal + 0.66, // 12.34 + 0.66 = 13.0
-                    preciseFloat: 5.5
-                };
-                output;
-                """;
+            let output = {
+                originalLong: params.bigLong,
+                floatCalculation: params.doubleVal + 0.66, // 12.34 + 0.66 = 13.0
+                preciseFloat: 5.5
+            };
+            output;
+            """;
 
-        Object result = JsScriptExecutor.runScript(params, jsScript, "test");
+        Object result = JsScriptExecutor.runScript("params", params, jsScript);
         System.out.println(JacksonUtil.toJson(result));
         // 预期关注点: floatCalculation 应该是 13.0 而不是整型 13 (防止破坏前端某些强类型字段的定义)
         System.out.println("测试用例 2 通过\n");
@@ -77,14 +77,14 @@ public class JsTestDemoExtended {
 
         // 尝试加载 Java 核心类进行恶意操作的 JS
         String jsScript = """
-                // 尝试通过 Java 反射执行系统命令 (黑客常见手段)
-                let ProcessBuilder = Java.type('java.lang.ProcessBuilder');
-                let p = new ProcessBuilder('calc').start(); 
-                "success";
-                """;
+            // 尝试通过 Java 反射执行系统命令 (黑客常见手段)
+            let ProcessBuilder = Java.type('java.lang.ProcessBuilder');
+            let p = new ProcessBuilder('calc').start(); 
+            "success";
+            """;
 
         try {
-            JsScriptExecutor.runScript(null, jsScript, "test");
+            JsScriptExecutor.runScript("params", null, jsScript);
             System.err.println("❌ 警告：沙箱被穿透了！脚本成功访问了 Java 类！");
         } catch (Exception e) {
             System.out.println("✅ 拦截成功：沙箱成功阻止了 Host 类的访问。错误信息: " + e.getMessage());
@@ -101,18 +101,18 @@ public class JsTestDemoExtended {
 
         String syntaxErrorJs = "let a = ;"; // 语法错误
         String runtimeErrorJs = """
-                let user = { name: "Tom" };
-                let age = user.profile.age; // 运行时错误: profile 为 undefined，再点 age 会报错
-                """;
+            let user = { name: "Tom" };
+            let age = user.profile.age; // 运行时错误: profile 为 undefined，再点 age 会报错
+            """;
 
         try {
-            JsScriptExecutor.runScript(null, syntaxErrorJs, "test");
+            JsScriptExecutor.runScript("params", null, syntaxErrorJs);
         } catch (Exception e) {
             System.out.println("语法错误捕获: " + e.getMessage()); // 应该包含“语法错误”字样和行号
         }
 
         try {
-            JsScriptExecutor.runScript(null, runtimeErrorJs, "test");
+            JsScriptExecutor.runScript("params", null, runtimeErrorJs);
         } catch (Exception e) {
             System.out.println("运行时错误捕获: " + e.getMessage()); // 应该清晰指示第 2 行报错
         }
@@ -126,23 +126,23 @@ public class JsTestDemoExtended {
     private static void testCase5_HighConcurrencyPerformance() {
         System.out.println("=== 测试用例 5: 并发与性能压测 (执行 2000 次) ===");
         Map<String, Object> params = Map.of("score", 85);
-        String jsScript = "score >= 60 ? 'pass' : 'fail';";
+        String jsScript = "params.score >= 60 ? 'pass' : 'fail';";
 
         // 预热机制（让 JIT 编译器准备好）
         for (int i = 0; i < 100; i++) {
-            JsScriptExecutor.runScript(params, jsScript, "test");
+            JsScriptExecutor.runScript("params", params, jsScript);
         }
 
         long startTime = System.currentTimeMillis();
         int loopCount = 2000;
 
         for (int i = 0; i < loopCount; i++) {
-            JsScriptExecutor.runScript(params, jsScript, "test");
+            JsScriptExecutor.runScript("params", params, jsScript);
         }
 
         long endTime = System.currentTimeMillis();
         System.out.println("执行 " + loopCount + " 次简单脚本耗时: " + (endTime - startTime) + " ms");
-        System.out.println("平均单次耗时: " + ((double) (endTime - startTime) / loopCount) + " ms");
+        System.out.println("平均单次耗时: " + ((double)(endTime - startTime) / loopCount) + " ms");
         // 如果重构成功，2000 次在一台普通的电脑上应该在几百毫秒内就能跑完。如果没用 SHARED_ENGINE，这里可能会耗时数秒甚至卡死。
         System.out.println("测试用例 5 通过\n");
     }

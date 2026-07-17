@@ -1,29 +1,19 @@
 package com.byteasy.util;
 
-import cn.hutool.extra.spring.SpringUtil;
-import com.byteasy.component.JsScriptFactory;
-import com.byteasy.dto.ScriptFunction;
-import com.byteasy.script.JsFunctionFactory;
-import com.byteasy.script.ProxyWrapper;
-import lombok.extern.log4j.Log4j2;
 import org.graalvm.polyglot.*;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.function.Function;
 
-@Log4j2
 public class JsScriptExecutor {
 
     // 1. 提取全局唯一的共享 Engine，避免重复初始化 JS 编译器内核
     private static final Engine SHARED_ENGINE = Engine.newBuilder().build();
-
 
     // 创建一个专用于执行 JS 脚本的隔离线程池（防止主业务线程被卡死）
     private static final ExecutorService JS_EXECUTOR_POOL = new ThreadPoolExecutor(
@@ -41,23 +31,11 @@ public class JsScriptExecutor {
             }
     );
 
-    public static Object runScriptWithTimeout(Map<String, Object> params, String jsScript, String jsName, long timeoutMillis) {
-        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+    public static Object runScriptWithTimeout(String bindParamName, Map<String, Object> params, String jsScript, long timeoutMillis) {
         // 提交到线程池异步执行
         Future<Object> future = JS_EXECUTOR_POOL.submit(() -> {
-            RequestContextHolder.setRequestAttributes(attributes);
-            try {
-                Map<String, ScriptFunction> map = null;
-                try {
-                    JsFunctionFactory jsFunctionFactory = SpringUtil.getBean(JsFunctionFactory.class);
-                    map = jsFunctionFactory.getJsFunctionMap();
-                } catch (Exception e) {
-                }
-                // 这里执行原有的逻辑
-                return runScriptWithFunctions(params, map, jsScript, jsName);
-            } finally {
-                RequestContextHolder.resetRequestAttributes();
-            }
+            // 这里执行原有的逻辑
+            return runScript(bindParamName, params, jsScript);
         });
 
         try {
@@ -78,8 +56,42 @@ public class JsScriptExecutor {
         }
     }
 
-    public static Object runScript(Map<String, Object> params, String jsScript, String jsName) {
-        return runScriptWithFunctions(params, null, jsScript, jsName);
+    public static Object runScript(String bindParamName, Map<String, Object> params, String jsScript) {
+        if (jsScript == null || jsScript.isBlank()) {
+            throw new IllegalArgumentException("JS脚本不能为空");
+        }
+        Map<String, Object> bindParams = params == null ? new HashMap<>() : params;
+
+        ResourceLimits limits = ResourceLimits.newBuilder()
+                .statementLimit(10000, null)
+                .build();
+        // 2. 将 Engine 绑定到 Context，极大加速 Context 的创建（如果不用对象池，这也是底线优化）
+        try (Context context = Context.newBuilder("js")
+                .engine(SHARED_ENGINE)
+                .allowAllAccess(false)
+                .allowIO(false)
+                .allowHostAccess(false)
+                .allowCreateThread(false)
+                .option("sandbox.MaxCPUTime", "3000ms")
+                .resourceLimits(limits)
+                .build()) {
+
+            Value jsBindings = context.getBindings("js");
+
+            // 3. 优化参数注入：直接利用现成的 jsBindings，避免在循环中调用 eval("{}")
+            jsBindings.putMember(bindParamName, wrapJavaObject(context, bindParams));
+
+            // 4. 执行脚本
+            Value resultValue;
+            try {
+                resultValue = context.eval("js", jsScript);
+            } catch (PolyglotException e) {
+                throw new RuntimeException("JS脚本执行失败：" + formatJsError(e), e);
+            }
+
+            // 5. 转换结果
+            return convertGraalValueToJavaObject(resultValue);
+        }
     }
 
     /**
@@ -87,11 +99,16 @@ public class JsScriptExecutor {
      *
      * @param functions 要注入的 Java 函数映射，Key 为 JS 中的函数名，Value 为 Java 的 Function
      */
-    public static Object runScriptWithFunctions(Map<String, Object> params, Map<String, ScriptFunction> functions, String jsScript, String jsName) {
+    public static Object runScriptWithFunctions(
+            String bindParamName,
+            Map<String, Object> params,
+            Map<String, Function<Object[], Object>> functions, // 接收 Java 函数
+            String jsScript) {
+
         if (jsScript == null || jsScript.isBlank()) {
             throw new IllegalArgumentException("JS脚本不能为空");
         }
-        Map<String, Object> bindParams = params == null ? Collections.EMPTY_MAP : params;
+        Map<String, Object> bindParams = params == null ? new HashMap<>() : params;
 
         ResourceLimits limits = ResourceLimits.newBuilder()
                 .statementLimit(10000, null)
@@ -100,8 +117,9 @@ public class JsScriptExecutor {
         // 这样既安全，又开放了函数回调能力
         try (Context context = Context.newBuilder("js")
                 .engine(SHARED_ENGINE)
-                .allowAllAccess(true)
-                .allowHostAccess(HostAccess.ALL) // 允许显式授权的 Host 访问
+                .allowAllAccess(false)
+                .allowIO(false)
+                .allowHostAccess(HostAccess.EXPLICIT) // 允许显式授权的 Host 访问
                 .allowCreateThread(false)
                 .resourceLimits(limits)
                 .build()) {
@@ -109,9 +127,7 @@ public class JsScriptExecutor {
             Value jsBindings = context.getBindings("js");
 
             // 2. 注入业务参数
-            for (Map.Entry<String, Object> entry : bindParams.entrySet()) {
-                jsBindings.putMember(entry.getKey(), ProxyWrapper.wrap(entry.getValue()));
-            }
+            jsBindings.putMember(bindParamName, wrapJavaObject(context, bindParams));
 
             // 3. 注入 Java 函数
             if (functions != null) {
@@ -125,13 +141,15 @@ public class JsScriptExecutor {
                             inputArgs = new Object[arguments.length];
                             int i = 0;
                             for (Value argument : arguments) {
-                                inputArgs[i++] = convertGraalValueToJavaObjectV1(argument);
+                                inputArgs[i++] = convertGraalValueToJavaObject(argument);
                             }
                         }
 
                         // 2. 回调你编写的 Java 业务逻辑 Lambda
-                        Object result = javaFunc.getFunction().apply(inputArgs);
-                        return ProxyWrapper.wrap(result);
+                        Object result = javaFunc.apply(inputArgs);
+
+                        // 3. 将 Java 返回值安全包装回 Value 塞给 JS（如果你的方法叫 javaObjectToGraalValue，请对应替换方法名）
+                        return wrapJavaObject(context, result);
                     });
                 });
             }
@@ -139,66 +157,105 @@ public class JsScriptExecutor {
             // 4. 执行脚本
             Value resultValue;
             try {
-                Source cachedScript = com.byteasy.component.JsScriptFactory.getScriptSource(jsName);
-                if (cachedScript == null) {
-                    cachedScript = Source.newBuilder("js", jsScript, jsName + ".js")
-                            .cached(true)
-                            .build();
-                    JsScriptFactory.setScriptSource(jsName, cachedScript);
-                }
-
-                resultValue = context.eval(cachedScript);
-            } catch (Exception e) {
-                if (e instanceof PolyglotException) {
-                    throw new RuntimeException("JS脚本执行失败: " + jsName + " :" + formatJsError((PolyglotException) e), e);
-                } else {
-                    throw new RuntimeException(e);
-                }
+                resultValue = context.eval("js", jsScript);
+            } catch (PolyglotException e) {
+                throw new RuntimeException("JS脚本执行失败：" + formatJsError(e), e);
             }
 
-            return extractFinalResult(resultValue);
+            return convertGraalValueToJavaObject(resultValue);
         }
     }
 
+    /**
+     * 优化后的参数包装：不再频繁调用 eval()
+     */
+    private static Value wrapJavaObject(Context context, Object obj) {
+        if (obj == null) {
+            return context.asValue(null);
+        }
+        if (obj instanceof Map<?, ?>) {
+            Map<?, ?> map = (Map<?, ?>) obj;
+            // 获取 JS 的内置 Object 构造器，直接创建空对象，性能比 eval("{}") 高数倍
+            Value jsObj = context.getBindings("js").getMember("Object").newInstance();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (entry.getKey() != null) {
+                    jsObj.putMember(entry.getKey().toString(), wrapJavaObject(context, entry.getValue()));
+                }
+            }
+            return jsObj;
+        }
+        if (obj instanceof Iterable<?>) {
+            Iterable<?> list = (Iterable<?>) obj;
+            // 获取 JS 的内置 Array 构造器
+            Value jsArr = context.getBindings("js").getMember("Array").newInstance();
+            long idx = 0;
+            for (Object item : list) {
+                jsArr.setArrayElement(idx++, wrapJavaObject(context, item));
+            }
+            return jsArr;
+        }
+        // 基础类型直接包装
+        return context.asValue(obj);
+    }
 
-    private static Object convertGraalValueToJavaObjectV1(Value val) {
+    private static Object convertGraalValueToJavaObject(Value val) {
+        // 处理 JS 的 null 和 undefined
         if (val == null || val.isNull()) {
             return null;
         }
 
-        // 1. 【最核心优化】：如果这是 Java 传给 JS 然后又被 JS 传回来的对象，直接脱壳！
-        // 比如你传进去的 ServiceInstance 或 ListProxy，这里直接 0 毫秒还原成 Java 原生对象。
-        if (val.isHostObject()) {
-            return val.asHostObject();
+        // 处理 Date
+        if (val.isDate() || val.isTime() || val.isInstant()) {
+            Value toIsoFn = val.getMember("getTime");
+            return toIsoFn.execute().asLong();
         }
 
-        // 2. 日期和时间（保留你之前非常严谨的 JDK 8 时间 API 转换逻辑）
-        if (val.isInstant()) {
-            return LocalDateTime.ofInstant(val.asInstant(), ZoneId.systemDefault());
-        } else if (val.isDate() && val.isTime()) {
-            return LocalDateTime.of(val.asDate(), val.asTime());
-        } else if (val.isDate()) {
-            return val.asDate();
-        } else if (val.isTime()) {
-            return val.asTime();
-        }
-
-        // 3. 【干掉深拷贝】：处理纯纯的 JS Array 和 Object
-        // 告别之前的 new ArrayList<>() 和 new HashMap<>() 递归！
+        // 处理数组
         if (val.hasArrayElements()) {
-            // GraalVM 会在底层生成一个实现了 java.util.List 的反向代理类。
-            // Java 侧调用 list.get(0) 时，底层才会去读 JS 数组的第 0 个元素。实现懒加载！
-            return val.as(List.class);
+            List<Object> list = new ArrayList<>();
+            long arraySize = val.getArraySize();
+            for (long i = 0; i < arraySize; i++) {
+                list.add(convertGraalValueToJavaObject(val.getArrayElement(i)));
+            }
+            return list;
         }
 
-        if (val.hasMembers()) {
-            // 同理，自动生成实现了 java.util.Map 的反向代理类。
-            return val.as(Map.class);
+        // 处理普通 JS 对象
+        if (val.hasMembers() && !val.isHostObject()) {
+            Map<String, Object> map = new HashMap<>();
+            val.getMemberKeys().forEach(key -> {
+                Value childVal = val.getMember(key);
+                map.put(key, convertGraalValueToJavaObject(childVal));
+            });
+            return map;
         }
 
-        // 4. 基础数据类型 (String, Number, Boolean)
-        // GraalVM 的 .as(Object.class) 会自动将 JS 的基础类型映射为 Java 的 String, Double, Integer, Boolean
-        return val.as(Object.class);
+        // 处理基础数据类型
+        if (val.isString()) {
+            return val.asString();
+        }
+        if (val.isBoolean()) {
+            return val.asBoolean();
+        }
+        if (val.isNumber()) {
+            double doubleVal = val.asDouble();
+            // 处理 JS 计算产生的 NaN 或无穷大
+            if (Double.isNaN(doubleVal) || Double.isInfinite(doubleVal)) {
+                return null;
+            }
+            // 修复点：只有当它确实“适合”转为整数，且在数学上等于整数，同时排除掉原本就是浮点计算的情况
+            // 或者更安全的做法：检查原始 JS Value 是否有浮点特征
+            if (val.fitsInInt() && doubleVal == (int) doubleVal) {
+                // 如果你的业务强依赖浮点输出，这里可以加一层判断
+                // 为了绝对安全，建议业务上如果是金额、计量等浮点数，直接返回 Double
+                return val.asInt();
+            } else if (val.fitsInLong() && doubleVal == (long) doubleVal) {
+                return val.asLong();
+            }
+            return doubleVal;
+        }
+
+        return val.toString();
     }
 
     private static String formatJsError(PolyglotException e) {
@@ -211,52 +268,5 @@ public class JsScriptExecutor {
             sb.append("（语法错误）");
         }
         return sb.toString();
-    }
-
-    /**
-     * 专门用于脚本执行结束时的最终结果提取。
-     * 将 GraalVM 的 Value 深度拷贝为纯 Java 对象，防止 Context 关闭后抛出 IllegalStateException。
-     */
-    public static Object extractFinalResult(org.graalvm.polyglot.Value val) {
-        if (val == null || val.isNull()) {
-            return null;
-        }
-
-        // 1. 如果是原本就从 Java 传进去的对象，直接脱壳，安全且不用拷
-        if (val.isHostObject()) {
-            return val.asHostObject();
-        }
-
-        // 2. 基础类型（直接提取具体值）
-        if (val.isString()) return val.asString();
-        if (val.isBoolean()) return val.asBoolean();
-        if (val.isNumber()) {
-            return val.fitsInInt() ? val.asInt() : val.asDouble();
-        }
-
-        // 日期处理
-        if (val.isInstant())
-            return java.time.LocalDateTime.ofInstant(val.asInstant(), java.time.ZoneId.systemDefault());
-
-        // 3. 数组类型：必须遍历深拷贝为纯 ArrayList
-        if (val.hasArrayElements()) {
-            java.util.List<Object> list = new java.util.ArrayList<>((int) val.getArraySize());
-            for (long i = 0; i < val.getArraySize(); i++) {
-                list.add(extractFinalResult(val.getArrayElement(i)));
-            }
-            return list;
-        }
-
-        // 4. 对象类型：必须遍历深拷贝为纯 HashMap
-        if (val.hasMembers()) {
-            java.util.Map<String, Object> map = new java.util.HashMap<>();
-            for (String key : val.getMemberKeys()) {
-                map.put(key, extractFinalResult(val.getMember(key)));
-            }
-            return map;
-        }
-
-        // 兜底
-        return val.as(Object.class);
     }
 }

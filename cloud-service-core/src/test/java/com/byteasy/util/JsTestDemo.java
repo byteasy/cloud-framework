@@ -22,8 +22,8 @@ public class JsTestDemo {
         String jsScript = """
                 let res = {
                   success: true,
-                  username: name,
-                  realAge: age + 1,
+                  username: form.name,
+                  realAge: form.age + 1,
                   now: new Date(),
                   tags: ["normal", "user"],
                   extra: {
@@ -31,12 +31,12 @@ public class JsTestDemo {
                   }
                 };
                 res.success = false;
-                age = 99;
-                ;[res]
+                form.age = 99;
+                ;[form, res]
                 """;
 
         // 3. 执行脚本，拿到可直接序列化的Java对象
-        Object resultObj = JsScriptExecutor.runScript(frontParams, jsScript, "test");
+        Object resultObj = JsScriptExecutor.runScript("form", frontParams, jsScript);
 
         // 4. 序列化为JSON返回前端
         String resultJson;

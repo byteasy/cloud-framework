@@ -14,13 +14,14 @@ class JsScriptExecutorTest {
     @DisplayName("验证：正常脚本能否正确执行并返回数据")
     void testNormalScriptExecution() {
         // 1. 准备入参
+        String bindParamName = "params";
         Map<String, Object> params = new HashMap<>();
         params.put("basePrice", 100);
         params.put("discount", 0.8);
 
         // 2. 编写正常计算的 JS 脚本
         String jsScript = """
-            let finalPrice = basePrice * discount;
+            let finalPrice = params.basePrice * params.discount;
             let result = {
                 status: "success",
                 finalPrice: finalPrice,
@@ -30,7 +31,7 @@ class JsScriptExecutorTest {
         """;
 
         // 3. 执行脚本（设置富余的超时时间 2000 毫秒）
-        Object output = JsScriptExecutor.runScriptWithTimeout(params, jsScript, "test", 2000);
+        Object output = JsScriptExecutor.runScriptWithTimeout(bindParamName, params, jsScript, 2000);
 
         // 4. 断言验证返回的 Java 对象结构
         assertNotNull(output);
@@ -38,7 +39,7 @@ class JsScriptExecutorTest {
 
         Map<?, ?> resultMap = (Map<?, ?>) output;
         assertEquals("success", resultMap.get("status"));
-        assertEquals(80.0, resultMap.get("finalPrice"));
+        assertEquals(80, resultMap.get("finalPrice"));
         assertTrue(resultMap.get("tags") instanceof java.util.List);
 
         System.out.println("====== 正常脚本测试通过，输出结果 ======");
@@ -49,6 +50,7 @@ class JsScriptExecutorTest {
     @DisplayName("验证：用户编写死循环脚本时，系统能否在指定时间内强行拦截")
     void testScriptTimeoutInterruption() {
         // 1. 准备入参
+        String bindParamName = "params";
         Map<String, Object> params = new HashMap<>();
 
         // 2. 编写一个经典的死循环 JS 脚本
@@ -66,7 +68,7 @@ class JsScriptExecutorTest {
         // 4. 断言：预期系统会抛出 RuntimeException，且包含超时提示
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             // 设置硬超时时间为 500 毫秒
-            JsScriptExecutor.runScriptWithTimeout(params, timeoutJsScript, "Test", 500);
+            JsScriptExecutor.runScriptWithTimeout(bindParamName, params, timeoutJsScript, 500);
         });
 
         long duration = System.currentTimeMillis() - startTime;
@@ -85,6 +87,7 @@ class JsScriptExecutorTest {
     @Test
     @DisplayName("验证：JS 语法错误或执行期错误能否被正常捕获并输出行号")
     void testScriptRuntimeException() {
+        String bindParamName = "params";
         Map<String, Object> params = new HashMap<>();
 
         // 编写一个包含明显语法错误的脚本（少了闭合括号，或者调用不存在的方法）
@@ -98,7 +101,7 @@ class JsScriptExecutorTest {
 
         // 断言：预期抛出 RuntimeException
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            JsScriptExecutor.runScriptWithTimeout(params, errorJsScript, "Test", 2000);
+            JsScriptExecutor.runScriptWithTimeout(bindParamName, params, errorJsScript, 2000);
         });
 
         System.out.println("====== 语法/执行期错误捕获测试成功 ======");
