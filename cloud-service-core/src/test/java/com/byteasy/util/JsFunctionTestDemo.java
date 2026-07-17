@@ -44,22 +44,22 @@ public class JsFunctionTestDemo {
                 logFromJs("开始计算最终价格...");
                 
                 // 调用 Java 函数获取折扣
-                let discount = getDiscountByUserId(form.userId); 
+                let discount = getDiscountByUserId(userId); 
                 
                 logFromJs("获取到的折扣是: " + discount);
                 
-                let finalPrice = form.price * discount;
+                let finalPrice = price * discount;
                 
                 // 返回结果
                 ({
-                    originalPrice: form.price,
+                    originalPrice: price,
                     discount: discount,
                     payPrice: finalPrice
                 });
                 """;
 
         // 4. 使用新方法执行
-        Object resultObj = JsScriptExecutor.runScriptWithFunctions("form", frontParams, functions, jsScript);
+        Object resultObj = JsScriptExecutor.runScriptWithFunctions(frontParams, functions, jsScript);
 
         // 5. 输出结果
         System.out.println("\n返回前端JSON：");
