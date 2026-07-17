@@ -3,10 +3,7 @@ package com.byteasy.util;
 import org.graalvm.polyglot.*;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
 
@@ -31,11 +28,11 @@ public class JsScriptExecutor {
             }
     );
 
-    public static Object runScriptWithTimeout(String bindParamName, Map<String, Object> params, String jsScript, long timeoutMillis) {
+    public static Object runScriptWithTimeout(Map<String, Object> params, String jsScript, long timeoutMillis) {
         // 提交到线程池异步执行
         Future<Object> future = JS_EXECUTOR_POOL.submit(() -> {
             // 这里执行原有的逻辑
-            return runScript(bindParamName, params, jsScript);
+            return runScript(params, jsScript);
         });
 
         try {
@@ -56,42 +53,8 @@ public class JsScriptExecutor {
         }
     }
 
-    public static Object runScript(String bindParamName, Map<String, Object> params, String jsScript) {
-        if (jsScript == null || jsScript.isBlank()) {
-            throw new IllegalArgumentException("JS脚本不能为空");
-        }
-        Map<String, Object> bindParams = params == null ? new HashMap<>() : params;
-
-        ResourceLimits limits = ResourceLimits.newBuilder()
-                .statementLimit(10000, null)
-                .build();
-        // 2. 将 Engine 绑定到 Context，极大加速 Context 的创建（如果不用对象池，这也是底线优化）
-        try (Context context = Context.newBuilder("js")
-                .engine(SHARED_ENGINE)
-                .allowAllAccess(false)
-                .allowIO(false)
-                .allowHostAccess(false)
-                .allowCreateThread(false)
-                .option("sandbox.MaxCPUTime", "3000ms")
-                .resourceLimits(limits)
-                .build()) {
-
-            Value jsBindings = context.getBindings("js");
-
-            // 3. 优化参数注入：直接利用现成的 jsBindings，避免在循环中调用 eval("{}")
-            jsBindings.putMember(bindParamName, wrapJavaObject(context, bindParams));
-
-            // 4. 执行脚本
-            Value resultValue;
-            try {
-                resultValue = context.eval("js", jsScript);
-            } catch (PolyglotException e) {
-                throw new RuntimeException("JS脚本执行失败：" + formatJsError(e), e);
-            }
-
-            // 5. 转换结果
-            return convertGraalValueToJavaObject(resultValue);
-        }
+    public static Object runScript(Map<String, Object> params, String jsScript) {
+        return runScriptWithFunctions(params, null, jsScript);
     }
 
     /**
@@ -99,16 +62,11 @@ public class JsScriptExecutor {
      *
      * @param functions 要注入的 Java 函数映射，Key 为 JS 中的函数名，Value 为 Java 的 Function
      */
-    public static Object runScriptWithFunctions(
-            String bindParamName,
-            Map<String, Object> params,
-            Map<String, Function<Object[], Object>> functions, // 接收 Java 函数
-            String jsScript) {
-
+    public static Object runScriptWithFunctions(Map<String, Object> params, Map<String, Function<Object[], Object>> functions, String jsScript) {
         if (jsScript == null || jsScript.isBlank()) {
             throw new IllegalArgumentException("JS脚本不能为空");
         }
-        Map<String, Object> bindParams = params == null ? new HashMap<>() : params;
+        Map<String, Object> bindParams = params == null ? Collections.EMPTY_MAP : params;
 
         ResourceLimits limits = ResourceLimits.newBuilder()
                 .statementLimit(10000, null)
@@ -127,7 +85,9 @@ public class JsScriptExecutor {
             Value jsBindings = context.getBindings("js");
 
             // 2. 注入业务参数
-            jsBindings.putMember(bindParamName, wrapJavaObject(context, bindParams));
+            for (Map.Entry<String, Object> entry : bindParams.entrySet()) {
+                jsBindings.putMember(entry.getKey(), wrapJavaObject(context, entry.getValue()));
+            }
 
             // 3. 注入 Java 函数
             if (functions != null) {
