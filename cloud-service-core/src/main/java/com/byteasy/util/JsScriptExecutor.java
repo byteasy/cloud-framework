@@ -1,5 +1,7 @@
 package com.byteasy.util;
 
+import cn.hutool.extra.spring.SpringUtil;
+import com.byteasy.script.JsFunctionFactory;
 import org.graalvm.polyglot.*;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
 
@@ -31,8 +33,9 @@ public class JsScriptExecutor {
     public static Object runScriptWithTimeout(Map<String, Object> params, String jsScript, long timeoutMillis) {
         // 提交到线程池异步执行
         Future<Object> future = JS_EXECUTOR_POOL.submit(() -> {
+            JsFunctionFactory jsFunctionFactory = SpringUtil.getBean(JsFunctionFactory.class);
             // 这里执行原有的逻辑
-            return runScript(params, jsScript);
+            return runScriptWithFunctions(params, jsFunctionFactory.getJsFunctionMap(), jsScript);
         });
 
         try {

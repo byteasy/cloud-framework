@@ -47,7 +47,7 @@ public class UserInfo {
     @Schema(description = "用户领域")
     private String realm;
 
-    @Schema(description = "请求的起点是否是终端用户")
+    @Schema(description = "true: 用户发起的请求 false: 微服务通过上下文传递")
     private boolean isStartedByUser = true;
 
 }
