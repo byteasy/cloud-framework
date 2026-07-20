@@ -20,11 +20,6 @@ public class JdbcFunction implements JsFunctions {
         List<JsFunction> list = new ArrayList<>();
         list.add(new JsFunction() {
             @Override
-            public String group() {
-                return "basic";
-            }
-
-            @Override
             public String name() {
                 return "dbQueryForMap";
             }
@@ -45,11 +40,6 @@ public class JdbcFunction implements JsFunctions {
 
         list.add(new JsFunction() {
             @Override
-            public String group() {
-                return "basic";
-            }
-
-            @Override
             public String name() {
                 return "dbQueryForList";
             }
@@ -69,11 +59,6 @@ public class JdbcFunction implements JsFunctions {
         });
 
         list.add(new JsFunction() {
-            @Override
-            public String group() {
-                return "basic";
-            }
-
             @Override
             public String name() {
                 return "dbUpdate";

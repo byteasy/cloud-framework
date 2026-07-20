@@ -1,6 +1,5 @@
 package com.byteasy.script;
 
-import com.byteasy.common.util.JacksonUtil;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
@@ -18,11 +17,6 @@ public class Log4jFunction implements JsFunctions {
     public Collection<JsFunction> jsFunctions() {
         List<JsFunction> list = new ArrayList<>();
         list.add(new JsFunction() {
-            @Override
-            public String group() {
-                return "basic";
-            }
-
             @Override
             public String name() {
                 return "logInfo";
@@ -43,7 +37,7 @@ public class Log4jFunction implements JsFunctions {
                     // 使用简单的 replace 替换占位符（或者使用 MessageFormatter）
                     String message = firstArg;
                     for (int i = 1; i < args.length; i++) {
-                        message = message.replaceFirst("\\{\\}", JacksonUtil.toJson(args[i]));
+                        message = message.replaceFirst("\\{\\}", String.valueOf(args[i]));
                     }
                     log.info(message);
                 } else {
@@ -55,11 +49,6 @@ public class Log4jFunction implements JsFunctions {
         });
 
         list.add(new JsFunction() {
-            @Override
-            public String group() {
-                return "basic";
-            }
-
             @Override
             public String name() {
                 return "logWarn";
@@ -80,7 +69,7 @@ public class Log4jFunction implements JsFunctions {
                     // 使用简单的 replace 替换占位符（或者使用 MessageFormatter）
                     String message = firstArg;
                     for (int i = 1; i < args.length; i++) {
-                        message = message.replaceFirst("\\{\\}", JacksonUtil.toJson(args[i]));
+                        message = message.replaceFirst("\\{\\}", String.valueOf(args[i]));
                     }
                     log.warn(message);
                 } else {
@@ -92,11 +81,6 @@ public class Log4jFunction implements JsFunctions {
         });
 
         list.add(new JsFunction() {
-            @Override
-            public String group() {
-                return "basic";
-            }
-
             @Override
             public String name() {
                 return "logErr";
@@ -117,7 +101,7 @@ public class Log4jFunction implements JsFunctions {
                     // 使用简单的 replace 替换占位符（或者使用 MessageFormatter）
                     String message = firstArg;
                     for (int i = 1; i < args.length; i++) {
-                        message = message.replaceFirst("\\{\\}", JacksonUtil.toJson(args[i]));
+                        message = message.replaceFirst("\\{\\}", String.valueOf(args[i]));
                     }
                     log.error(message);
                 } else {
