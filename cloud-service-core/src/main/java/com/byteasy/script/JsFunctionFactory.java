@@ -22,6 +22,7 @@ public class JsFunctionFactory {
     public void init() {
         Map<String, JsFunction> map = SpringUtil.getBeansOfType(JsFunction.class);
         for (Map.Entry<String, JsFunction> entry : map.entrySet()) {
+            log.info("JsFunction name: {}, description: {}", entry.getValue().name(), entry.getValue().description());
             jsFunctionMap.put(entry.getValue().name(), (args) -> {
                 try {
                     return entry.getValue().run(args);
@@ -36,6 +37,7 @@ public class JsFunctionFactory {
         for (Map.Entry<String, JsFunctions> functionsEntry : functions.entrySet()) {
             JsFunctions jsFunctions = functionsEntry.getValue();
             for (JsFunction jsFunction : jsFunctions.jsFunctions()) {
+                log.info("JsFunction name: {}, description: {}", jsFunction.name(), jsFunction.description());
                 jsFunctionMap.put(jsFunction.name(), (args) -> {
                     try {
                         return jsFunction.run(args);
