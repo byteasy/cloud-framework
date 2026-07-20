@@ -31,6 +31,21 @@ public class JsFunctionFactory {
                 return null;
             });
         }
+
+        Map<String, JsFunctions> functions = SpringUtil.getBeansOfType(JsFunctions.class);
+        for (Map.Entry<String, JsFunctions> functionsEntry : functions.entrySet()) {
+            JsFunctions jsFunctions = functionsEntry.getValue();
+            for (JsFunction jsFunction : jsFunctions.jsFunctions()) {
+                jsFunctionMap.put(jsFunction.name(), (args) -> {
+                    try {
+                        return jsFunction.run(args);
+                    } catch (Exception e) {
+                        log.error(jsFunction.name() + " run err", e);
+                    }
+                    return null;
+                });
+            }
+        }
     }
 
     public Map<String, Function<Object[], Object>> getJsFunctionMap() {
