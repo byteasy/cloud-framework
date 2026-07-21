@@ -33,9 +33,14 @@ public class JsScriptExecutor {
     public static Object runScriptWithTimeout(Map<String, Object> params, String jsScript, long timeoutMillis) {
         // 提交到线程池异步执行
         Future<Object> future = JS_EXECUTOR_POOL.submit(() -> {
-            JsFunctionFactory jsFunctionFactory = SpringUtil.getBean(JsFunctionFactory.class);
+            Map<String, Function<Object[], Object>> map = null;
+            try {
+                JsFunctionFactory jsFunctionFactory = SpringUtil.getBean(JsFunctionFactory.class);
+                map = jsFunctionFactory.getJsFunctionMap();
+            } catch (Exception e) {
+            }
             // 这里执行原有的逻辑
-            return runScriptWithFunctions(params, jsFunctionFactory.getJsFunctionMap(), jsScript);
+            return runScriptWithFunctions(params, map, jsScript);
         });
 
         try {
