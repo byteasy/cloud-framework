@@ -20,11 +20,6 @@ public class CommonServiceFunction implements JsFunctions {
         List<JsFunction> list = new ArrayList<>();
         list.add(new JsFunction() {
             @Override
-            public String group() {
-                return "basic";
-            }
-
-            @Override
             public String name() {
                 return "commonServiceSaveOrUpdate";
             }
@@ -41,11 +36,6 @@ public class CommonServiceFunction implements JsFunctions {
         });
 
         list.add(new JsFunction() {
-            @Override
-            public String group() {
-                return "basic";
-            }
-
             @Override
             public String name() {
                 return "saveOrUpdateBatch";
@@ -64,18 +54,13 @@ public class CommonServiceFunction implements JsFunctions {
 
         list.add(new JsFunction() {
             @Override
-            public String group() {
-                return "basic";
-            }
-
-            @Override
             public String name() {
                 return "commonServiceGetById";
             }
 
             @Override
             public String description() {
-                return "根据ID查询某行";
+                return "Use ICommonService to getById a row";
             }
 
             @Override
@@ -86,32 +71,23 @@ public class CommonServiceFunction implements JsFunctions {
 
         list.add(new JsFunction() {
             @Override
-            public String group() {
-                return "basic";
-            }
-
-            @Override
             public String name() {
                 return "commonServicePage";
             }
 
             @Override
             public String description() {
-                return "分页查询，查询条件前端制定";
+                return "Use ICommonService to page rows";
             }
 
             @Override
             public Object run(Object[] args) throws Exception {
+                // TODO 线程上下文切换，page内部无法获得request
                 return commonService.page((String) args[0]);
             }
         });
 
         list.add(new JsFunction() {
-            @Override
-            public String group() {
-                return "basic";
-            }
-
             @Override
             public String name() {
                 return "commonServiceList";
@@ -119,43 +95,17 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "单表批量查询,查询条件前端指定";
+                return "Use ICommonService to list rows";
             }
 
             @Override
             public Object run(Object[] args) throws Exception {
+                // TODO 线程上下文切换，page内部无法获得request
                 return commonService.list((String) args[0]);
             }
         });
 
         list.add(new JsFunction() {
-            @Override
-            public String group() {
-                return "basic";
-            }
-
-            @Override
-            public String name() {
-                return "commonServiceListBy";
-            }
-
-            @Override
-            public String description() {
-                return "单表批量条件查询";
-            }
-
-            @Override
-            public Object run(Object[] args) throws Exception {
-                return commonService.list((String) args[0], (Map<String, Object>) args[1]);
-            }
-        });
-
-        list.add(new JsFunction() {
-            @Override
-            public String group() {
-                return "basic";
-            }
-
             @Override
             public String name() {
                 return "commonServiceRemoveById";
@@ -163,7 +113,7 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "根据ID删除某一行";
+                return "Use ICommonService to removeById row";
             }
 
             @Override

@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 @Service
 @Log4j2
@@ -24,26 +23,26 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
     private OpenApiFactory openApiFactory;
 
     @Override
-    public Result runApiScript(String apiCode, Map<String, String[]> params, Map<String, String> headers, String body) throws ExecutionException {
-        log.info("runApiScript, api: {}, params: {}, headers: {}, body: {}", apiCode, params, headers, body);
+    public Result runApiScript(Long apiId, Map<String, String[]> params, Map<String, String> headers, String body) {
+        log.info("runApiScript, api: {}, params: {}, headers: {}, body: {}", apiId, params, headers, body);
 
-        Map<String, Object> openApi = openApiFactory.getOpenApi(apiCode);
+        Map<String, Object> openApi = openApiFactory.getOpenApi(apiId);
         if (openApi == null) {
-            log.error("openApi is null, apiCode: {}", apiCode);
-            return Result.error("openApi is null, apiCode: " + apiCode);
+            log.error("openApi is null, apiId: {}", apiId);
+            return Result.error("openApi is null, apiId: " + apiId);
         }
 
         Long scriptId = MapUtil.getLong(openApi, "scriptId");
         if (scriptId == null) {
-            log.error("scriptId is null, apiCode: {}, scriptId: {}", apiCode, scriptId);
-            return Result.error("scriptId is null, apiCode: {}" + apiCode);
+            log.error("scriptId is null, apiId: {}, scriptId: {}", apiId, scriptId);
+            return Result.error("scriptId is null, apiId: {}" + apiId);
         }
 
         Map<String, Object> jsScriptObj = jsScriptFactory.getScript(scriptId);
         String script = MapUtil.getStr(jsScriptObj, "script");
         if (StringUtils.isEmpty(script)) {
-            log.error("script is null, apiCode: {}, scriptId: {}", apiCode, scriptId);
-            return Result.error("script is null, apiCode: " + apiCode);
+            log.error("script is null, apiId: {}, scriptId: {}", apiId, scriptId);
+            return Result.error("script is null, apiId: " + apiId);
         }
 
         Map<String, Object> input = Maps.newHashMap();
@@ -51,6 +50,6 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
         input.put("params", params);
         input.put("body", body);
 
-        return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, MapUtil.getStr(jsScriptObj, "id"), 30000));
+        return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, 30000));
     }
 }
