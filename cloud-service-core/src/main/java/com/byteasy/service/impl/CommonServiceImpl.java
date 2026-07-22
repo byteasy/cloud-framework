@@ -6,9 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.CastUtil;
-import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.RequestUtil;
-import com.byteasy.component.EntityDefineUtil;
 import com.byteasy.component.EntityServiceFactory;
 import com.byteasy.component.I18nUtil;
 import com.byteasy.component.SchemaDefineUtil;
@@ -16,20 +14,17 @@ import com.byteasy.dto.Column;
 import com.byteasy.dto.EntityDefineDTO;
 import com.byteasy.dto.FormatMap;
 import com.byteasy.entity.LogicDeleteEntity;
-import com.byteasy.enums.*;
-import com.byteasy.event.EntityChangeEvent;
-import com.byteasy.event.EntityChangeSource;
+import com.byteasy.enums.ColumnType;
+import com.byteasy.enums.Delete;
+import com.byteasy.enums.IBaseEnum;
+import com.byteasy.enums.RelationType;
 import com.byteasy.exception.BizException;
 import com.byteasy.service.ICommonService;
 import com.byteasy.service.IDatabaseMetaService;
 import com.byteasy.util.ColumnUtil;
-import com.byteasy.util.EventPublishUtil;
-import com.byteasy.util.MapUtil;
 import com.google.common.collect.Lists;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -60,19 +55,11 @@ public class CommonServiceImpl implements ICommonService {
     @Autowired
     private SchemaDefineUtil schemaDefineUtil;
     @Autowired
-    private EntityDefineUtil entityDefineUtil;
-    @Autowired
     private EntityServiceFactory entityServiceFactory;
     @Autowired
     private IDatabaseMetaService databaseMetaService;
-    @Autowired
-    private EventPublishUtil eventPublishUtil;
 
     private Set<String> auditEntityPropSet = ColumnUtil.getFieldNames(LogicDeleteEntity.class);
-
-    protected void publicEvent(EntityChangeEvent event) {
-        eventPublishUtil.publishEvent(event);
-    }
 
     /**
      * 通用 新增/更新
@@ -83,7 +70,7 @@ public class CommonServiceImpl implements ICommonService {
      */
     @Override
     public Map<String, Object> saveOrUpdate(String className, Map<String, Object> entity) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
@@ -91,9 +78,7 @@ public class CommonServiceImpl implements ICommonService {
         if (ObjectUtils.isEmpty(id)) {
             insert(entityDefineDTO, entity, columnMap);
             id = entity.get("id");
-            publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.CREATE, null, entity, className)));
         } else {
-            publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, getById(className, id), entity, className)));
             update(entityDefineDTO, entity, columnMap);
         }
         return getById(entityDefineDTO, id, columnMap);
@@ -102,10 +87,7 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     @Transactional
     public boolean saveOrUpdateBatch(String className, List<Map<String, Object>> entities) {
-        if (CollectionUtil.isEmpty(entities)) {
-            return false;
-        }
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
         return batchInsert(entityDefineDTO, entities, columnMap) > 0;
@@ -113,7 +95,7 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public Map<String, Object> getById(String className, Object id) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
         return getById(entityDefineDTO, id, columnMap);
@@ -121,16 +103,13 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public Page<Map<String, Object>> page(String className) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
         Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
 
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        Map<String, String[]> multiMap = request.getParameterMap();
-
-        Pair<String, List<Object>> whereSql = buildWhereSql(columnMap, multiMap);
+        Pair<String, List<Object>> whereSql = buildWhereSql(columnMap);
 
         String fromSql = String.format("FROM %s %s", entityDefineDTO.getTableName(), whereSql.getFirst());
         String selectSql = String.format("SELECT %s %s %s %s", getSelectSql(columnMap), fromSql, buildOrderBySql(columnMap), buildLimitSql());
@@ -168,15 +147,13 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public List<Map<String, Object>> list(String className) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
         Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        Map<String, String[]> multiMap = request.getParameterMap();
 
-        Pair<String, List<Object>> whereSql = buildWhereSql(columnMap, multiMap);
+        Pair<String, List<Object>> whereSql = buildWhereSql(columnMap);
 
         String fromSql = String.format("FROM %s %s", entityDefineDTO.getTableName(), whereSql.getFirst());
         String selectSql = String.format("SELECT %s %s %s %s", getSelectSql(columnMap), fromSql, buildOrderBySql(columnMap), buildLimitSql());
@@ -204,58 +181,11 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     @Override
-    public List<Map<String, Object>> list(String className, Map<String, Object> args) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
-
-        Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
-
-        Pair<String, List<Object>> whereSql = buildWhereSql(columnMap, args);
-
-        String fromSql = String.format("FROM %s %s", entityDefineDTO.getTableName(), whereSql.getFirst());
-        String selectSql = String.format("SELECT %s %s %s %s", getSelectSql(columnMap), fromSql, buildOrderBySql(columnMap, args), buildLimitSql(args));
-        List list = jdbcTemplate.query(selectSql, whereSql.getValue().toArray(new Object[0]), (rs, rowNum) -> {
-            FormatMap map = new FormatMap();
-            ResultSetMetaData meta = rs.getMetaData();
-            int count = meta.getColumnCount();
-
-            for (int i = 1; i <= count; i++) {
-                // 拿到你 AS 定义的驼峰别名（区分大小写）
-                String key = meta.getColumnLabel(i);
-                if (columnMap.get(key).getSerialPattern() != null) {
-                    map.rule(key, columnMap.get(key).getSerialPattern());
-                }
-
-                Object value = rs.getObject(i);
-                map.put(key, convertToEntityValue(value, columnMap.get(key)));
-            }
-            return map;
-        });
-        if (!externalKeys.isEmpty()) {
-            entityServiceFactory.updateExternalEntity(externalKeys, list);
-        }
-        return list;
-    }
-
-    @Override
-    public Map<String, Object> getOne(String className, Map<String, Object> args) {
-        List<Map<String, Object>> list = list(className, args);
-        if (list.size() == 1) {
-            return list.getFirst();
-        } else if (list.size() > 1) {
-            throw new BizException("Expect one row, but actual: " + list.size());
-        }
-        return null;
-    }
-
-    @Override
     public boolean removeById(String className, Object id) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
-        publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, getById(className, id), null, className)));
         if (isLogicDeleteEntity(columnMap)) {
             StringJoiner setJoiner = new StringJoiner(",");
             List<Object> params = new ArrayList<>();
@@ -302,7 +232,7 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public Collection<Column> getColumns(String className) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
         String schema = databaseMetaService.getCurrentSchema();
         return databaseMetaService.getColumns(className, schema, entityDefineDTO.getTableName());
     }
@@ -322,48 +252,9 @@ public class CommonServiceImpl implements ICommonService {
         return true;
     }
 
-    private String buildLimitSql(Map<String, Object> args) {
-        int size = MapUtils.getIntValue(args, "size", 20);
-        int current = MapUtils.getIntValue(args, "current", 1);
-        return String.format("limit %s offset %s", size, (current - 1) * size);
-    }
-
     private String buildLimitSql() {
         Page page = RequestUtil.getPage();
         return String.format("limit %s offset %s", page.getSize(), (page.getCurrent() - 1) * page.getSize());
-    }
-
-    private String buildOrderBySql(Map<String, Column> columnMap, Map<String, Object> args) {
-        StringJoiner sql = new StringJoiner(",");
-
-        List descColumns = (List) args.get("descColumns");
-        if (!CollectionUtils.isEmpty(descColumns)) {
-            List<String> colNames = descColumns.stream().filter(f -> columnMap.containsKey(f) && StringUtils.isNotEmpty(columnMap.get(f).getFieldName()))
-                    .map(k -> columnMap.get(k).getFieldName()).toList();
-            for (String colName : colNames) {
-                if (SqlInjectionUtils.check(colName)) {
-                    throw new BizException("Discovering SQL injection column: " + colName);
-                }
-                sql.add(colName + " desc");
-            }
-        }
-
-        List ascColumns = (List) args.get("ascColumns");
-        if (!CollectionUtils.isEmpty(ascColumns)) {
-            List<String> colNames = ascColumns.stream().filter(f -> columnMap.containsKey(f) && StringUtils.isNotEmpty(columnMap.get(f).getFieldName()))
-                    .map(k -> columnMap.get(k).getFieldName()).toList();
-            for (String colName : colNames) {
-                if (SqlInjectionUtils.check(colName)) {
-                    throw new BizException("Discovering SQL injection column: " + colName);
-                }
-                sql.add(colName + " asc");
-            }
-        }
-        if (sql.length() > 0) {
-            return String.format("order by %s", sql);
-        } else {
-            return "";
-        }
     }
 
     private String buildOrderBySql(Map<String, Column> columnMap) {
@@ -401,7 +292,9 @@ public class CommonServiceImpl implements ICommonService {
         }
     }
 
-    private Pair<String, List<Object>> buildWhereSql(Map<String, Column> columnMap, Map<String, ?> multiMap) {
+    private Pair<String, List<Object>> buildWhereSql(Map<String, Column> columnMap) {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        Map<String, String[]> multiMap = request.getParameterMap();
         StringJoiner whereStr = new StringJoiner(" AND ");
 
         // 保存查询参数，后面要传给 jdbcTemplate
@@ -410,7 +303,6 @@ public class CommonServiceImpl implements ICommonService {
         for (String name : multiMap.keySet()) {
             String fieldName = name;
             String defaultQueryType = null;
-            Object mapValue = multiMap.get(name);
 
             // 处理数组参数 name[]
             if (fieldName.contains("[]")) {
@@ -423,17 +315,7 @@ public class CommonServiceImpl implements ICommonService {
                 continue;
             }
 
-            String[] valueArr = null;
-            if (mapValue.getClass().isArray()) {
-                valueArr = (String[]) mapValue;
-            } else if (mapValue instanceof Collection<?>) {
-                Collection<?> collection = (Collection<?>) mapValue;
-                valueArr = collection.stream().map(String::valueOf).toArray(String[]::new);
-            } else if (mapValue instanceof String) {
-                valueArr = new String[]{mapValue.toString()};
-            } else {
-                valueArr = new String[]{JacksonUtil.toJson(mapValue)};
-            }
+            String[] valueArr = multiMap.get(name);
             if (valueArr == null || valueArr.length == 0) {
                 continue;
             }
@@ -445,7 +327,9 @@ public class CommonServiceImpl implements ICommonService {
             }
 
             // 查询类型
-            String queryType = (String) (MapUtil.getSingleValue(multiMap, fieldName + "QueryType"));
+            String queryType = multiMap.containsKey(fieldName + "QueryType")
+                    ? multiMap.get(fieldName + "QueryType")[0]
+                    : defaultQueryType;
 
             // 日期自动 between
             if (queryType == null && valueArr.length > 1) {
@@ -718,11 +602,9 @@ public class CommonServiceImpl implements ICommonService {
                     value = entity.get(field);
                 }
 
-                // SQL注入检查,脚本字段不做检查
-                if(!YesNo.NO.equals(column.getSqlInjectionCheck())) {
-                    if (SqlInjectionUtils.check(String.valueOf(value))) {
-                        throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + value);
-                    }
+                // SQL注入检查
+                if (SqlInjectionUtils.check(String.valueOf(value))) {
+                    throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + value);
                 }
 
                 // 转换数据库类型
@@ -769,10 +651,8 @@ public class CommonServiceImpl implements ICommonService {
                 continue;
             }
             setJoiner.add(column.getFieldName() + "=?");
-            if(!YesNo.NO.equals(column.getSqlInjectionCheck())) {
-                if (SqlInjectionUtils.check(String.valueOf(entity.get(col)))) {
-                    throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + entity.get(col));
-                }
+            if (SqlInjectionUtils.check(String.valueOf(entity.get(col)))) {
+                throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + entity.get(col));
             }
             params.add(convertToDbValue(entity.get(col), columnMap.get(col)));
         }
