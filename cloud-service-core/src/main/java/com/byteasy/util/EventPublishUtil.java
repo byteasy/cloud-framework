@@ -1,4 +1,4 @@
-package com.byteasy.common.event;
+package com.byteasy.util;
 
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.collection.CollectionUtil;
@@ -17,6 +17,7 @@ import com.byteasy.event.SourceType;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -28,7 +29,8 @@ import java.util.Map;
 public class EventPublishUtil {
 
 
-    public static void publishEvent(PlatformEvent event) {
+    @Async
+    public void publishEvent(PlatformEvent event) {
         SpringUtil.publishEvent(event);
 
         if (!SourceType.SINGLETON.equals(event.getSourceType())) {

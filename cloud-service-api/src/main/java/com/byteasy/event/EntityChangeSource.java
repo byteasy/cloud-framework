@@ -1,10 +1,10 @@
 package com.byteasy.event;
 
-import com.byteasy.entity.Entity;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import java.io.Serializable;
@@ -15,13 +15,13 @@ import java.util.UUID;
 /**
  * 实体变更事件类，用于描述数据实体的变更操作
  *
- * @param <T> 实体类型，需继承BaseEntity
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @ToString
-public class EntityChangeSource<T extends Entity> extends EventSource implements Serializable {
+public class EntityChangeSource extends EventSource implements Serializable {
 
     public enum ChangeType {
         CREATE, UPDATE, DELETE, BATCH_CREATE, BATCH_UPDATE, BATCH_DELETE
@@ -32,16 +32,21 @@ public class EntityChangeSource<T extends Entity> extends EventSource implements
     /**
      * 变更前
      */
-    private T before;
+    private Object before;
     /**
      * 变更后
      */
-    private T after;
+    private Object after;
 
     /**
-     * 数据发起的变更系统
+     * 变更实体类
      */
-    private String sourceSystem;
+    private String className;
+
+    /**
+     * 变更服务
+     */
+    private String srcApplicationName;
 
     /**
      * 拓展字段
@@ -55,15 +60,26 @@ public class EntityChangeSource<T extends Entity> extends EventSource implements
     }
 
     // 全参数构造方法
-    public EntityChangeSource(ChangeType changeType, T before, T after) {
+    public EntityChangeSource(ChangeType changeType, Object before, Object after) {
         this();
         this.changeType = changeType;
         this.before = before;
         this.after = after;
     }
 
-    public static <T extends Entity> EntityChangeSource<T> of(ChangeType changeType, T before, T after) {
-        return new EntityChangeSource<>(changeType, before, after);
+    public EntityChangeSource(ChangeType changeType, Object before, Object after, String className) {
+        this.changeType = changeType;
+        this.before = before;
+        this.after = after;
+        this.className = className;
+    }
+
+    public static EntityChangeSource of(ChangeType changeType, Object before, Object after) {
+        return new EntityChangeSource(changeType, before, after);
+    }
+
+    public static EntityChangeSource of(ChangeType changeType, Object before, Object after, String className) {
+        return new EntityChangeSource(changeType, before, after, className);
     }
 
     @JsonAnySetter

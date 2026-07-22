@@ -4,8 +4,9 @@ import com.byteasy.api.IEntityDefineService;
 import com.byteasy.api.ISchemaDefineService;
 import com.byteasy.dto.Column;
 import com.byteasy.dto.EntityDefineDTO;
-import com.byteasy.event.EntityDefineChangeEvent;
-import com.byteasy.event.IPlatformEventHandler;
+import com.byteasy.event.EntityChangeEvent;
+import com.byteasy.event.EntityChangeSource;
+import com.byteasy.event.IPlatformEntityChangeHandler;
 import com.byteasy.util.ColumnUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -22,7 +23,7 @@ import java.util.concurrent.ExecutionException;
 
 @Component
 @Log4j2
-public class SchemaDefineUtil implements IPlatformEventHandler<EntityDefineChangeEvent> {
+public class SchemaDefineUtil implements IPlatformEntityChangeHandler {
 
     @Autowired
     private Environment env;
@@ -113,14 +114,14 @@ public class SchemaDefineUtil implements IPlatformEventHandler<EntityDefineChang
     }
 
     @Override
-    public void handle(EntityDefineChangeEvent event) {
-        entityDefineCacheLoader.invalidate(event.getSource().getClassName());
-        columnsCacheLoader.invalidate(event.getSource().getClassName());
-        log.info("EntityDefine and Column Meta cache invalidate, className: {}", event.getSource().getClassName());
+    public String className() {
+        return "com.byteasy.platform.entity.SchemaDefine";
     }
 
     @Override
-    public Class<EntityDefineChangeEvent> getEventType() {
-        return EntityDefineChangeEvent.class;
+    public void handle(EntityChangeEvent event) {
+        EntityChangeSource source = event.getSource();
+        entityDefineCacheLoader.invalidate(event.getSource().getClassName());
+        columnsCacheLoader.invalidate(event.getSource().getClassName());
     }
 }
