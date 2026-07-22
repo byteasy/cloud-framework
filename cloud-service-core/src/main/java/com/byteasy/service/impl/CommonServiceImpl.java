@@ -18,10 +18,13 @@ import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.Delete;
 import com.byteasy.enums.IBaseEnum;
 import com.byteasy.enums.RelationType;
+import com.byteasy.event.EntityChangeEvent;
+import com.byteasy.event.EntityChangeSource;
 import com.byteasy.exception.BizException;
 import com.byteasy.service.ICommonService;
 import com.byteasy.service.IDatabaseMetaService;
 import com.byteasy.util.ColumnUtil;
+import com.byteasy.util.EventPublishUtil;
 import com.google.common.collect.Lists;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
@@ -58,8 +61,14 @@ public class CommonServiceImpl implements ICommonService {
     private EntityServiceFactory entityServiceFactory;
     @Autowired
     private IDatabaseMetaService databaseMetaService;
+    @Autowired
+    private EventPublishUtil eventPublishUtil;
 
     private Set<String> auditEntityPropSet = ColumnUtil.getFieldNames(LogicDeleteEntity.class);
+
+    protected void publicEvent(EntityChangeEvent event) {
+        eventPublishUtil.publishEvent(event);
+    }
 
     /**
      * 通用 新增/更新
@@ -78,7 +87,9 @@ public class CommonServiceImpl implements ICommonService {
         if (ObjectUtils.isEmpty(id)) {
             insert(entityDefineDTO, entity, columnMap);
             id = entity.get("id");
+            publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.CREATE, null, entity, className)));
         } else {
+            publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, getById(className, id), entity, className)));
             update(entityDefineDTO, entity, columnMap);
         }
         return getById(entityDefineDTO, id, columnMap);
@@ -186,6 +197,7 @@ public class CommonServiceImpl implements ICommonService {
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
+        publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, getById(className, id), null, className)));
         if (isLogicDeleteEntity(columnMap)) {
             StringJoiner setJoiner = new StringJoiner(",");
             List<Object> params = new ArrayList<>();

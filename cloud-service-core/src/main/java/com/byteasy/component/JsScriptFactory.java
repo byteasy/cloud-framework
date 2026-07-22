@@ -26,7 +26,7 @@ public class JsScriptFactory implements IPlatformEntityChangeHandler {
     private LoadingCache<Long, Map<String, Object>> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(24)).maximumSize(10000).build(new CacheLoader<>() {
         @Override
         public Map<String, Object> load(Long scriptId) {
-            Result<Map<String, Object>> result = platformCommonService.getById("", scriptId);
+            Result<Map<String, Object>> result = platformCommonService.getById("com.byteasy.platform.entity.JsScript", scriptId);
             if (result.isSuccess()) {
                 return result.getData();
             } else {
