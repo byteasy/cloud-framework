@@ -1,6 +1,7 @@
 package com.byteasy.component;
 
 import cn.hutool.core.util.ReflectUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.byteasy.Result;
 import com.byteasy.api.IPlatformCommonService;
 import com.byteasy.event.EntityChangeEvent;
@@ -9,6 +10,7 @@ import com.byteasy.event.IPlatformEntityChangeHandler;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.apache.pulsar.shade.com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,20 +23,22 @@ public class OpenApiFactory implements IPlatformEntityChangeHandler {
     @Autowired
     private IPlatformCommonService platformCommonService;
 
-    private LoadingCache<Long, Map<String, Object>> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(24)).maximumSize(10000).build(new CacheLoader<>() {
+    private LoadingCache<String, Map<String, Object>> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(24)).maximumSize(10000).build(new CacheLoader<>() {
         @Override
-        public Map<String, Object> load(Long apiId) {
-            Result<Map<String, Object>> result = platformCommonService.getById("com.byteasy.platform.entity.OpenApi", apiId);
-            if (result.isSuccess()) {
-                return result.getData();
+        public Map<String, Object> load(String apiCode) {
+            Map<String, Object> params = Maps.newHashMapWithExpectedSize(1);
+            params.put("code", apiCode);
+            Result<Page<Map<String, Object>>> result = platformCommonService.page("com.byteasy.platform.entity.OpenApi", params);
+            if (result.isSuccess() && result.getData() != null && result.getData().getRecords() != null && !result.getData().getRecords().isEmpty()) {
+                return result.getData().getRecords().getFirst();
             } else {
                 return null;
             }
         }
     });
 
-    public Map<String, Object> getOpenApi(Long apiId) {
-        return cache.getIfPresent(apiId);
+    public Map<String, Object> getOpenApi(String apiCode) {
+        return cache.getIfPresent(apiCode);
     }
 
     @Override

@@ -6,5 +6,5 @@ import java.util.Map;
 
 public interface IJsScriptApiService {
 
-    Result runApiScript(Long apiId, Map<String, String[]> params, Map<String, String> headers, String body);
+    Result runApiScript(String apiCode, Map<String, String[]> params, Map<String, String> headers, String body);
 }
