@@ -84,6 +84,10 @@ public class EntityServiceFactory implements ApplicationContextAware {
             try {
                 String className = externalKey.getExternalClass();
                 EntityDefineDTO entityDefineDTO = entityDefineService.getEntityDefine(className);
+                if (entityDefineDTO == null) {
+                    log.error("entityDefineDTO is null, className: {}", className);
+                    continue;
+                }
                 if (RelationType.EXTERNAL_KEY.equals(externalKey.getRelationType())) {
                     // 改为远程接口调用，方便递归填充参照对象
                     String serviceName = SpringUtil.getApplicationName();

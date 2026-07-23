@@ -23,26 +23,26 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
     private OpenApiFactory openApiFactory;
 
     @Override
-    public Result runApiScript(Long apiId, Map<String, String[]> params, Map<String, String> headers, String body) {
-        log.info("runApiScript, api: {}, params: {}, headers: {}, body: {}", apiId, params, headers, body);
+    public Result runApiScript(String apiCode, Map<String, String[]> params, Map<String, String> headers, String body) {
+        log.info("runApiScript, api: {}, params: {}, headers: {}, body: {}", apiCode, params, headers, body);
 
-        Map<String, Object> openApi = openApiFactory.getOpenApi(apiId);
+        Map<String, Object> openApi = openApiFactory.getOpenApi(apiCode);
         if (openApi == null) {
-            log.error("openApi is null, apiId: {}", apiId);
-            return Result.error("openApi is null, apiId: " + apiId);
+            log.error("openApi is null, apiCode: {}", apiCode);
+            return Result.error("openApi is null, apiCode: " + apiCode);
         }
 
         Long scriptId = MapUtil.getLong(openApi, "scriptId");
         if (scriptId == null) {
-            log.error("scriptId is null, apiId: {}, scriptId: {}", apiId, scriptId);
-            return Result.error("scriptId is null, apiId: {}" + apiId);
+            log.error("scriptId is null, apiCode: {}, scriptId: {}", apiCode, scriptId);
+            return Result.error("scriptId is null, apiCode: {}" + apiCode);
         }
 
         Map<String, Object> jsScriptObj = jsScriptFactory.getScript(scriptId);
         String script = MapUtil.getStr(jsScriptObj, "script");
         if (StringUtils.isEmpty(script)) {
-            log.error("script is null, apiId: {}, scriptId: {}", apiId, scriptId);
-            return Result.error("script is null, apiId: " + apiId);
+            log.error("script is null, apiCode: {}, scriptId: {}", apiCode, scriptId);
+            return Result.error("script is null, apiCode: " + apiCode);
         }
 
         Map<String, Object> input = Maps.newHashMap();

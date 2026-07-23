@@ -19,13 +19,13 @@ public class JsScriptOpenApiController {
     @Autowired
     private IJsScriptApiService jsScriptApiService;
 
-    @PostMapping("/{apiId}")
-    public Result runScriptApi(@PathVariable Long apiId, @RequestBody String body, HttpServletRequest request) {
+    @PostMapping("/{apiCode}")
+    public Result runScriptApi(@PathVariable String apiCode, @RequestBody String body, HttpServletRequest request) {
         Map<String, String[]> params = request.getParameterMap();
         Map<String, String> headers = new HashMap<>();
         request.getHeaderNames().asIterator().forEachRemaining(key -> {
             headers.put(key, request.getHeader(key));
         });
-        return jsScriptApiService.runApiScript(apiId, params, headers, body);
+        return jsScriptApiService.runApiScript(apiCode, params, headers, body);
     }
 }
