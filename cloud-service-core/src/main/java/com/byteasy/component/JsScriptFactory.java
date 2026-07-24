@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Component
 @Log4j2
@@ -35,8 +36,8 @@ public class JsScriptFactory implements IPlatformEntityChangeHandler {
         }
     });
 
-    public Map<String, Object> getScript(Long scriptId) {
-        return cache.getIfPresent(scriptId);
+    public Map<String, Object> getScript(Long scriptId) throws ExecutionException {
+        return cache.get(scriptId);
     }
 
     @Override

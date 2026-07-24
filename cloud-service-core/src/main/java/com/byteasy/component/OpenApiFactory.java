@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Component
 public class OpenApiFactory implements IPlatformEntityChangeHandler {
@@ -28,7 +29,7 @@ public class OpenApiFactory implements IPlatformEntityChangeHandler {
         public Map<String, Object> load(String apiCode) {
             Map<String, Object> params = Maps.newHashMapWithExpectedSize(1);
             params.put("code", apiCode);
-            Result<Page<Map<String, Object>>> result = platformCommonService.page("com.byteasy.platform.entity.OpenApi", params);
+            Result<Page<Map<String, Object>>> result = platformCommonService.page("com.byteasy.platform.entity.Openapi", params);
             if (result.isSuccess() && result.getData() != null && result.getData().getRecords() != null && !result.getData().getRecords().isEmpty()) {
                 return result.getData().getRecords().getFirst();
             } else {
@@ -37,8 +38,8 @@ public class OpenApiFactory implements IPlatformEntityChangeHandler {
         }
     });
 
-    public Map<String, Object> getOpenApi(String apiCode) {
-        return cache.getIfPresent(apiCode);
+    public Map<String, Object> getOpenApi(String apiCode) throws ExecutionException {
+        return cache.get(apiCode);
     }
 
     @Override

@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @Log4j2
@@ -23,7 +24,7 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
     private OpenApiFactory openApiFactory;
 
     @Override
-    public Result runApiScript(String apiCode, Map<String, String[]> params, Map<String, String> headers, String body) {
+    public Result runApiScript(String apiCode, Map<String, String[]> params, Map<String, String> headers, String body) throws ExecutionException {
         log.info("runApiScript, api: {}, params: {}, headers: {}, body: {}", apiCode, params, headers, body);
 
         Map<String, Object> openApi = openApiFactory.getOpenApi(apiCode);
