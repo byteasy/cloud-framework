@@ -7,6 +7,7 @@ import com.byteasy.api.IPlatformCommonService;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
 import com.byteasy.event.IPlatformEntityChangeHandler;
+import com.byteasy.util.FieldValueUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -52,13 +53,13 @@ public class OpenApiFactory implements IPlatformEntityChangeHandler {
         EntityChangeSource source = event.getSource();
         switch (source.getChangeType()) {
             case DELETE: {
-                Object id = ReflectUtil.getFieldValue(source.getBefore(), "id");
-                cache.invalidate(id);
+                String code = FieldValueUtil.getFieldValue(source.getBefore(), "code", String.class);
+                cache.invalidate(code);
                 break;
             }
             case UPDATE: {
-                Object id = ReflectUtil.getFieldValue(source.getAfter(), "id");
-                cache.invalidate(id);
+                String code = FieldValueUtil.getFieldValue(source.getAfter(), "code", String.class);
+                cache.invalidate(code);
                 break;
             }
             default:

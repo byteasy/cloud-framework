@@ -6,6 +6,7 @@ import com.byteasy.api.IPlatformCommonService;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
 import com.byteasy.event.IPlatformEntityChangeHandler;
+import com.byteasy.util.FieldValueUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -50,13 +51,13 @@ public class JsScriptFactory implements IPlatformEntityChangeHandler {
         EntityChangeSource source = event.getSource();
         switch (source.getChangeType()) {
             case DELETE: {
-                Object id = ReflectUtil.getFieldValue(source.getBefore(), "id");
-                cache.invalidate(id);
+                Long id = FieldValueUtil.getFieldValue(source.getBefore(), "id", Long.class);
+                cache.invalidate((Long) id);
                 break;
             }
             case UPDATE: {
-                Object id = ReflectUtil.getFieldValue(source.getAfter(), "id");
-                cache.invalidate(id);
+                Long id = FieldValueUtil.getFieldValue(source.getAfter(), "id", Long.class);
+                cache.invalidate((Long) id);
                 break;
             }
             default:
