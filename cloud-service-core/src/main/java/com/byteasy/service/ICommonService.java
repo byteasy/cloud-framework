@@ -19,6 +19,8 @@ public interface ICommonService {
 
     List<Map<String, Object>> list(String className);
 
+    List<Map<String, Object>> list(String className, Map<String, Object> args);
+
     boolean removeById(String className, Object id);
 
     Collection<Column> getColumns(String className);
