@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping(Constant.SAPI + "/script/api")
@@ -20,7 +21,7 @@ public class JsScriptOpenApiController {
     private IJsScriptApiService jsScriptApiService;
 
     @PostMapping("/{apiCode}")
-    public Result runScriptApi(@PathVariable String apiCode, @RequestBody String body, HttpServletRequest request) {
+    public Result runScriptApi(@PathVariable String apiCode, @RequestBody String body, HttpServletRequest request) throws ExecutionException {
         Map<String, String[]> params = request.getParameterMap();
         Map<String, String> headers = new HashMap<>();
         request.getHeaderNames().asIterator().forEachRemaining(key -> {
