@@ -60,7 +60,7 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "Use ICommonService to getById a row";
+                return "根据ID查询某行";
             }
 
             @Override
@@ -77,12 +77,11 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "Use ICommonService to page rows";
+                return "分页查询，查询条件前端制定";
             }
 
             @Override
             public Object run(Object[] args) throws Exception {
-                // TODO 线程上下文切换，page内部无法获得request
                 return commonService.page((String) args[0]);
             }
         });
@@ -95,13 +94,29 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "Use ICommonService to list rows";
+                return "单表批量查询,查询条件前端指定";
             }
 
             @Override
             public Object run(Object[] args) throws Exception {
-                // TODO 线程上下文切换，page内部无法获得request
                 return commonService.list((String) args[0]);
+            }
+        });
+
+        list.add(new JsFunction() {
+            @Override
+            public String name() {
+                return "commonServiceListBy";
+            }
+
+            @Override
+            public String description() {
+                return "单表批量条件查询";
+            }
+
+            @Override
+            public Object run(Object[] args) throws Exception {
+                return commonService.list((String) args[0], (Map<String, Object>) args[1]);
             }
         });
 
@@ -113,7 +128,7 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "Use ICommonService to removeById row";
+                return "根据ID删除某一行";
             }
 
             @Override

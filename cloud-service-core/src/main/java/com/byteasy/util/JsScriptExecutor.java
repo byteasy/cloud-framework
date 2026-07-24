@@ -1,14 +1,24 @@
 package com.byteasy.util;
 
 import cn.hutool.extra.spring.SpringUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.script.JsFunctionFactory;
+import lombok.extern.log4j.Log4j2;
 import org.graalvm.polyglot.*;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
 
+import java.lang.reflect.Array;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
 
+@Log4j2
 public class JsScriptExecutor {
 
     // 1. 提取全局唯一的共享 Engine，避免重复初始化 JS 编译器内核
@@ -31,16 +41,22 @@ public class JsScriptExecutor {
     );
 
     public static Object runScriptWithTimeout(Map<String, Object> params, String jsScript, long timeoutMillis) {
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         // 提交到线程池异步执行
         Future<Object> future = JS_EXECUTOR_POOL.submit(() -> {
-            Map<String, Function<Object[], Object>> map = null;
+            RequestContextHolder.setRequestAttributes(attributes);
             try {
-                JsFunctionFactory jsFunctionFactory = SpringUtil.getBean(JsFunctionFactory.class);
-                map = jsFunctionFactory.getJsFunctionMap();
-            } catch (Exception e) {
+                Map<String, Function<Object[], Object>> map = null;
+                try {
+                    JsFunctionFactory jsFunctionFactory = SpringUtil.getBean(JsFunctionFactory.class);
+                    map = jsFunctionFactory.getJsFunctionMap();
+                } catch (Exception e) {
+                }
+                // 这里执行原有的逻辑
+                return runScriptWithFunctions(params, map, jsScript);
+            } finally {
+                RequestContextHolder.resetRequestAttributes();
             }
-            // 这里执行原有的逻辑
-            return runScriptWithFunctions(params, map, jsScript);
         });
 
         try {
@@ -141,6 +157,9 @@ public class JsScriptExecutor {
         if (obj == null) {
             return context.asValue(null);
         }
+        if (isBasicType(obj.getClass())) {
+            return context.asValue(obj);
+        }
         if (obj instanceof Map<?, ?>) {
             Map<?, ?> map = (Map<?, ?>) obj;
             // 获取 JS 的内置 Object 构造器，直接创建空对象，性能比 eval("{}") 高数倍
@@ -162,8 +181,50 @@ public class JsScriptExecutor {
             }
             return jsArr;
         }
-        // 基础类型直接包装
-        return context.asValue(obj);
+        if (obj instanceof IPage<?>) {
+            IPage<?> page = (IPage<?>) obj;
+            Value jsPage = context.getBindings("js").getMember("Object").newInstance();
+
+            // 1. 递归转换核心数据列表 records (它是一个 List，会走到下面的 Iterable 分支)
+            jsPage.putMember("records", wrapJavaObject(context, page.getRecords()));
+
+            // 2. 注入分页基础属性。基础数据类型直接使用 asValue 即可
+            jsPage.putMember("total", context.asValue(page.getTotal()));
+            jsPage.putMember("size", context.asValue(page.getSize()));
+            jsPage.putMember("current", context.asValue(page.getCurrent()));
+            jsPage.putMember("pages", context.asValue(page.getPages()));
+
+            return jsPage;
+        }
+        // 4. 数组类型处理 (包含 Object[] 和 基本类型数组如 int[], double[])
+        if (obj.getClass().isArray()) {
+            Value jsArr = context.getBindings("js").getMember("Array").newInstance();
+            // 使用反射 Array 工具类统一处理，避免强转 Object[] 时基本类型数组报错
+            int length = Array.getLength(obj);
+            for (int i = 0; i < length; i++) {
+                Object item = Array.get(obj, i);
+                jsArr.setArrayElement(i, wrapJavaObject(context, item));
+            }
+            return jsArr;
+        }
+        log.info("wrapJavaObject class: {}", obj.getClass().getName());
+        Map<String, Object> map = JacksonUtil.obj2Map(obj);
+        return wrapJavaObject(context, map);
+    }
+
+    /**
+     * 判断是否为可以被直接传递给 JS 的基本类型
+     */
+    private static boolean isBasicType(Class<?> clazz) {
+        return clazz.isPrimitive() ||                              // 基本数据类型 (int, boolean, double 等)
+                Number.class.isAssignableFrom(clazz) ||             // 包装数字类及其子类 (Integer, Long, BigDecimal, BigInteger 等)
+                CharSequence.class.isAssignableFrom(clazz) ||       // 字符串相关 (String, StringBuilder, StringBuffer 等)
+                Boolean.class.equals(clazz) ||                      // 包装类 Boolean
+                Character.class.equals(clazz) ||                    // 包装类 Character
+                Date.class.isAssignableFrom(clazz) ||               // 老版本日期类型 (java.util.Date, java.sql.Date 等)
+                TemporalAccessor.class.isAssignableFrom(clazz) ||   // JDK 8+ 现代时间类型 (LocalDate, LocalDateTime, Instant, ZonedDateTime 等统一接口)
+                UUID.class.isAssignableFrom(clazz) ||               // UUID 通常也视作基础类型(字符串)处理
+                clazz.isEnum();                                     // 枚举类型 (GraalVM 原生支持将 Java 枚举映射到 JS)
     }
 
     private static Object convertGraalValueToJavaObject(Value val) {
@@ -172,10 +233,26 @@ public class JsScriptExecutor {
             return null;
         }
 
-        // 处理 Date
-        if (val.isDate() || val.isTime() || val.isInstant()) {
-            Value toIsoFn = val.getMember("getTime");
-            return toIsoFn.execute().asLong();
+        // 处理 Date 和 Time
+        if (val.isInstant()) {
+            // 1. 包含时区的完整时间（如 JS Date 或 Java Timestamp）
+            // 推荐转为 LocalDateTime，这样 Jackson/Fastjson 就能走你配置好的全局时间格式化器
+            return LocalDateTime.ofInstant(val.asInstant(), ZoneId.systemDefault());
+
+        } else if (val.isDate() && val.isTime()) {
+            // 2. 包含日期和时间，但没有时区信息
+            // 直接合并成 java.time.LocalDateTime
+            return LocalDateTime.of(val.asDate(), val.asTime());
+
+        } else if (val.isDate()) {
+            // 3. 只有日期 (比如 "2023-10-01")
+            // val.asDate() 底层直接返回 java.time.LocalDate，序列化框架能完美识别
+            return val.asDate();
+
+        } else if (val.isTime()) {
+            // 4. 只有时间 (比如 "14:30:00")
+            // val.asTime() 底层直接返回 java.time.LocalTime
+            return val.asTime();
         }
 
         // 处理数组
