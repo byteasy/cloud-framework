@@ -30,7 +30,7 @@ class JsScriptExecutorTest {
         """;
 
         // 3. 执行脚本（设置富余的超时时间 2000 毫秒）
-        Object output = JsScriptExecutor.runScriptWithTimeout(params, jsScript, 2000);
+        Object output = JsScriptExecutor.runScriptWithTimeout(params, jsScript, "test", 2000);
 
         // 4. 断言验证返回的 Java 对象结构
         assertNotNull(output);
@@ -66,7 +66,7 @@ class JsScriptExecutorTest {
         // 4. 断言：预期系统会抛出 RuntimeException，且包含超时提示
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             // 设置硬超时时间为 500 毫秒
-            JsScriptExecutor.runScriptWithTimeout(params, timeoutJsScript, 500);
+            JsScriptExecutor.runScriptWithTimeout(params, timeoutJsScript, "Test", 500);
         });
 
         long duration = System.currentTimeMillis() - startTime;
@@ -98,7 +98,7 @@ class JsScriptExecutorTest {
 
         // 断言：预期抛出 RuntimeException
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            JsScriptExecutor.runScriptWithTimeout(params, errorJsScript, 2000);
+            JsScriptExecutor.runScriptWithTimeout(params, errorJsScript, "Test", 2000);
         });
 
         System.out.println("====== 语法/执行期错误捕获测试成功 ======");

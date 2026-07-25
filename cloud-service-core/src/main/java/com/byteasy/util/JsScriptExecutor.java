@@ -3,6 +3,7 @@ package com.byteasy.util;
 import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.component.JsScriptFactory;
 import com.byteasy.script.JsFunctionFactory;
 import lombok.extern.log4j.Log4j2;
 import org.graalvm.polyglot.*;
@@ -24,6 +25,7 @@ public class JsScriptExecutor {
     // 1. 提取全局唯一的共享 Engine，避免重复初始化 JS 编译器内核
     private static final Engine SHARED_ENGINE = Engine.newBuilder().build();
 
+
     // 创建一个专用于执行 JS 脚本的隔离线程池（防止主业务线程被卡死）
     private static final ExecutorService JS_EXECUTOR_POOL = new ThreadPoolExecutor(
             Runtime.getRuntime().availableProcessors(), Runtime.getRuntime().availableProcessors() * 2, 60L, TimeUnit.SECONDS,
@@ -40,7 +42,7 @@ public class JsScriptExecutor {
             }
     );
 
-    public static Object runScriptWithTimeout(Map<String, Object> params, String jsScript, long timeoutMillis) {
+    public static Object runScriptWithTimeout(Map<String, Object> params, String jsScript, String jsName, long timeoutMillis) {
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         // 提交到线程池异步执行
         Future<Object> future = JS_EXECUTOR_POOL.submit(() -> {
@@ -53,7 +55,7 @@ public class JsScriptExecutor {
                 } catch (Exception e) {
                 }
                 // 这里执行原有的逻辑
-                return runScriptWithFunctions(params, map, jsScript);
+                return runScriptWithFunctions(params, map, jsScript, jsName);
             } finally {
                 RequestContextHolder.resetRequestAttributes();
             }
@@ -77,8 +79,8 @@ public class JsScriptExecutor {
         }
     }
 
-    public static Object runScript(Map<String, Object> params, String jsScript) {
-        return runScriptWithFunctions(params, null, jsScript);
+    public static Object runScript(Map<String, Object> params, String jsScript, String jsName) {
+        return runScriptWithFunctions(params, null, jsScript, jsName);
     }
 
     /**
@@ -86,7 +88,7 @@ public class JsScriptExecutor {
      *
      * @param functions 要注入的 Java 函数映射，Key 为 JS 中的函数名，Value 为 Java 的 Function
      */
-    public static Object runScriptWithFunctions(Map<String, Object> params, Map<String, Function<Object[], Object>> functions, String jsScript) {
+    public static Object runScriptWithFunctions(Map<String, Object> params, Map<String, Function<Object[], Object>> functions, String jsScript, String jsName) {
         if (jsScript == null || jsScript.isBlank()) {
             throw new IllegalArgumentException("JS脚本不能为空");
         }
@@ -141,9 +143,21 @@ public class JsScriptExecutor {
             // 4. 执行脚本
             Value resultValue;
             try {
-                resultValue = context.eval("js", jsScript);
-            } catch (PolyglotException e) {
-                throw new RuntimeException("JS脚本执行失败：" + formatJsError(e), e);
+                Source cachedScript = com.byteasy.component.JsScriptFactory.getScriptSource(jsName);
+                if (cachedScript == null) {
+                    cachedScript = Source.newBuilder("js", jsScript, jsName + ".js")
+                            .cached(true)
+                            .build();
+                    JsScriptFactory.setScriptSource(jsName, cachedScript);
+                }
+
+                resultValue = context.eval(cachedScript);
+            } catch (Exception e) {
+                if (e instanceof PolyglotException) {
+                    throw new RuntimeException("JS脚本执行失败: " + jsName + " :" + formatJsError((PolyglotException) e), e);
+                } else {
+                    throw new RuntimeException(e);
+                }
             }
 
             return convertGraalValueToJavaObject(resultValue);

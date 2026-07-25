@@ -41,7 +41,7 @@ public class ServiceInstanceUtil implements IPlatformEntityChangeHandler {
 
     @Override
     public String className() {
-        return "com.byteasy.platform.entity.SchemaDefine";
+        return "com.byteasy.platform.entity.ServiceInstance";
     }
 
     @Override

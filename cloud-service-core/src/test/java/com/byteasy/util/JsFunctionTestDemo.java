@@ -59,7 +59,7 @@ public class JsFunctionTestDemo {
                 """;
 
         // 4. 使用新方法执行
-        Object resultObj = JsScriptExecutor.runScriptWithFunctions(frontParams, functions, jsScript);
+        Object resultObj = JsScriptExecutor.runScriptWithFunctions(frontParams, functions, jsScript, "test");
 
         // 5. 输出结果
         System.out.println("\n返回前端JSON：");

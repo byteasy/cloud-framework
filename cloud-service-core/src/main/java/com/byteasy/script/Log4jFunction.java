@@ -1,5 +1,6 @@
 package com.byteasy.script;
 
+import com.byteasy.common.util.JacksonUtil;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
@@ -37,7 +38,7 @@ public class Log4jFunction implements JsFunctions {
                     // 使用简单的 replace 替换占位符（或者使用 MessageFormatter）
                     String message = firstArg;
                     for (int i = 1; i < args.length; i++) {
-                        message = message.replaceFirst("\\{\\}", String.valueOf(args[i]));
+                        message = message.replaceFirst("\\{\\}", JacksonUtil.toJson(args[i]));
                     }
                     log.info(message);
                 } else {
@@ -69,7 +70,7 @@ public class Log4jFunction implements JsFunctions {
                     // 使用简单的 replace 替换占位符（或者使用 MessageFormatter）
                     String message = firstArg;
                     for (int i = 1; i < args.length; i++) {
-                        message = message.replaceFirst("\\{\\}", String.valueOf(args[i]));
+                        message = message.replaceFirst("\\{\\}", JacksonUtil.toJson(args[i]));
                     }
                     log.warn(message);
                 } else {
@@ -101,7 +102,7 @@ public class Log4jFunction implements JsFunctions {
                     // 使用简单的 replace 替换占位符（或者使用 MessageFormatter）
                     String message = firstArg;
                     for (int i = 1; i < args.length; i++) {
-                        message = message.replaceFirst("\\{\\}", String.valueOf(args[i]));
+                        message = message.replaceFirst("\\{\\}", JacksonUtil.toJson(args[i]));
                     }
                     log.error(message);
                 } else {
