@@ -36,7 +36,7 @@ public class JsTestDemo {
                 """;
 
         // 3. 执行脚本，拿到可直接序列化的Java对象
-        Object resultObj = JsScriptExecutor.runScript(frontParams, jsScript);
+        Object resultObj = JsScriptExecutor.runScript(frontParams, jsScript, "test");
 
         // 4. 序列化为JSON返回前端
         String resultJson;

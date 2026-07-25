@@ -1,5 +1,6 @@
 package com.byteasy.common.controller;
 
+import cn.hutool.crypto.digest.DigestUtil;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.dto.JsScriptRunDTO;
@@ -15,7 +16,7 @@ public class JsExecController {
 
     @PostMapping("/form/run")
     public Result run(@RequestBody JsScriptRunDTO runDTO) {
-        Object data = JsScriptExecutor.runScriptWithTimeout(runDTO.getInput(), runDTO.getScript(), 3000);
+        Object data = JsScriptExecutor.runScriptWithTimeout(runDTO.getInput(), runDTO.getScript(), new String(DigestUtil.md5(runDTO.getScript())), 3000);
         runDTO.setOutput(data);
         return Result.success(runDTO);
     }

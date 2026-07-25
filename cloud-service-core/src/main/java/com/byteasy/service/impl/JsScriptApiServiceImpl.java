@@ -51,6 +51,6 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
         input.put("params", params);
         input.put("body", body);
 
-        return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, 30000));
+        return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, MapUtil.getStr(jsScriptObj, "id"), 30000));
     }
 }
