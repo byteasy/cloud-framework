@@ -1,21 +1,20 @@
 package com.byteasy.util;
 
 import cn.hutool.extra.spring.SpringUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.component.JsScriptFactory;
 import com.byteasy.script.JsFunctionFactory;
+import com.byteasy.script.ProxyWrapper;
 import lombok.extern.log4j.Log4j2;
 import org.graalvm.polyglot.*;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
-import java.lang.reflect.Array;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.temporal.TemporalAccessor;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.function.Function;
 
@@ -101,9 +100,8 @@ public class JsScriptExecutor {
         // 这样既安全，又开放了函数回调能力
         try (Context context = Context.newBuilder("js")
                 .engine(SHARED_ENGINE)
-                .allowAllAccess(false)
-                .allowIO(false)
-                .allowHostAccess(HostAccess.EXPLICIT) // 允许显式授权的 Host 访问
+                .allowAllAccess(true)
+                .allowHostAccess(HostAccess.ALL) // 允许显式授权的 Host 访问
                 .allowCreateThread(false)
                 .resourceLimits(limits)
                 .build()) {
@@ -112,7 +110,7 @@ public class JsScriptExecutor {
 
             // 2. 注入业务参数
             for (Map.Entry<String, Object> entry : bindParams.entrySet()) {
-                jsBindings.putMember(entry.getKey(), wrapJavaObject(context, entry.getValue()));
+                jsBindings.putMember(entry.getKey(), ProxyWrapper.wrap(entry.getValue()));
             }
 
             // 3. 注入 Java 函数
@@ -127,15 +125,14 @@ public class JsScriptExecutor {
                             inputArgs = new Object[arguments.length];
                             int i = 0;
                             for (Value argument : arguments) {
-                                inputArgs[i++] = convertGraalValueToJavaObject(argument);
+                                inputArgs[i++] = convertGraalValueToJavaObjectV1(argument);
                             }
                         }
 
                         // 2. 回调你编写的 Java 业务逻辑 Lambda
                         Object result = javaFunc.apply(inputArgs);
 
-                        // 3. 将 Java 返回值安全包装回 Value 塞给 JS（如果你的方法叫 javaObjectToGraalValue，请对应替换方法名）
-                        return wrapJavaObject(context, result);
+                        return ProxyWrapper.wrap(result);
                     });
                 });
             }
@@ -160,161 +157,49 @@ public class JsScriptExecutor {
                 }
             }
 
-            return convertGraalValueToJavaObject(resultValue);
+            return extractFinalResult(resultValue);
         }
     }
 
-    /**
-     * 优化后的参数包装：不再频繁调用 eval()
-     */
-    private static Value wrapJavaObject(Context context, Object obj) {
-        if (obj == null) {
-            return context.asValue(null);
-        }
-        if (isBasicType(obj.getClass())) {
-            return context.asValue(obj);
-        }
-        if (obj instanceof Map<?, ?>) {
-            Map<?, ?> map = (Map<?, ?>) obj;
-            // 获取 JS 的内置 Object 构造器，直接创建空对象，性能比 eval("{}") 高数倍
-            Value jsObj = context.getBindings("js").getMember("Object").newInstance();
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-                if (entry.getKey() != null) {
-                    jsObj.putMember(entry.getKey().toString(), wrapJavaObject(context, entry.getValue()));
-                }
-            }
-            return jsObj;
-        }
-        if (obj instanceof Iterable<?>) {
-            Iterable<?> list = (Iterable<?>) obj;
-            // 获取 JS 的内置 Array 构造器
-            Value jsArr = context.getBindings("js").getMember("Array").newInstance();
-            long idx = 0;
-            for (Object item : list) {
-                jsArr.setArrayElement(idx++, wrapJavaObject(context, item));
-            }
-            return jsArr;
-        }
-        if (obj instanceof IPage<?>) {
-            IPage<?> page = (IPage<?>) obj;
-            Value jsPage = context.getBindings("js").getMember("Object").newInstance();
 
-            // 1. 递归转换核心数据列表 records (它是一个 List，会走到下面的 Iterable 分支)
-            jsPage.putMember("records", wrapJavaObject(context, page.getRecords()));
-
-            // 2. 注入分页基础属性。基础数据类型直接使用 asValue 即可
-            jsPage.putMember("total", context.asValue(page.getTotal()));
-            jsPage.putMember("size", context.asValue(page.getSize()));
-            jsPage.putMember("current", context.asValue(page.getCurrent()));
-            jsPage.putMember("pages", context.asValue(page.getPages()));
-
-            return jsPage;
-        }
-        // 4. 数组类型处理 (包含 Object[] 和 基本类型数组如 int[], double[])
-        if (obj.getClass().isArray()) {
-            Value jsArr = context.getBindings("js").getMember("Array").newInstance();
-            // 使用反射 Array 工具类统一处理，避免强转 Object[] 时基本类型数组报错
-            int length = Array.getLength(obj);
-            for (int i = 0; i < length; i++) {
-                Object item = Array.get(obj, i);
-                jsArr.setArrayElement(i, wrapJavaObject(context, item));
-            }
-            return jsArr;
-        }
-        log.info("wrapJavaObject class: {}", obj.getClass().getName());
-        Map<String, Object> map = JacksonUtil.obj2Map(obj);
-        return wrapJavaObject(context, map);
-    }
-
-    /**
-     * 判断是否为可以被直接传递给 JS 的基本类型
-     */
-    private static boolean isBasicType(Class<?> clazz) {
-        return clazz.isPrimitive() ||                              // 基本数据类型 (int, boolean, double 等)
-                Number.class.isAssignableFrom(clazz) ||             // 包装数字类及其子类 (Integer, Long, BigDecimal, BigInteger 等)
-                CharSequence.class.isAssignableFrom(clazz) ||       // 字符串相关 (String, StringBuilder, StringBuffer 等)
-                Boolean.class.equals(clazz) ||                      // 包装类 Boolean
-                Character.class.equals(clazz) ||                    // 包装类 Character
-                Date.class.isAssignableFrom(clazz) ||               // 老版本日期类型 (java.util.Date, java.sql.Date 等)
-                TemporalAccessor.class.isAssignableFrom(clazz) ||   // JDK 8+ 现代时间类型 (LocalDate, LocalDateTime, Instant, ZonedDateTime 等统一接口)
-                UUID.class.isAssignableFrom(clazz) ||               // UUID 通常也视作基础类型(字符串)处理
-                clazz.isEnum();                                     // 枚举类型 (GraalVM 原生支持将 Java 枚举映射到 JS)
-    }
-
-    private static Object convertGraalValueToJavaObject(Value val) {
-        // 处理 JS 的 null 和 undefined
+    private static Object convertGraalValueToJavaObjectV1(Value val) {
         if (val == null || val.isNull()) {
             return null;
         }
 
-        // 处理 Date 和 Time
+        // 1. 【最核心优化】：如果这是 Java 传给 JS 然后又被 JS 传回来的对象，直接脱壳！
+        // 比如你传进去的 ServiceInstance 或 ListProxy，这里直接 0 毫秒还原成 Java 原生对象。
+        if (val.isHostObject()) {
+            return val.asHostObject();
+        }
+
+        // 2. 日期和时间（保留你之前非常严谨的 JDK 8 时间 API 转换逻辑）
         if (val.isInstant()) {
-            // 1. 包含时区的完整时间（如 JS Date 或 Java Timestamp）
-            // 推荐转为 LocalDateTime，这样 Jackson/Fastjson 就能走你配置好的全局时间格式化器
             return LocalDateTime.ofInstant(val.asInstant(), ZoneId.systemDefault());
-
         } else if (val.isDate() && val.isTime()) {
-            // 2. 包含日期和时间，但没有时区信息
-            // 直接合并成 java.time.LocalDateTime
             return LocalDateTime.of(val.asDate(), val.asTime());
-
         } else if (val.isDate()) {
-            // 3. 只有日期 (比如 "2023-10-01")
-            // val.asDate() 底层直接返回 java.time.LocalDate，序列化框架能完美识别
             return val.asDate();
-
         } else if (val.isTime()) {
-            // 4. 只有时间 (比如 "14:30:00")
-            // val.asTime() 底层直接返回 java.time.LocalTime
             return val.asTime();
         }
 
-        // 处理数组
+        // 3. 【干掉深拷贝】：处理纯纯的 JS Array 和 Object
+        // 告别之前的 new ArrayList<>() 和 new HashMap<>() 递归！
         if (val.hasArrayElements()) {
-            List<Object> list = new ArrayList<>();
-            long arraySize = val.getArraySize();
-            for (long i = 0; i < arraySize; i++) {
-                list.add(convertGraalValueToJavaObject(val.getArrayElement(i)));
-            }
-            return list;
+            // GraalVM 会在底层生成一个实现了 java.util.List 的反向代理类。
+            // Java 侧调用 list.get(0) 时，底层才会去读 JS 数组的第 0 个元素。实现懒加载！
+            return val.as(List.class);
         }
 
-        // 处理普通 JS 对象
-        if (val.hasMembers() && !val.isHostObject()) {
-            Map<String, Object> map = new HashMap<>();
-            val.getMemberKeys().forEach(key -> {
-                Value childVal = val.getMember(key);
-                map.put(key, convertGraalValueToJavaObject(childVal));
-            });
-            return map;
+        if (val.hasMembers()) {
+            // 同理，自动生成实现了 java.util.Map 的反向代理类。
+            return val.as(Map.class);
         }
 
-        // 处理基础数据类型
-        if (val.isString()) {
-            return val.asString();
-        }
-        if (val.isBoolean()) {
-            return val.asBoolean();
-        }
-        if (val.isNumber()) {
-            double doubleVal = val.asDouble();
-            // 处理 JS 计算产生的 NaN 或无穷大
-            if (Double.isNaN(doubleVal) || Double.isInfinite(doubleVal)) {
-                return null;
-            }
-            // 修复点：只有当它确实“适合”转为整数，且在数学上等于整数，同时排除掉原本就是浮点计算的情况
-            // 或者更安全的做法：检查原始 JS Value 是否有浮点特征
-            if (val.fitsInInt() && doubleVal == (int) doubleVal) {
-                // 如果你的业务强依赖浮点输出，这里可以加一层判断
-                // 为了绝对安全，建议业务上如果是金额、计量等浮点数，直接返回 Double
-                return val.asInt();
-            } else if (val.fitsInLong() && doubleVal == (long) doubleVal) {
-                return val.asLong();
-            }
-            return doubleVal;
-        }
-
-        return val.toString();
+        // 4. 基础数据类型 (String, Number, Boolean)
+        // GraalVM 的 .as(Object.class) 会自动将 JS 的基础类型映射为 Java 的 String, Double, Integer, Boolean
+        return val.as(Object.class);
     }
 
     private static String formatJsError(PolyglotException e) {
@@ -327,5 +212,51 @@ public class JsScriptExecutor {
             sb.append("（语法错误）");
         }
         return sb.toString();
+    }
+
+    /**
+     * 专门用于脚本执行结束时的最终结果提取。
+     * 将 GraalVM 的 Value 深度拷贝为纯 Java 对象，防止 Context 关闭后抛出 IllegalStateException。
+     */
+    public static Object extractFinalResult(org.graalvm.polyglot.Value val) {
+        if (val == null || val.isNull()) {
+            return null;
+        }
+
+        // 1. 如果是原本就从 Java 传进去的对象，直接脱壳，安全且不用拷
+        if (val.isHostObject()) {
+            return val.asHostObject();
+        }
+
+        // 2. 基础类型（直接提取具体值）
+        if (val.isString()) return val.asString();
+        if (val.isBoolean()) return val.asBoolean();
+        if (val.isNumber()) {
+            return val.fitsInInt() ? val.asInt() : val.asDouble();
+        }
+
+        // 日期处理
+        if (val.isInstant()) return java.time.LocalDateTime.ofInstant(val.asInstant(), java.time.ZoneId.systemDefault());
+
+        // 3. 数组类型：必须遍历深拷贝为纯 ArrayList
+        if (val.hasArrayElements()) {
+            java.util.List<Object> list = new java.util.ArrayList<>((int) val.getArraySize());
+            for (long i = 0; i < val.getArraySize(); i++) {
+                list.add(extractFinalResult(val.getArrayElement(i)));
+            }
+            return list;
+        }
+
+        // 4. 对象类型：必须遍历深拷贝为纯 HashMap
+        if (val.hasMembers()) {
+            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            for (String key : val.getMemberKeys()) {
+                map.put(key, extractFinalResult(val.getMember(key)));
+            }
+            return map;
+        }
+
+        // 兜底
+        return val.as(Object.class);
     }
 }

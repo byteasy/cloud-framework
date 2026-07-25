@@ -38,7 +38,7 @@ class JsScriptExecutorTest {
 
         Map<?, ?> resultMap = (Map<?, ?>) output;
         assertEquals("success", resultMap.get("status"));
-        assertEquals(80, resultMap.get("finalPrice"));
+        assertEquals(80.0, resultMap.get("finalPrice"));
         assertTrue(resultMap.get("tags") instanceof java.util.List);
 
         System.out.println("====== 正常脚本测试通过，输出结果 ======");
