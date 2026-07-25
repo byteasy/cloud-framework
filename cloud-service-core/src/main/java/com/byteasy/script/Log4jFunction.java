@@ -19,6 +19,11 @@ public class Log4jFunction implements JsFunctions {
         List<JsFunction> list = new ArrayList<>();
         list.add(new JsFunction() {
             @Override
+            public String group() {
+                return "basic";
+            }
+
+            @Override
             public String name() {
                 return "logInfo";
             }
@@ -51,6 +56,11 @@ public class Log4jFunction implements JsFunctions {
 
         list.add(new JsFunction() {
             @Override
+            public String group() {
+                return "basic";
+            }
+
+            @Override
             public String name() {
                 return "logWarn";
             }
@@ -82,6 +92,11 @@ public class Log4jFunction implements JsFunctions {
         });
 
         list.add(new JsFunction() {
+            @Override
+            public String group() {
+                return "basic";
+            }
+
             @Override
             public String name() {
                 return "logErr";
