@@ -130,6 +130,7 @@ public class JsScriptExecutor {
                         }
 
                         // 2. 回调你编写的 Java 业务逻辑 Lambda
+                        // TODO 还需要增加远程调用，用于永续通过js脚本实现跨领域多个微服务实例直接的function调用。
                         Object result = javaFunc.apply(inputArgs);
 
                         return ProxyWrapper.wrap(result);
