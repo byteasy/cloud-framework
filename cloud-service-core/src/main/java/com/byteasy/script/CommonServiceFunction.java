@@ -20,6 +20,11 @@ public class CommonServiceFunction implements JsFunctions {
         List<JsFunction> list = new ArrayList<>();
         list.add(new JsFunction() {
             @Override
+            public String group() {
+                return "basic";
+            }
+
+            @Override
             public String name() {
                 return "commonServiceSaveOrUpdate";
             }
@@ -36,6 +41,11 @@ public class CommonServiceFunction implements JsFunctions {
         });
 
         list.add(new JsFunction() {
+            @Override
+            public String group() {
+                return "basic";
+            }
+
             @Override
             public String name() {
                 return "saveOrUpdateBatch";
@@ -54,6 +64,11 @@ public class CommonServiceFunction implements JsFunctions {
 
         list.add(new JsFunction() {
             @Override
+            public String group() {
+                return "basic";
+            }
+
+            @Override
             public String name() {
                 return "commonServiceGetById";
             }
@@ -70,6 +85,11 @@ public class CommonServiceFunction implements JsFunctions {
         });
 
         list.add(new JsFunction() {
+            @Override
+            public String group() {
+                return "basic";
+            }
+
             @Override
             public String name() {
                 return "commonServicePage";
@@ -88,6 +108,11 @@ public class CommonServiceFunction implements JsFunctions {
 
         list.add(new JsFunction() {
             @Override
+            public String group() {
+                return "basic";
+            }
+
+            @Override
             public String name() {
                 return "commonServiceList";
             }
@@ -105,6 +130,11 @@ public class CommonServiceFunction implements JsFunctions {
 
         list.add(new JsFunction() {
             @Override
+            public String group() {
+                return "basic";
+            }
+
+            @Override
             public String name() {
                 return "commonServiceListBy";
             }
@@ -121,6 +151,11 @@ public class CommonServiceFunction implements JsFunctions {
         });
 
         list.add(new JsFunction() {
+            @Override
+            public String group() {
+                return "basic";
+            }
+
             @Override
             public String name() {
                 return "commonServiceRemoveById";
