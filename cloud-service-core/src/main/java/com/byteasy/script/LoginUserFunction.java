@@ -6,6 +6,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class LoginUserFunction implements JsFunction {
     @Override
+    public String group() {
+        return "basic";
+    }
+
+    @Override
     public String name() {
         return "currentUser";
     }
