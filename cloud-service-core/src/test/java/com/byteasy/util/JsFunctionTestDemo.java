@@ -1,6 +1,7 @@
 package com.byteasy.util;
 
 import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.dto.ScriptFunction;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -19,10 +20,12 @@ public class JsFunctionTestDemo {
         frontParams.put("userId", "USER_12345");
 
         // 2. 准备要传递给 JS 的 Java 函数
-        Map<String, Function<Object[], Object>> functions = new HashMap<>();
+        Map<String, ScriptFunction> functions = new HashMap<>();
 
         // 函数 A：根据用户 ID 获取折扣（模拟查库或调用远程 RPC）
-        functions.put("getDiscountByUserId", (userIdObj) -> {
+        ScriptFunction scriptFunction = new ScriptFunction();
+        scriptFunction.setName("getDiscountByUserId");
+        scriptFunction.setFunction((userIdObj) -> {
             String userId = String.valueOf(userIdObj[0]);
             System.out.println("[Java 收到回调] 正在为用户 " + userId + " 查询折扣...");
 
@@ -31,12 +34,16 @@ public class JsFunctionTestDemo {
             }
             return 1.0; // 原价
         });
+        functions.put("getDiscountByUserId", scriptFunction);
 
         // 函数 B：记录日志工具
-        functions.put("logFromJs", (msg) -> {
+        ScriptFunction scriptFunction1 = new ScriptFunction();
+        scriptFunction1.setName("logFromJs");
+        scriptFunction1.setFunction((msg) -> {
             System.out.println("[JS Log]: " + JacksonUtil.toJson(msg));
             return null; // JS 不需要返回值时，Java 返回 null 即可
         });
+        functions.put("logFromJs", scriptFunction1);
 
         // 3. 编写 JS 脚本
         // 脚本内部可以直接像调用普通 JS 函数一样调用 `getDiscountByUserId` 和 `logFromJs`

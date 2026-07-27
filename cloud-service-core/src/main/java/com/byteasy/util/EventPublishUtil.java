@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.byteasy.util.RandomUtil.random;
+
 @Component
 @Log4j2
 public class EventPublishUtil {
@@ -82,11 +84,4 @@ public class EventPublishUtil {
         }
     }
 
-    private static ServiceInstance random(List<ServiceInstance> list) {
-        if (list.size() == 1) {
-            return list.get(0);
-        }
-        int random = RandomUtil.randomInt(list.size());
-        return list.get(random);
-    }
 }

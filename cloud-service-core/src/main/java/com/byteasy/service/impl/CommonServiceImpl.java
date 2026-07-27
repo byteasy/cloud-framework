@@ -102,6 +102,9 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     @Transactional
     public boolean saveOrUpdateBatch(String className, List<Map<String, Object>> entities) {
+        if (CollectionUtil.isEmpty(entities)) {
+            return false;
+        }
         EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
@@ -233,6 +236,17 @@ public class CommonServiceImpl implements ICommonService {
             entityServiceFactory.updateExternalEntity(externalKeys, list);
         }
         return list;
+    }
+
+    @Override
+    public Map<String, Object> getOne(String className, Map<String, Object> args) {
+        List<Map<String, Object>> list = list(className, args);
+        if (list.size() == 1) {
+            return list.getFirst();
+        } else if (list.size() > 1) {
+            throw new BizException("Expect one row, but actual: " + list.size());
+        }
+        return null;
     }
 
     @Override
@@ -412,9 +426,9 @@ public class CommonServiceImpl implements ICommonService {
             String[] valueArr = null;
             if (mapValue.getClass().isArray()) {
                 valueArr = (String[]) mapValue;
-            } else if (mapValue instanceof List<?>) {
-                List<Object> list = (List<Object>) mapValue;
-                valueArr = list.toArray(new String[list.size()]);
+            } else if (mapValue instanceof Collection<?>) {
+                Collection<?> collection = (Collection<?>) mapValue;
+                valueArr = collection.toArray(new String[collection.size()]);
             } else if (mapValue instanceof String) {
                 valueArr = new String[]{mapValue.toString()};
             } else {
