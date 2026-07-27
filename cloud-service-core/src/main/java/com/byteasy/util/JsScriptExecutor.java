@@ -2,6 +2,7 @@ package com.byteasy.util;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.component.JsScriptFactory;
+import com.byteasy.dto.ScriptFunction;
 import com.byteasy.script.JsFunctionFactory;
 import com.byteasy.script.ProxyWrapper;
 import lombok.extern.log4j.Log4j2;
@@ -16,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
-import java.util.function.Function;
 
 @Log4j2
 public class JsScriptExecutor {
@@ -47,7 +47,7 @@ public class JsScriptExecutor {
         Future<Object> future = JS_EXECUTOR_POOL.submit(() -> {
             RequestContextHolder.setRequestAttributes(attributes);
             try {
-                Map<String, Function<Object[], Object>> map = null;
+                Map<String, ScriptFunction> map = null;
                 try {
                     JsFunctionFactory jsFunctionFactory = SpringUtil.getBean(JsFunctionFactory.class);
                     map = jsFunctionFactory.getJsFunctionMap();
@@ -87,7 +87,7 @@ public class JsScriptExecutor {
      *
      * @param functions 要注入的 Java 函数映射，Key 为 JS 中的函数名，Value 为 Java 的 Function
      */
-    public static Object runScriptWithFunctions(Map<String, Object> params, Map<String, Function<Object[], Object>> functions, String jsScript, String jsName) {
+    public static Object runScriptWithFunctions(Map<String, Object> params, Map<String, ScriptFunction> functions, String jsScript, String jsName) {
         if (jsScript == null || jsScript.isBlank()) {
             throw new IllegalArgumentException("JS脚本不能为空");
         }
@@ -130,9 +130,7 @@ public class JsScriptExecutor {
                         }
 
                         // 2. 回调你编写的 Java 业务逻辑 Lambda
-                        // TODO 还需要增加远程调用，用于永续通过js脚本实现跨领域多个微服务实例直接的function调用。
-                        Object result = javaFunc.apply(inputArgs);
-
+                        Object result = javaFunc.getFunction().apply(inputArgs);
                         return ProxyWrapper.wrap(result);
                     });
                 });
@@ -237,7 +235,8 @@ public class JsScriptExecutor {
         }
 
         // 日期处理
-        if (val.isInstant()) return java.time.LocalDateTime.ofInstant(val.asInstant(), java.time.ZoneId.systemDefault());
+        if (val.isInstant())
+            return java.time.LocalDateTime.ofInstant(val.asInstant(), java.time.ZoneId.systemDefault());
 
         // 3. 数组类型：必须遍历深拷贝为纯 ArrayList
         if (val.hasArrayElements()) {
