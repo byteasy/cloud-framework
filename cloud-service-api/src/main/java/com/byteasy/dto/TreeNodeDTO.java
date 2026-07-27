@@ -15,6 +15,5 @@ public class TreeNodeDTO {
     private String type;
     private String code;
     private String name;
-    private Boolean leaf;
     private Collection<TreeNodeDTO> children;
 }

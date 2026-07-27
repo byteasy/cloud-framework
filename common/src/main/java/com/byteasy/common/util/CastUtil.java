@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -44,6 +45,10 @@ public class CastUtil {
     }
 
     public static <T> List<T> copyList(List<?> list, Class<T> cls) {
+        return copyList(list, cls, null);
+    }
+
+    public static <T> List<T> copyList(List<?> list, Class<T> cls, Consumer<T> consumer) {
         if (list == null) {
             return null;
         }
@@ -51,6 +56,9 @@ public class CastUtil {
         for (Object o : list) {
             T target = ReflectUtil.newInstance(cls);
             BeanUtil.copyProperties(o, target);
+            if (consumer != null) {
+                consumer.accept(target);
+            }
             resultList.add(target);
         }
         return resultList;
