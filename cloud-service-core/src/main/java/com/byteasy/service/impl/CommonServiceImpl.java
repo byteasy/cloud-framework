@@ -428,7 +428,7 @@ public class CommonServiceImpl implements ICommonService {
                 valueArr = (String[]) mapValue;
             } else if (mapValue instanceof Collection<?>) {
                 Collection<?> collection = (Collection<?>) mapValue;
-                valueArr = collection.toArray(new String[collection.size()]);
+                valueArr = collection.stream().map(String::valueOf).toArray(String[]::new);
             } else if (mapValue instanceof String) {
                 valueArr = new String[]{mapValue.toString()};
             } else {

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +23,28 @@ public class CastUtil {
         Map<K, T> map = Maps.newHashMap();
         for (T entity : entities) {
             map.put(function.apply(entity), entity);
+        }
+        return map;
+    }
+
+    public static <K, T> Map<K, T> collectionToMap(Collection<T> entities, Function<T, K> function) {
+        if (entities == null) {
+            return null;
+        }
+        Map<K, T> map = Maps.newHashMap();
+        for (T entity : entities) {
+            map.put(function.apply(entity), entity);
+        }
+        return map;
+    }
+
+    public static <K, T, V> Map<K, V> collectionToMap(Collection<T> entities, Function<T, K> keyFunction, Function<T, V> valueFunction) {
+        if (entities == null) {
+            return null;
+        }
+        Map<K, V> map = Maps.newHashMap();
+        for (T entity : entities) {
+            map.put(keyFunction.apply(entity), valueFunction.apply(entity));
         }
         return map;
     }
