@@ -156,7 +156,13 @@ public class EntityServiceFactory implements ApplicationContextAware {
                                 Entity e = (Entity) entity;
                                 e.setExtendField(fieldName, map.get(ReflectUtil.getFieldValue(e, externalKey.getName())));
                             } else if (entity instanceof FormatMap) {
-                                ((FormatMap) entity).put(fieldName, map.get(((FormatMap) entity).get(externalKey.getName())));
+                                Object value = ((FormatMap) entity).get(externalKey.getName());
+                                if (map.containsKey(value)) {
+                                    ((FormatMap) entity).put(fieldName, map.get(value));
+                                } else if(map.containsKey(String.valueOf(value))) {
+                                    // ID等Long类型，会因为Jackson序列化变为字符串
+                                    ((FormatMap) entity).put(fieldName, map.get(String.valueOf(value)));
+                                }
                             }
                         }
 //                    }
