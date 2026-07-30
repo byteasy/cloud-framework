@@ -16,10 +16,7 @@ import com.byteasy.dto.Column;
 import com.byteasy.dto.EntityDefineDTO;
 import com.byteasy.dto.FormatMap;
 import com.byteasy.entity.LogicDeleteEntity;
-import com.byteasy.enums.ColumnType;
-import com.byteasy.enums.Delete;
-import com.byteasy.enums.IBaseEnum;
-import com.byteasy.enums.RelationType;
+import com.byteasy.enums.*;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
 import com.byteasy.exception.BizException;
@@ -721,9 +718,11 @@ public class CommonServiceImpl implements ICommonService {
                     value = entity.get(field);
                 }
 
-                // SQL注入检查
-                if (SqlInjectionUtils.check(String.valueOf(value))) {
-                    throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + value);
+                // SQL注入检查,脚本字段不做检查
+                if(!YesNo.NO.equals(column.getSqlInjectionCheck())) {
+                    if (SqlInjectionUtils.check(String.valueOf(value))) {
+                        throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + value);
+                    }
                 }
 
                 // 转换数据库类型
@@ -770,8 +769,10 @@ public class CommonServiceImpl implements ICommonService {
                 continue;
             }
             setJoiner.add(column.getFieldName() + "=?");
-            if (SqlInjectionUtils.check(String.valueOf(entity.get(col)))) {
-                throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + entity.get(col));
+            if(!YesNo.NO.equals(column.getSqlInjectionCheck())) {
+                if (SqlInjectionUtils.check(String.valueOf(entity.get(col)))) {
+                    throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + entity.get(col));
+                }
             }
             params.add(convertToDbValue(entity.get(col), columnMap.get(col)));
         }
