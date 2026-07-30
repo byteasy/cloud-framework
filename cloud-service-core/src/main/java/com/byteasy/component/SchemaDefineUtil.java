@@ -29,8 +29,6 @@ public class SchemaDefineUtil implements IPlatformEntityChangeHandler {
     private Environment env;
     @Autowired
     private ISchemaDefineService schemaDefineService;
-    @Autowired
-    private IEntityDefineService entityDefineService;
 
     private LoadingCache<String, List<Column>> columnsCacheLoader = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
         @Override
@@ -56,12 +54,6 @@ public class SchemaDefineUtil implements IPlatformEntityChangeHandler {
         }
     });
 
-    private LoadingCache<String, EntityDefineDTO> entityDefineCacheLoader = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
-        @Override
-        public EntityDefineDTO load(String key) {
-            return entityDefineService.getEntityDefine(key);
-        }
-    });
 
     public List<Column> getColumns(String className, boolean skipRpc) {
         if (!skipRpc) {
@@ -90,28 +82,6 @@ public class SchemaDefineUtil implements IPlatformEntityChangeHandler {
         return null;
     }
 
-    public String getEntityName(String className) {
-        EntityDefineDTO entityDefine = null;
-        try {
-            entityDefine = entityDefineCacheLoader.get(className);
-        } catch (ExecutionException e) {
-            log.error(e);
-        }
-        if (entityDefine != null) {
-            return entityDefine.getName();
-        }
-        return null;
-    }
-
-    public EntityDefineDTO getEntityDefine(String className) {
-        EntityDefineDTO entityDefine = null;
-        try {
-            entityDefine = entityDefineCacheLoader.get(className);
-        } catch (ExecutionException e) {
-            log.error(e);
-        }
-        return entityDefine;
-    }
 
     @Override
     public String className() {
@@ -120,8 +90,6 @@ public class SchemaDefineUtil implements IPlatformEntityChangeHandler {
 
     @Override
     public void handle(EntityChangeEvent event) {
-        EntityChangeSource source = event.getSource();
-        entityDefineCacheLoader.invalidate(event.getSource().getClassName());
         columnsCacheLoader.invalidate(event.getSource().getClassName());
     }
 }

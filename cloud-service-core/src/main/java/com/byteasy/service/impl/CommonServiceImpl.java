@@ -8,6 +8,7 @@ import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.RequestUtil;
+import com.byteasy.component.EntityDefineUtil;
 import com.byteasy.component.EntityServiceFactory;
 import com.byteasy.component.I18nUtil;
 import com.byteasy.component.SchemaDefineUtil;
@@ -62,6 +63,8 @@ public class CommonServiceImpl implements ICommonService {
     @Autowired
     private SchemaDefineUtil schemaDefineUtil;
     @Autowired
+    private EntityDefineUtil entityDefineUtil;
+    @Autowired
     private EntityServiceFactory entityServiceFactory;
     @Autowired
     private IDatabaseMetaService databaseMetaService;
@@ -83,7 +86,7 @@ public class CommonServiceImpl implements ICommonService {
      */
     @Override
     public Map<String, Object> saveOrUpdate(String className, Map<String, Object> entity) {
-        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
@@ -105,7 +108,7 @@ public class CommonServiceImpl implements ICommonService {
         if (CollectionUtil.isEmpty(entities)) {
             return false;
         }
-        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
         return batchInsert(entityDefineDTO, entities, columnMap) > 0;
@@ -113,7 +116,7 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public Map<String, Object> getById(String className, Object id) {
-        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
         return getById(entityDefineDTO, id, columnMap);
@@ -121,7 +124,7 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public Page<Map<String, Object>> page(String className) {
-        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
@@ -168,7 +171,7 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public List<Map<String, Object>> list(String className) {
-        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
@@ -205,7 +208,7 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public List<Map<String, Object>> list(String className, Map<String, Object> args) {
-        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
@@ -251,7 +254,7 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public boolean removeById(String className, Object id) {
-        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
@@ -302,7 +305,7 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public Collection<Column> getColumns(String className) {
-        EntityDefineDTO entityDefineDTO = schemaDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         String schema = databaseMetaService.getCurrentSchema();
         return databaseMetaService.getColumns(className, schema, entityDefineDTO.getTableName());
     }
