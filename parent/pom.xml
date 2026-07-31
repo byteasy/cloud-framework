@@ -18,8 +18,8 @@
     <description>All software dependencies</description>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Spring Cloud Alibaba -->
@@ -49,7 +49,7 @@
         <mybatis-dynamic-datasource-version>4.3.1</mybatis-dynamic-datasource-version>
         <druid-version>1.2.27</druid-version>
         <caffeine-version>3.2.3</caffeine-version>
-        <lombok-version>1.18.42</lombok-version>
+        <lombok-version>1.18.46</lombok-version>
         <jakarta-version>2.2.42</jakarta-version>
         <freemarker-version>2.3.34</freemarker-version>
         <commons-io-version>2.21.0</commons-io-version>
@@ -462,6 +462,16 @@
                     <version>${maven-compile-plugin.version}</version>
                     <configuration>
                         <parameters>true</parameters>
+                        <source>${maven.compiler.source}</source>
+                        <target>${maven.compiler.source}</target>
+                        <!-- 如果需要突破 JDK 25 限制，可以在这里加上之前提到的 <compilerArgs> -->
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok-version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
                 </plugin>
                 <plugin>
