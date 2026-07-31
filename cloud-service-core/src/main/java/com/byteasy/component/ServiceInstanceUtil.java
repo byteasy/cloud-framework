@@ -5,8 +5,8 @@ import com.byteasy.Result;
 import com.byteasy.api.IServiceInstanceService;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.dto.ServiceInstanceDTO;
-import com.byteasy.event.IPlatformEventHandler;
-import com.byteasy.event.ServiceInstanceEvent;
+import com.byteasy.event.EntityChangeEvent;
+import com.byteasy.event.IPlatformEntityChangeHandler;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import java.util.Map;
 
 @Component
 @Log4j2
-public class ServiceInstanceUtil implements IPlatformEventHandler<ServiceInstanceEvent> {
+public class ServiceInstanceUtil implements IPlatformEntityChangeHandler {
 
     @Autowired
     private IServiceInstanceService serviceInstanceService;
@@ -40,13 +40,13 @@ public class ServiceInstanceUtil implements IPlatformEventHandler<ServiceInstanc
     }
 
     @Override
-    public void handle(ServiceInstanceEvent event) {
-        serviceInstanceCache.clear();
-        loadedTime = -1;
+    public String className() {
+        return "com.byteasy.platform.entity.ServiceInstance";
     }
 
     @Override
-    public Class<ServiceInstanceEvent> getEventType() {
-        return ServiceInstanceEvent.class;
+    public void handle(EntityChangeEvent event) {
+        serviceInstanceCache.clear();
+        loadedTime = -1;
     }
 }

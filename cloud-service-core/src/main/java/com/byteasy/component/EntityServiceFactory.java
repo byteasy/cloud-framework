@@ -84,40 +84,45 @@ public class EntityServiceFactory implements ApplicationContextAware {
             try {
                 String className = externalKey.getExternalClass();
                 EntityDefineDTO entityDefineDTO = entityDefineService.getEntityDefine(className);
+                if (entityDefineDTO == null) {
+                    log.error("entityDefineDTO is null, className: {}", className);
+                    continue;
+                }
                 if (RelationType.EXTERNAL_KEY.equals(externalKey.getRelationType())) {
+                    // 虽然在本服务领域内定义的实体对象，但是低代码建的模型对象，没有实体类，所以统一通过接口获取
                     // 改为远程接口调用，方便递归填充参照对象
-                    String serviceName = SpringUtil.getApplicationName();
-                    if (serviceName.equalsIgnoreCase(entityDefineDTO.getServiceCode())) {
-                        // 自身的领域实体，可直接从service调用
-                        Set keys = getPrimaryKeys(externalKey.getName(), entities);
-                        if (!CollectionUtil.isEmpty(keys)) {
-                            QueryWrapper queryWrapper = new QueryWrapper();
-                            queryWrapper.in(externalKey.getExternalClassPrimaryField(), keys);
-                            Class<?> cls = Class.forName(className);
-                            ServiceImpl service = getService(cls);
-                            List objList = service.list(queryWrapper);
-                            Map map = CastUtil.listToMap(objList, o -> ReflectUtil.getFieldValue(o, externalKey.getExternalClassPrimaryField()));
-
-                            String fieldName = getClassFieldName(cls);
-                            for (Object entity : entities) {
-                                if (entity instanceof Entity<?>) {
-                                    Entity e = (Entity) entity;
-                                    e.setExtendField(fieldName, map.get(ReflectUtil.getFieldValue(e, externalKey.getName())));
-                                } else if (entity instanceof FormatMap) {
-                                    ((FormatMap) entity).put(fieldName, map.get(((FormatMap) entity).get(externalKey.getName())));
-                                }
-                            }
-                            // 判断是否需要递归调用
-                            /**
-                             * 将外键关联的对象塞入拓展字段中
-                             */
-                            List<Column> columns = schemaDefineUtil.getColumns(className, false);
-                            Set<Column> fieldExternalKeys = columns.stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
-                            if (!fieldExternalKeys.isEmpty() && !objList.isEmpty()) {
-                                updateExternalEntity(fieldExternalKeys, objList);
-                            }
-                        }
-                    } else {
+//                    String serviceName = SpringUtil.getApplicationName();
+//                    if (serviceName.equalsIgnoreCase(entityDefineDTO.getServiceCode())) {
+//                        // 自身的领域实体，可直接从service调用
+//                        Set keys = getPrimaryKeys(externalKey.getName(), entities);
+//                        if (!CollectionUtil.isEmpty(keys)) {
+//                            QueryWrapper queryWrapper = new QueryWrapper();
+//                            queryWrapper.in(externalKey.getExternalClassPrimaryField(), keys);
+//                            Class<?> cls = Class.forName(className);
+//                            ServiceImpl service = getService(cls);
+//                            List objList = service.list(queryWrapper);
+//                            Map map = CastUtil.listToMap(objList, o -> ReflectUtil.getFieldValue(o, externalKey.getExternalClassPrimaryField()));
+//
+//                            String fieldName = getClassFieldName(cls);
+//                            for (Object entity : entities) {
+//                                if (entity instanceof Entity<?>) {
+//                                    Entity e = (Entity) entity;
+//                                    e.setExtendField(fieldName, map.get(ReflectUtil.getFieldValue(e, externalKey.getName())));
+//                                } else if (entity instanceof FormatMap) {
+//                                    ((FormatMap) entity).put(fieldName, map.get(((FormatMap) entity).get(externalKey.getName())));
+//                                }
+//                            }
+//                            // 判断是否需要递归调用
+//                            /**
+//                             * 将外键关联的对象塞入拓展字段中
+//                             */
+//                            List<Column> columns = schemaDefineUtil.getColumns(className, false);
+//                            Set<Column> fieldExternalKeys = columns.stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
+//                            if (!fieldExternalKeys.isEmpty() && !objList.isEmpty()) {
+//                                updateExternalEntity(fieldExternalKeys, objList);
+//                            }
+//                        }
+//                    } else {
                         String url = ((Map) entityDefineDTO.getExtendField().get("serviceInstance")).get("contextPath").toString() + entityDefineDTO.getUrl();
                         List<ServiceInstance> instances = discoveryClient.getInstances(entityDefineDTO.getServiceCode());
                         if (instances.isEmpty()) {
@@ -151,10 +156,16 @@ public class EntityServiceFactory implements ApplicationContextAware {
                                 Entity e = (Entity) entity;
                                 e.setExtendField(fieldName, map.get(ReflectUtil.getFieldValue(e, externalKey.getName())));
                             } else if (entity instanceof FormatMap) {
-                                ((FormatMap) entity).put(fieldName, map.get(((FormatMap) entity).get(externalKey.getName())));
+                                Object value = ((FormatMap) entity).get(externalKey.getName());
+                                if (map.containsKey(value)) {
+                                    ((FormatMap) entity).put(fieldName, map.get(value));
+                                } else if(map.containsKey(String.valueOf(value))) {
+                                    // ID等Long类型，会因为Jackson序列化变为字符串
+                                    ((FormatMap) entity).put(fieldName, map.get(String.valueOf(value)));
+                                }
                             }
                         }
-                    }
+//                    }
 
                 } else if (RelationType.DETAIL_TABLE.equals(externalKey.getRelationType())) {
                     for (Object entity : entities) {

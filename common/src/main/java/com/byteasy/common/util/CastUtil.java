@@ -6,9 +6,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -21,6 +23,28 @@ public class CastUtil {
         Map<K, T> map = Maps.newHashMap();
         for (T entity : entities) {
             map.put(function.apply(entity), entity);
+        }
+        return map;
+    }
+
+    public static <K, T> Map<K, T> collectionToMap(Collection<T> entities, Function<T, K> function) {
+        if (entities == null) {
+            return null;
+        }
+        Map<K, T> map = Maps.newHashMap();
+        for (T entity : entities) {
+            map.put(function.apply(entity), entity);
+        }
+        return map;
+    }
+
+    public static <K, T, V> Map<K, V> collectionToMap(Collection<T> entities, Function<T, K> keyFunction, Function<T, V> valueFunction) {
+        if (entities == null) {
+            return null;
+        }
+        Map<K, V> map = Maps.newHashMap();
+        for (T entity : entities) {
+            map.put(keyFunction.apply(entity), valueFunction.apply(entity));
         }
         return map;
     }
@@ -44,6 +68,10 @@ public class CastUtil {
     }
 
     public static <T> List<T> copyList(List<?> list, Class<T> cls) {
+        return copyList(list, cls, null);
+    }
+
+    public static <T> List<T> copyList(List<?> list, Class<T> cls, Consumer<T> consumer) {
         if (list == null) {
             return null;
         }
@@ -51,6 +79,9 @@ public class CastUtil {
         for (Object o : list) {
             T target = ReflectUtil.newInstance(cls);
             BeanUtil.copyProperties(o, target);
+            if (consumer != null) {
+                consumer.accept(target);
+            }
             resultList.add(target);
         }
         return resultList;

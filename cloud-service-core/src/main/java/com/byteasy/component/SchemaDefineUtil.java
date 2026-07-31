@@ -4,8 +4,9 @@ import com.byteasy.api.IEntityDefineService;
 import com.byteasy.api.ISchemaDefineService;
 import com.byteasy.dto.Column;
 import com.byteasy.dto.EntityDefineDTO;
-import com.byteasy.event.EntityDefineChangeEvent;
-import com.byteasy.event.IPlatformEventHandler;
+import com.byteasy.event.EntityChangeEvent;
+import com.byteasy.event.EntityChangeSource;
+import com.byteasy.event.IPlatformEntityChangeHandler;
 import com.byteasy.util.ColumnUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -22,14 +23,12 @@ import java.util.concurrent.ExecutionException;
 
 @Component
 @Log4j2
-public class SchemaDefineUtil implements IPlatformEventHandler<EntityDefineChangeEvent> {
+public class SchemaDefineUtil implements IPlatformEntityChangeHandler {
 
     @Autowired
     private Environment env;
     @Autowired
     private ISchemaDefineService schemaDefineService;
-    @Autowired
-    private IEntityDefineService entityDefineService;
 
     private LoadingCache<String, List<Column>> columnsCacheLoader = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
         @Override
@@ -55,12 +54,6 @@ public class SchemaDefineUtil implements IPlatformEventHandler<EntityDefineChang
         }
     });
 
-    private LoadingCache<String, EntityDefineDTO> entityDefineCacheLoader = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
-        @Override
-        public EntityDefineDTO load(String key) {
-            return entityDefineService.getEntityDefine(key);
-        }
-    });
 
     public List<Column> getColumns(String className, boolean skipRpc) {
         if (!skipRpc) {
@@ -89,38 +82,14 @@ public class SchemaDefineUtil implements IPlatformEventHandler<EntityDefineChang
         return null;
     }
 
-    public String getEntityName(String className) {
-        EntityDefineDTO entityDefine = null;
-        try {
-            entityDefine = entityDefineCacheLoader.get(className);
-        } catch (ExecutionException e) {
-            log.error(e);
-        }
-        if (entityDefine != null) {
-            return entityDefine.getName();
-        }
-        return null;
-    }
 
-    public EntityDefineDTO getEntityDefine(String className) {
-        EntityDefineDTO entityDefine = null;
-        try {
-            entityDefine = entityDefineCacheLoader.get(className);
-        } catch (ExecutionException e) {
-            log.error(e);
-        }
-        return entityDefine;
+    @Override
+    public String className() {
+        return "com.byteasy.platform.entity.SchemaDefine";
     }
 
     @Override
-    public void handle(EntityDefineChangeEvent event) {
-        entityDefineCacheLoader.invalidate(event.getSource().getClassName());
+    public void handle(EntityChangeEvent event) {
         columnsCacheLoader.invalidate(event.getSource().getClassName());
-        log.info("EntityDefine and Column Meta cache invalidate, className: {}", event.getSource().getClassName());
-    }
-
-    @Override
-    public Class<EntityDefineChangeEvent> getEventType() {
-        return EntityDefineChangeEvent.class;
     }
 }

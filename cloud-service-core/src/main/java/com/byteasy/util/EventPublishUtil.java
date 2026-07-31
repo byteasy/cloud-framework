@@ -1,4 +1,4 @@
-package com.byteasy.common.event;
+package com.byteasy.util;
 
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.collection.CollectionUtil;
@@ -11,24 +11,29 @@ import com.byteasy.common.token.UserInfoBuilder;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.component.ServiceInstanceUtil;
-import com.byteasy.event.EventSource;
-import com.byteasy.event.PlatformEvent;
-import com.byteasy.event.SourceType;
+import com.byteasy.event.*;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.byteasy.util.RandomUtil.random;
+
 @Component
 @Log4j2
 public class EventPublishUtil {
 
-
-    public static void publishEvent(PlatformEvent event) {
+    @Async
+    public void publishEvent(PlatformEvent event) {
+        if (event instanceof EntityChangeEvent) {
+            EntityChangeSource source = ((EntityChangeEvent) event).getSource();
+            source.setSrcApplicationName(SpringUtil.getApplicationName());
+        }
         SpringUtil.publishEvent(event);
 
         if (!SourceType.SINGLETON.equals(event.getSourceType())) {
@@ -79,11 +84,4 @@ public class EventPublishUtil {
         }
     }
 
-    private static ServiceInstance random(List<ServiceInstance> list) {
-        if (list.size() == 1) {
-            return list.get(0);
-        }
-        int random = RandomUtil.randomInt(list.size());
-        return list.get(random);
-    }
 }
