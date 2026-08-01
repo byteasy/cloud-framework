@@ -46,6 +46,7 @@ public class JsScriptExecutor {
         // 提交到线程池异步执行
         Future<Object> future = JS_EXECUTOR_POOL.submit(() -> {
             RequestContextHolder.setRequestAttributes(attributes);
+            long startTs = System.currentTimeMillis();
             try {
                 Map<String, ScriptFunction> map = null;
                 try {
@@ -57,6 +58,8 @@ public class JsScriptExecutor {
                 return runScriptWithFunctions(params, map, jsScript, jsName);
             } finally {
                 RequestContextHolder.resetRequestAttributes();
+                long endTs = System.currentTimeMillis();
+                log.info("runScriptWithTimeout, script: {} ts: {}", jsName, endTs - startTs);
             }
         });
 
