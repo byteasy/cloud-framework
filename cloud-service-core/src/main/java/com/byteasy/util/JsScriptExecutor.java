@@ -59,7 +59,7 @@ public class JsScriptExecutor {
             } finally {
                 RequestContextHolder.resetRequestAttributes();
                 long endTs = System.currentTimeMillis();
-                log.info("runScriptWithTimeout, script: {} ts: {}", jsName, endTs - startTs);
+                log.info("runScriptWithTimeout, script: {} {} ms", jsName, endTs - startTs);
             }
         });
 
