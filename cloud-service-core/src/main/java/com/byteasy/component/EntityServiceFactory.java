@@ -1,12 +1,10 @@
 package com.byteasy.component;
 
 import cn.hutool.core.codec.Base64;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.byteasy.Constant;
@@ -23,6 +21,7 @@ import com.byteasy.dto.EntityDefineDTO;
 import com.byteasy.dto.FormatMap;
 import com.byteasy.entity.Entity;
 import com.byteasy.enums.RelationType;
+import com.byteasy.util.ColumnUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.annotation.Resource;
 import lombok.extern.log4j.Log4j2;
@@ -37,7 +36,6 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Component
 @Log4j2
@@ -123,48 +121,48 @@ public class EntityServiceFactory implements ApplicationContextAware {
 //                            }
 //                        }
 //                    } else {
-                        String url = ((Map) entityDefineDTO.getExtendField().get("serviceInstance")).get("contextPath").toString() + entityDefineDTO.getUrl();
-                        List<ServiceInstance> instances = discoveryClient.getInstances(entityDefineDTO.getServiceCode());
-                        if (instances.isEmpty()) {
-                            log.error("updateExternalEntity err, because no instances for service {}", entityDefineDTO.getServiceCode());
-                            return;
-                        }
-                        Map<String, String> header = new HashMap<>();
-                        List<Pair<String, String>> params = Lists.newArrayList();
-                        UserInfo token = TokenUtil.getUserinfo();
-                        if (token != null) {
-                            header.put(Constant.USER_INFO, Base64.encode(JacksonUtil.toJson(token)));
-                        } else {
-                            header.put(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
-                        }
-                        Set keys = getPrimaryKeys(externalKey.getName(), entities);
-                        for (Object key : keys) {
-                            params.add(Pair.of(externalKey.getExternalClassPrimaryField() + "[]", key.toString()));
-                        }
-                        params.add(Pair.of(externalKey.getExternalClassPrimaryField() + "QueryType", "in"));
-                        params.add(Pair.of("current", "1"));
-                        params.add(Pair.of("size", "5000"));
+                    String url = ((Map) entityDefineDTO.getExtendField().get("serviceInstance")).get("contextPath").toString() + entityDefineDTO.getUrl();
+                    List<ServiceInstance> instances = discoveryClient.getInstances(entityDefineDTO.getServiceCode());
+                    if (instances.isEmpty()) {
+                        log.error("updateExternalEntity err, because no instances for service {}", entityDefineDTO.getServiceCode());
+                        return;
+                    }
+                    Map<String, String> header = new HashMap<>();
+                    List<Pair<String, String>> params = Lists.newArrayList();
+                    UserInfo token = TokenUtil.getUserinfo();
+                    if (token != null) {
+                        header.put(Constant.USER_INFO, Base64.encode(JacksonUtil.toJson(token)));
+                    } else {
+                        header.put(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
+                    }
+                    Set keys = getPrimaryKeys(externalKey.getName(), entities);
+                    for (Object key : keys) {
+                        params.add(Pair.of(externalKey.getExternalClassPrimaryField() + "[]", key.toString()));
+                    }
+                    params.add(Pair.of(externalKey.getExternalClassPrimaryField() + "QueryType", "in"));
+                    params.add(Pair.of("current", "1"));
+                    params.add(Pair.of("size", "5000"));
 
-                        ServiceInstance randomService = random(instances);
-                        Result<Page<JSONObject>> result = OkHttpUtil.get((randomService.isSecure() ? "https://" : "http://") + randomService.getHost() + ":" + randomService.getPort() + url, header, params, null, new TypeReference<Result<Page<JSONObject>>>() {
-                        });
-                        Map map = CastUtil.listToMap(result.getData().getRecords(), o -> o.get(externalKey.getExternalClassPrimaryField()));
+                    ServiceInstance randomService = random(instances);
+                    Result<Page<JSONObject>> result = OkHttpUtil.get((randomService.isSecure() ? "https://" : "http://") + randomService.getHost() + ":" + randomService.getPort() + url, header, params, null, new TypeReference<Result<Page<JSONObject>>>() {
+                    });
+                    Map map = CastUtil.listToMap(result.getData().getRecords(), o -> ColumnUtil.toValue(o, externalKey.getType(), externalKey.getExternalClassPrimaryField()));
 
-                        String fieldName = getClassFieldName(className);
-                        for (Object entity : entities) {
-                            if (entity instanceof Entity<?>) {
-                                Entity e = (Entity) entity;
-                                e.setExtendField(fieldName, map.get(ReflectUtil.getFieldValue(e, externalKey.getName())));
-                            } else if (entity instanceof FormatMap) {
-                                Object value = ((FormatMap) entity).get(externalKey.getName());
-                                if (map.containsKey(value)) {
-                                    ((FormatMap) entity).put(fieldName, map.get(value));
-                                } else if(map.containsKey(String.valueOf(value))) {
-                                    // ID等Long类型，会因为Jackson序列化变为字符串
-                                    ((FormatMap) entity).put(fieldName, map.get(String.valueOf(value)));
-                                }
+                    String fieldName = getClassFieldName(className);
+                    for (Object entity : entities) {
+                        if (entity instanceof Entity<?>) {
+                            Entity e = (Entity) entity;
+                            e.setExtendField(fieldName, map.get(ReflectUtil.getFieldValue(e, externalKey.getName())));
+                        } else if (entity instanceof FormatMap) {
+                            Object value = ((FormatMap) entity).get(externalKey.getName());
+                            if (map.containsKey(value)) {
+                                ((FormatMap) entity).put(fieldName, map.get(value));
+                            } else if (map.containsKey(String.valueOf(value))) {
+                                // ID等Long类型，会因为Jackson序列化变为字符串
+                                ((FormatMap) entity).put(fieldName, map.get(String.valueOf(value)));
                             }
                         }
+                    }
 //                    }
 
                 } else if (RelationType.DETAIL_TABLE.equals(externalKey.getRelationType())) {

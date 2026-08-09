@@ -11,6 +11,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -24,6 +25,7 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
     private OpenApiFactory openApiFactory;
 
     @Override
+    @Transactional
     public Result runApiScript(String apiCode, Map<String, String[]> params, Map<String, String> headers, String body) throws ExecutionException {
         log.info("runApiScript, api: {}, params: {}, headers: {}, body: {}", apiCode, params, headers, body);
 

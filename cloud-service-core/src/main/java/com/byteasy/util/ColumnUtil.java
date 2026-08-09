@@ -232,4 +232,34 @@ public class ColumnUtil {
         List<Field> fields = ReflectionUtils.getDeclaredFields(cls);
         return fields.stream().map(Field::getName).collect(Collectors.toSet());
     }
+
+    public static Object toValue(JSONObject jsonObject, ColumnType type, String fieldName) {
+        switch (type) {
+            case ColumnType.INT -> {
+                return jsonObject.getInt(fieldName);
+            }
+            case ColumnType.LONG -> {
+                return jsonObject.getLong(fieldName);
+            }
+            case ColumnType.FLOAT -> {
+                return jsonObject.getFloat(fieldName);
+            }
+            case ColumnType.DOUBLE -> {
+                return jsonObject.getDouble(fieldName);
+            }
+            case ColumnType.BYTE -> {
+                return jsonObject.getByte(fieldName);
+            }
+            case ColumnType.SHORT -> {
+                return jsonObject.getShort(fieldName);
+            }
+            case ColumnType.BOOL -> {
+                return jsonObject.getBool(fieldName);
+            }
+            case ColumnType.STRING -> {
+                return jsonObject.getStr(fieldName);
+            }
+        }
+        return jsonObject.get(fieldName);
+    }
 }
