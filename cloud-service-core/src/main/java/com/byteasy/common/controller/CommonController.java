@@ -86,6 +86,17 @@ public class CommonController {
         return Result.success(commonService.getById(className, id));
     }
 
+    @DeleteMapping("/{className}")
+    @Authentication
+    @Operation(summary = "根据主键删除记录")
+    @Log
+    public Result<Boolean> removeByEntity(@PathVariable("className") String className, @RequestBody Map<String, Object> entity) throws Exception {
+        if (log.isInfoEnabled()) {
+            log.info("className: {}, removeByEntity: {}", className, JacksonUtil.toJson(entity));
+        }
+        return Result.success(commonService.removeById(className, entity.get("id")));
+    }
+
     @DeleteMapping("/{className}/{id}")
     @Authentication
     @Operation(summary = "根据主键删除记录")

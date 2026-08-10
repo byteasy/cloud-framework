@@ -44,8 +44,6 @@ public class EntityServiceFactory implements ApplicationContextAware {
 
     @Autowired
     private IEntityDefineService entityDefineService;
-    @Autowired
-    private SchemaDefineUtil schemaDefineUtil;
     @Resource
     private DiscoveryClient discoveryClient;
 
@@ -56,18 +54,6 @@ public class EntityServiceFactory implements ApplicationContextAware {
             entityServiceMap.put(value.getEntityClass(), value);
             log.info("entity class: {}, service: {}", value.getEntityClass().getName(), value.getClass().getName());
         }
-    }
-
-    public static ServiceImpl getService(Class<?> entityClass) {
-        ServiceImpl service = entityServiceMap.get(entityClass);
-        if (service == null) {
-            for (Map.Entry<Class<?>, ServiceImpl> entry : entityServiceMap.entrySet()) {
-                if (entry.getKey().isAssignableFrom(entityClass)) {
-                    return entry.getValue();
-                }
-            }
-        }
-        return service;
     }
 
     public Collection<ServiceImpl> getEntityService() {
