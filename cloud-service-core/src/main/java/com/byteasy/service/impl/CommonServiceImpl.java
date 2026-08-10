@@ -863,7 +863,7 @@ public class CommonServiceImpl implements ICommonService {
         return selJoiner.toString();
     }
 
-    public static Object convertToEntityValue(Object value, Column column) {
+    public Object convertToEntityValue(Object value, Column column) {
         switch (column.getType()) {
             case ENUM -> {
                 String className = column.getTypeClassName();
@@ -886,6 +886,13 @@ public class CommonServiceImpl implements ICommonService {
                     }
                     return value;
                 } catch (Exception e) {
+                    // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
+                    List<Column> enumDefineList = schemaDefineUtil.getColumns(className, false);
+                    for (Column enumDef: enumDefineList) {
+                        if(enumDef.getFieldName().equals(value)) {
+                            return enumDef.getName();
+                        }
+                    }
                     return value;
                 }
             }
@@ -893,7 +900,7 @@ public class CommonServiceImpl implements ICommonService {
         return value;
     }
 
-    public static Object convertToDbValue(Object value, Column column) {
+    public Object convertToDbValue(Object value, Column column) {
         if (value == null) {
             return null;
         }
@@ -938,6 +945,13 @@ public class CommonServiceImpl implements ICommonService {
                         }
                         yield null;
                     } catch (Exception e) {
+                        // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
+                        List<Column> enumDefineList = schemaDefineUtil.getColumns(className, false);
+                        for (Column enumDef: enumDefineList) {
+                            if(enumDef.getName().equals(valStr)) {
+                                yield enumDef.getFieldName();
+                            }
+                        }
                         yield null;
                     }
                 }
