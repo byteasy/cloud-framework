@@ -1,32 +1,26 @@
 package com.byteasy.component;
 
-import com.byteasy.api.IEntityDefineService;
 import com.byteasy.api.ISchemaDefineService;
 import com.byteasy.dto.Column;
-import com.byteasy.dto.EntityDefineDTO;
 import com.byteasy.event.EntityChangeEvent;
-import com.byteasy.event.EntityChangeSource;
 import com.byteasy.event.IPlatformEntityChangeHandler;
 import com.byteasy.util.ColumnUtil;
+import com.byteasy.util.FieldValueUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 @Component
 @Log4j2
 public class SchemaDefineUtil implements IPlatformEntityChangeHandler {
 
-    @Autowired
-    private Environment env;
     @Autowired
     private ISchemaDefineService schemaDefineService;
 
@@ -61,7 +55,7 @@ public class SchemaDefineUtil implements IPlatformEntityChangeHandler {
              * 1. 优先从系统中的手工配置加载
              */
             try {
-                List<Column> list = env.matchesProfiles("dev") ? schemaDefineService.getSchemaMetaInfo(className) : columnsCacheLoader.get(className);
+                List<Column> list = columnsCacheLoader.get(className);
                 if (!list.isEmpty()) {
                     return list;
                 }
@@ -90,6 +84,10 @@ public class SchemaDefineUtil implements IPlatformEntityChangeHandler {
 
     @Override
     public void handle(EntityChangeEvent event) {
-        columnsCacheLoader.invalidate(event.getSource().getClassName());
+        switch (event.getSource().getChangeType()) {
+            case DELETE -> columnsCacheLoader.invalidate(FieldValueUtil.getFieldValue(event.getSource().getBefore(), "className", String.class));
+            case CREATE, UPDATE -> columnsCacheLoader.invalidate(FieldValueUtil.getFieldValue(event.getSource().getAfter(), "className", String.class));
+        }
+
     }
 }

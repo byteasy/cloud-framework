@@ -719,7 +719,7 @@ public class CommonServiceImpl implements ICommonService {
                 }
 
                 // SQL注入检查,脚本字段不做检查
-                if(!YesNo.NO.equals(column.getSqlInjectionCheck())) {
+                if (!YesNo.NO.equals(column.getSqlInjectionCheck())) {
                     if (SqlInjectionUtils.check(String.valueOf(value))) {
                         throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + value);
                     }
@@ -769,7 +769,7 @@ public class CommonServiceImpl implements ICommonService {
                 continue;
             }
             setJoiner.add(column.getFieldName() + "=?");
-            if(!YesNo.NO.equals(column.getSqlInjectionCheck())) {
+            if (!YesNo.NO.equals(column.getSqlInjectionCheck())) {
                 if (SqlInjectionUtils.check(String.valueOf(entity.get(col)))) {
                     throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + entity.get(col));
                 }
@@ -888,8 +888,8 @@ public class CommonServiceImpl implements ICommonService {
                 } catch (Exception e) {
                     // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
                     List<Column> enumDefineList = schemaDefineUtil.getColumns(className, false);
-                    for (Column enumDef: enumDefineList) {
-                        if(enumDef.getFieldName().equals(value)) {
+                    for (Column enumDef : enumDefineList) {
+                        if (enumDef.getFieldName().equals(String.valueOf(value))) {
                             return enumDef.getName();
                         }
                     }
@@ -946,13 +946,19 @@ public class CommonServiceImpl implements ICommonService {
                         yield null;
                     } catch (Exception e) {
                         // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
+                        Object resultValue = null;
                         List<Column> enumDefineList = schemaDefineUtil.getColumns(className, false);
-                        for (Column enumDef: enumDefineList) {
-                            if(enumDef.getName().equals(valStr)) {
-                                yield enumDef.getFieldName();
+                        for (Column enumDef : enumDefineList) {
+                            if (enumDef.getName().equals(valStr)) {
+                                switch (enumDef.getType()) {
+                                    case BYTE, SHORT, INT, LONG -> resultValue = Long.valueOf(enumDef.getFieldName());
+                                    case BOOL -> resultValue = Boolean.valueOf(enumDef.getFieldName());
+                                    case FLOAT, DOUBLE -> resultValue = Double.valueOf(enumDef.getFieldName());
+                                    case STRING -> resultValue = enumDef.getFieldName();
+                                }
                             }
                         }
-                        yield null;
+                        yield resultValue;
                     }
                 }
                 default -> valStr;
