@@ -172,7 +172,9 @@ public class EntityServiceFactory implements ApplicationContextAware {
         Set set = new HashSet();
         for (Object entity : entities) {
             Object value = entity instanceof FormatMap ? ((FormatMap) entity).get(fieldName) : ReflectUtil.getFieldValue(entity, fieldName);
-            set.add(value);
+            if (value != null) {
+                set.add(value);
+            }
         }
         return set;
     }
