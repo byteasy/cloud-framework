@@ -31,8 +31,9 @@ public class CommonServiceFunction implements JsFunctions {
             @Override
             public String description() {
                 return """
-                        Use ICommonService to saveOrUpdate a map. \n
-                        Interface: Map<String, Object> saveOrUpdate(String className, Map<String, Object> entity);
+                        Use ICommonService to saveOrUpdate a map.
+                        函数原型:
+                                Map<String, Object> saveOrUpdate(String className, Map<String, Object> entity);
                         """;
             }
 
@@ -55,7 +56,11 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "Use ICommonService to saveOrUpdateBatch rows";
+                return """
+                        Use ICommonService to commonServiceSaveOrUpdateBatch a list.
+                        函数原型:
+                                boolean saveOrUpdateBatch(String className, List<Map<String, Object>> entities);
+                        """;
             }
 
             @Override
@@ -77,7 +82,11 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "根据ID查询某行";
+                return """
+                        Use ICommonService to getById a entity.
+                        函数原型:
+                                Map<String, Object> getById(String className, Object id);
+                        """;
             }
 
             @Override
@@ -99,7 +108,11 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "分页查询，查询条件前端制定";
+                return """
+                        Use ICommonService to get one page entities.
+                        函数原型:
+                                Page<Map<String, Object>> page(String className);
+                        """;
             }
 
             @Override
@@ -121,7 +134,11 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "单表批量查询,查询条件前端指定";
+                return """
+                        Use ICommonService to list all entities math the query params.
+                        函数原型:
+                                List<Map<String, Object>> list(String className);
+                        """;
             }
 
             @Override
@@ -143,7 +160,11 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "单表批量条件查询";
+                return """
+                        Use ICommonService to list all entities math the given params.
+                        函数原型:
+                                List<Map<String, Object>> list(String className, Map<String, Object> args);
+                        """;
             }
 
             @Override
@@ -165,7 +186,11 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "根据ID删除某一行";
+                return """
+                        Use ICommonService to remove an record.
+                        函数原型:
+                                boolean removeById(String className, Object id);
+                        """;
             }
 
             @Override

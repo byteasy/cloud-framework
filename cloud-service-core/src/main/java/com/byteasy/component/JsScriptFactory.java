@@ -77,4 +77,8 @@ public class JsScriptFactory implements IPlatformEntityChangeHandler {
     public static void setScriptSource(String id, Source source) {
         SCRIPT_CACHE.put(id, source);
     }
+
+    public static void invalidate(String id) {
+        SCRIPT_CACHE.invalidate(id);
+    }
 }

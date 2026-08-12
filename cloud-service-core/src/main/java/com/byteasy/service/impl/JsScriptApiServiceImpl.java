@@ -26,7 +26,7 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
 
     @Override
     @Transactional
-    public Result runApiScript(String apiCode, Map<String, String[]> params, Map<String, String> headers, String body) throws ExecutionException {
+    public Result debugScript(String apiCode, Map<String, String[]> params, Map<String, String> headers, String body) throws ExecutionException {
         log.info("runApiScript, api: {}, params: {}, headers: {}, body: {}", apiCode, params, headers, body);
 
         Map<String, Object> openApi = openApiFactory.getOpenApi(apiCode);
@@ -53,6 +53,23 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
         input.put("params", params);
         input.put("body", body);
 
+        return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, MapUtil.getStr(jsScriptObj, "id"), 30000));
+    }
+
+    @Override
+    public Result debugScript(Map<String, Object> jsScriptObj, Map<String, String[]> params, Map<String, String> headers, String body) throws ExecutionException {
+        String script = MapUtil.getStr(jsScriptObj, "script");
+        if (StringUtils.isEmpty(script)) {
+            log.error("script is null, scriptId: {}", script);
+            return Result.error("script is null");
+        }
+
+        Map<String, Object> input = Maps.newHashMap();
+        input.put("header", headers);
+        input.put("params", params);
+        input.put("body", body);
+
+        com.byteasy.component.JsScriptFactory.invalidate(MapUtil.getStr(jsScriptObj, "id"));
         return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, MapUtil.getStr(jsScriptObj, "id"), 30000));
     }
 }
