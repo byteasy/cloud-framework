@@ -69,7 +69,8 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
         input.put("params", params);
         input.put("body", body);
 
-        com.byteasy.component.JsScriptFactory.invalidate(MapUtil.getStr(jsScriptObj, "id"));
-        return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, MapUtil.getStr(jsScriptObj, "id"), 30000));
+        String scriptId = MapUtil.getStr(jsScriptObj, "id") + "-debug";
+        com.byteasy.component.JsScriptFactory.invalidate(scriptId);
+        return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, scriptId, 30000));
     }
 }
