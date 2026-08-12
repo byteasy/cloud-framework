@@ -11,11 +11,8 @@ import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.component.ServiceInstanceUtil;
 import com.byteasy.dto.ScriptFunction;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
@@ -31,8 +28,6 @@ public class JsFunctionFactory {
 
     private Map<String, ScriptFunction> jsFunctionMap = new HashMap<>();
 
-    @EventListener(ApplicationReadyEvent.class)
-    @Async
     public void init() {
         Map<String, JsFunction> map = SpringUtil.getBeansOfType(JsFunction.class);
         for (Map.Entry<String, JsFunction> entry : map.entrySet()) {
