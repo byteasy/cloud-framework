@@ -53,6 +53,8 @@ public class AsyncWaitServiceListener {
     @Async // 异步执行，不阻塞 Spring Boot 主线程启动
     @EventListener(ApplicationReadyEvent.class)
     public void waitUntilServiceReady() {
+        jsFunctionFactory.init();
+
         int maxRetries = 30; // 最多等待 30 次
         int retryIntervalSec = 2; // 每次间隔 2 秒
 

@@ -1,6 +1,5 @@
 package com.byteasy.script;
 
-import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.service.ICommonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -31,12 +30,15 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "Use ICommonService to saveOrUpdate a map";
+                return """
+                        Use ICommonService to saveOrUpdate a map. \n
+                        Interface: Map<String, Object> saveOrUpdate(String className, Map<String, Object> entity);
+                        """;
             }
 
             @Override
             public Object run(Object[] args) throws Exception {
-                return commonService.saveOrUpdate((String) args[0], JacksonUtil.nativeRead((String) args[1], Map.class));
+                return commonService.saveOrUpdate((String) args[0], (Map) args[1]);
             }
         });
 
@@ -48,7 +50,7 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public String name() {
-                return "saveOrUpdateBatch";
+                return "commonServiceSaveOrUpdateBatch";
             }
 
             @Override
@@ -58,7 +60,7 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public Object run(Object[] args) throws Exception {
-                return commonService.saveOrUpdateBatch((String) args[0], JacksonUtil.nativeRead((String) args[1], List.class));
+                return commonService.saveOrUpdateBatch((String) args[0], (List) args[1]);
             }
         });
 
