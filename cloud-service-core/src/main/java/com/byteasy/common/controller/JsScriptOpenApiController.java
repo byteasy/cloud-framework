@@ -46,6 +46,10 @@ public class JsScriptOpenApiController {
 
         String body = bodyMap.get("body").toString();
         Map<String, Object> script = (Map<String, Object>) bodyMap.get("script");
-        return jsScriptApiService.debugScript(script, params, headers, body);
+        try {
+            return jsScriptApiService.debugScript(script, params, headers, body);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
     }
 }
