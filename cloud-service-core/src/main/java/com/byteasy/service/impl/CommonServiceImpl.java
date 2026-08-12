@@ -108,7 +108,46 @@ public class CommonServiceImpl implements ICommonService {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
-        return batchInsert(entityDefineDTO, entities, columnMap) > 0;
+
+        // 根据 id 是否为空拆分为新增和更新列表
+        List<Map<String, Object>> insertList = new ArrayList<>();
+        List<Map<String, Object>> updateList = new ArrayList<>();
+
+        for (Map<String, Object> entity : entities) {
+            if (ObjectUtils.isEmpty(entity.get("id"))) {
+                insertList.add(entity);
+            } else {
+                updateList.add(entity);
+            }
+        }
+
+        boolean success = true;
+
+        // 批量新增
+        if (CollectionUtil.isNotEmpty(insertList)) {
+            int rows = batchInsert(entityDefineDTO, insertList, columnMap);
+            if (rows <= 0) {
+                success = false;
+            } else {
+                // 发布新增事件
+                for (Map<String, Object> entity : insertList) {
+                    publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.CREATE, null, entity, className)));
+                }
+            }
+        }
+
+        // 批量更新
+        if (CollectionUtil.isNotEmpty(updateList)) {
+            // 发布更新事件（需查询更新前的数据）
+            for (Map<String, Object> entity : updateList) {
+                Object id = entity.get("id");
+                publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, getById(className, id), entity, className)));
+            }
+
+            batchUpdate(entityDefineDTO, updateList, columnMap);
+        }
+
+        return success;
     }
 
     @Override
@@ -650,7 +689,8 @@ public class CommonServiceImpl implements ICommonService {
         }
     }
 
-    private int batchInsert(EntityDefineDTO entityDefineDTO, List<Map<String, Object>> entityList, Map<String, Column> columnMap) {
+    @Transactional
+    protected int batchInsert(EntityDefineDTO entityDefineDTO, List<Map<String, Object>> entityList, Map<String, Column> columnMap) {
         if (CollectionUtil.isEmpty(entityList)) return 0;
 
         // 取第一个实体，获取需要插入的字段（所有实体共用相同字段结构）
@@ -792,18 +832,149 @@ public class CommonServiceImpl implements ICommonService {
         }
 
         // 处理乐观锁
-        setJoiner.add("VERSION=VERSION + 1");
+        if (columnMap.containsKey("version")) {
+            setJoiner.add("VERSION=VERSION + 1");
+        }
 
+        String sql = null;
         params.add(convertToDbValue(entity.get("id"), columnMap.get("id")));
-        params.add(convertToDbValue(entity.get("version"), columnMap.get("version")));
-        String sql = String.format(
-                "UPDATE %s SET %s WHERE ID=? AND VERSION=?",
-                entityDefineDTO.getTableName(),
-                setJoiner
-        );
+        if (columnMap.containsKey("version")) {
+            params.add(convertToDbValue(entity.get("version"), columnMap.get("version")));
+            sql = String.format(
+                    "UPDATE %s SET %s WHERE ID=? AND VERSION=?",
+                    entityDefineDTO.getTableName(),
+                    setJoiner
+            );
+        } else {
+            sql = String.format(
+                    "UPDATE %s SET %s WHERE ID=?",
+                    entityDefineDTO.getTableName(),
+                    setJoiner
+            );
+        }
         int rows = jdbcTemplate.update(sql, params.toArray());
         if (rows < 1) {
             throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
+        }
+    }
+
+    @Transactional
+    protected void batchUpdate(EntityDefineDTO entityDefineDTO, List<Map<String, Object>> entityList, Map<String, Column> columnMap) {
+        if (CollectionUtil.isEmpty(entityList)) {
+            return;
+        }
+
+        // 取第一个实体作为模板字段（默认所有实体结构一致）
+        Map<String, Object> firstEntity = entityList.get(0);
+        Set<String> columns = firstEntity.keySet();
+        if (columns.isEmpty()) {
+            return;
+        }
+
+        StringJoiner setJoiner = new StringJoiner(",");
+        List<String> validColumns = new ArrayList<>();
+
+        // 构建 UPDATE SET 字段
+        for (String col : columns) {
+            // 审计属性不允许手动修改
+            if (auditEntityPropSet.contains(col)) {
+                continue;
+            }
+            Column column = columnMap.get(col);
+            if (column == null) {
+                continue;
+            }
+            if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) {
+                continue;
+            }
+            if (StringUtils.isEmpty(column.getFieldName())) {
+                continue;
+            }
+
+            setJoiner.add(column.getFieldName() + "=?");
+            validColumns.add(col);
+        }
+
+        // 处理审计字段（更新人、更新时间）
+        UserInfo userInfo = TokenUtil.getUserinfo();
+        boolean hasUpdaterId = columnMap.containsKey("updaterId");
+        boolean hasUpdatedBy = columnMap.containsKey("updatedBy");
+        boolean hasUpdatedTime = columnMap.containsKey("updatedTime");
+
+        if (hasUpdaterId) {
+            setJoiner.add(columnMap.get("updaterId").getFieldName() + "=?");
+        }
+        if (hasUpdatedBy) {
+            setJoiner.add(columnMap.get("updatedBy").getFieldName() + "=?");
+        }
+        if (hasUpdatedTime) {
+            setJoiner.add(columnMap.get("updatedTime").getFieldName() + "=?");
+        }
+
+        // 处理乐观锁
+        if (columnMap.containsKey("version")) {
+            setJoiner.add("VERSION=VERSION + 1");
+        }
+
+        String sql = null;
+        if (columnMap.containsKey("version")) {
+            sql = String.format(
+                    "UPDATE %s SET %s WHERE ID=? AND VERSION=?",
+                    entityDefineDTO.getTableName(),
+                    setJoiner
+            );
+        } else {
+            sql = String.format(
+                    "UPDATE %s SET %s WHERE ID=?",
+                    entityDefineDTO.getTableName(),
+                    setJoiner
+            );
+        }
+
+        // 构建批量参数
+        List<Object[]> batchParams = new ArrayList<>();
+        for (Map<String, Object> entity : entityList) {
+            List<Object> params = new ArrayList<>();
+
+            // 绑定业务字段参数
+            for (String col : validColumns) {
+                Column column = columnMap.get(col);
+                Object val = entity.get(col);
+
+                if (!YesNo.NO.equals(column.getSqlInjectionCheck())) {
+                    if (SqlInjectionUtils.check(String.valueOf(val))) {
+                        log.error("Discovering SQL injection column: {} value: {}", column.getName(), val);
+                        throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + val);
+                    }
+                }
+                params.add(convertToDbValue(val, column));
+            }
+
+            // 绑定审计字段参数
+            if (hasUpdaterId) {
+                params.add(userInfo.getUserId());
+            }
+            if (hasUpdatedBy) {
+                params.add(StringUtils.deleteWhitespace(userInfo.getName()));
+            }
+            if (hasUpdatedTime) {
+                params.add(convertToDbValue(LocalDateTime.now(), columnMap.get("updatedTime")));
+            }
+
+            // 绑定 WHERE 条件参数：WHERE ID=? AND VERSION=?
+            params.add(convertToDbValue(entity.get("id"), columnMap.get("id")));
+            if (columnMap.containsKey("version")) {
+                params.add(convertToDbValue(entity.get("version"), columnMap.get("version")));
+            }
+            batchParams.add(params.toArray());
+        }
+
+        // 执行批量更新并做乐观锁检查
+        int[] updateCounts = jdbcTemplate.batchUpdate(sql, batchParams);
+        for (int count : updateCounts) {
+            if (count < 1) {
+                throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
+            }
         }
     }
 

@@ -32,7 +32,7 @@ public class ExceptionAdvice {
     @ExceptionHandler(value = Exception.class)
     @ResponseBody
     public Result<String> exceptionHandler(Exception e) {
-        logger.error("exceptionHandler", e);
+        logger.error("exceptionHandler: " + e.getMessage(), e);
         doErrorMetric();
         return Result.of(Status.DUPLICATE_KEY_EXCEPTION, ExceptionUtil.getSimpleMessage(e), ExceptionUtil.stacktraceToString(e), null);
     }
@@ -40,7 +40,7 @@ public class ExceptionAdvice {
     @ExceptionHandler(value = RuntimeException.class)
     @ResponseBody
     public Result<String> runtimeExceptionHandler(RuntimeException e) {
-        logger.error("runtimeExceptionHandler", e);
+        logger.error("runtimeExceptionHandler: " + e.getMessage(), e);
         doErrorMetric();
         if (e instanceof BizException) {
             BizException bizException = (BizException) e;
