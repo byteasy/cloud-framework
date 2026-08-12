@@ -27,6 +27,25 @@ public class JsScriptOpenApiController {
         request.getHeaderNames().asIterator().forEachRemaining(key -> {
             headers.put(key, request.getHeader(key));
         });
-        return jsScriptApiService.runApiScript(apiCode, params, headers, body);
+        return jsScriptApiService.debugScript(apiCode, params, headers, body);
+    }
+
+    @PostMapping("/debug/script")
+    public Result debugScript(@RequestBody Map<String, Object> bodyMap, HttpServletRequest request) throws ExecutionException {
+        Map<String, String[]> params = request.getParameterMap();
+        Map<String, String> headers = new HashMap<>();
+        request.getHeaderNames().asIterator().forEachRemaining(key -> {
+            headers.put(key, request.getHeader(key));
+        });
+        Map<String, Object> testHeader = (Map<String, Object>) bodyMap.get("header");
+        if (testHeader != null) {
+            testHeader.forEach((k, v) -> {
+                headers.put(k, String.valueOf(v));
+            });
+        }
+
+        String body = bodyMap.get("body").toString();
+        Map<String, Object> script = (Map<String, Object>) bodyMap.get("script");
+        return jsScriptApiService.debugScript(script, params, headers, body);
     }
 }

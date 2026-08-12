@@ -1,13 +1,17 @@
 package com.byteasy.script;
 
 import com.byteasy.common.util.JacksonUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @Component
+@Log4j2
 public class JSONFunctions implements JsFunctions {
     @Override
     public Collection<JsFunction> jsFunctions() {
@@ -25,12 +29,26 @@ public class JSONFunctions implements JsFunctions {
 
             @Override
             public String description() {
-                return "Parse a json string to json object";
+                return """
+                            Parse a json string to json object or object array.
+                            函数原型：
+                            JacksonUtil.nativeRead(String json);
+                        """;
             }
 
             @Override
             public Object run(Object[] args) throws Exception {
-                return JacksonUtil.parseObj(String.valueOf(args[0]));
+                String json = String.valueOf(args[0]);
+                if (json.trim().startsWith("{")) {
+                    return JacksonUtil.nativeRead(String.valueOf(args[0]), new TypeReference<Map<String, Object>>() {
+                    });
+                } else if (json.trim().startsWith("[")) {
+                    return JacksonUtil.nativeRead(String.valueOf(args[0]), new TypeReference<List<Object>>() {
+                    });
+                } else {
+                    log.error("JSON parse error, {}", json);
+                    return "JSONParse err: " + json;
+                }
             }
         });
 
@@ -47,7 +65,11 @@ public class JSONFunctions implements JsFunctions {
 
             @Override
             public String description() {
-                return "Convert json object to json string";
+                return """
+                        Convert json object or object array to json string.
+                        函数原型:
+                                JacksonUtil.toJson(Object obj);
+                        """;
             }
 
             @Override

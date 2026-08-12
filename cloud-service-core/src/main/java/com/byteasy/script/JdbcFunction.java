@@ -31,7 +31,11 @@ public class JdbcFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "Use jdbcTemplate to query a map";
+                return """
+                        Use jdbcTemplate to query a object.
+                        函数原型:
+                                Map<String, Object> queryForMap(String sql, @Nullable Object... args) throws DataAccessException;
+                        """;
             }
 
             @Override
@@ -56,7 +60,11 @@ public class JdbcFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "Use jdbcTemplate to query rows";
+                return """
+                        Use jdbcTemplate to query a object list.
+                        函数原型:
+                                List<Map<String, Object>> queryForList(String sql, @Nullable Object... args) throws DataAccessException;
+                        """;
             }
 
             @Override
@@ -81,7 +89,11 @@ public class JdbcFunction implements JsFunctions {
 
             @Override
             public String description() {
-                return "Use jdbcTemplate to execute a sql";
+                return """
+                        Use jdbcTemplate to execute a sql.
+                        函数原型:
+                                int update(String sql, @Nullable Object... args) throws DataAccessException;
+                        """;
             }
 
             @Override

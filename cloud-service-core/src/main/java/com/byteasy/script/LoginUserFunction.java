@@ -17,7 +17,11 @@ public class LoginUserFunction implements JsFunction {
 
     @Override
     public String description() {
-        return "获取当前登录用户";
+        return """
+                Get current login user info. Has no args, will get user info from http header of param name: x-userinfo.
+                函数原型:
+                getUserinfo();
+                """;
     }
 
     @Override
