@@ -53,6 +53,8 @@ public class PostgresMetaServiceImpl implements IDatabaseMetaService {
             column.setDisplayName(i18nName.toString());
             column.setType(convert(rs.getString("data_type")));
             column.setIsRequire("NO".equals(rs.getString("is_nullable")) ? YesNo.YES : YesNo.NO);
+            column.setDesensitize(YesNo.NO);
+            column.setEncrypt(YesNo.NO);
             return column;
         });
         int showOrder = 1;
