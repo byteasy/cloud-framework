@@ -231,7 +231,7 @@ public class CommonController {
                     continue;
                 }
             }
-            if (value != null && YesNo.YES.equals(column.getIsI18n())) {
+            if (!ObjectUtil.isEmpty(value) && YesNo.YES.equals(column.getIsI18n())) {
                 JSONObject jsonObject;
                 try {
                     jsonObject = new JSONObject(String.valueOf(value));
