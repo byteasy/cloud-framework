@@ -659,7 +659,7 @@ public class CommonServiceImpl implements ICommonService {
         if (columnMap.containsKey("createdBy")) {
             colJoiner.add(columnMap.get("createdBy").getFieldName());
             valJoiner.add("?");
-            params.add(convertToDbValue(userInfo.getUserId(), columnMap.get("createdBy")));
+            params.add(convertToDbValue(userInfo.getName(), columnMap.get("createdBy")));
         }
         if (columnMap.containsKey("createdTime")) {
             colJoiner.add(columnMap.get("createdTime").getFieldName());
@@ -751,7 +751,7 @@ public class CommonServiceImpl implements ICommonService {
                 if ("creatorId".equals(field)) {
                     value = userInfo.getUserId();
                 } else if ("createdBy".equals(field)) {
-                    value = userInfo.getUserId();
+                    value = userInfo.getName();
                 } else if ("createdTime".equals(field)) {
                     value = LocalDateTime.now();
                 } else {
