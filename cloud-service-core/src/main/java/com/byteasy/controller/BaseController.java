@@ -368,6 +368,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
             if (YesNo.YES.equals(column.getIsRequire())) {
                 if (ObjectUtil.isEmpty(value)) {
                     builder.append(I18nUtil.getLanguageValue(column.getDisplayName())).append(":").append(I18nUtil.getMessage("excel.import.fieldMustNotNull")).append(";");
+                    continue;
                 }
             }
             if (value != null && YesNo.YES.equals(column.getIsI18n())) {
