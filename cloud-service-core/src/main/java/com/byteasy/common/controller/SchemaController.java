@@ -2,7 +2,7 @@ package com.byteasy.common.controller;
 
 import com.byteasy.Constant;
 import com.byteasy.Result;
-import com.byteasy.component.SchemaDefineUtil;
+import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.dto.Column;
 import com.byteasy.service.ICommonService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,20 +21,20 @@ import java.util.Collection;
 public class SchemaController {
 
     @Autowired
-    private SchemaDefineUtil schemaDefineUtil;
+    private FieldDefineUtil fieldDefineUtil;
     @Autowired
     private ICommonService commonService;
 
     @GetMapping("/{className}")
     @Operation(summary = "查询业务对象的字段信息")
     public Result<Collection<Column>> getSchemaMetaInfo(@PathVariable("className") String className) {
-        return Result.success(schemaDefineUtil.getColumns(className, false));
+        return Result.success(fieldDefineUtil.getColumns(className, false));
     }
 
     @GetMapping("/src/{className}")
     @Operation(summary = "查询代码中业务对象的字段信息")
     public Result<Collection<Column>> getSrcSchemaMetaInfo(@PathVariable("className") String className) {
-        return Result.success(schemaDefineUtil.getColumns(className, true));
+        return Result.success(fieldDefineUtil.getColumns(className, true));
     }
 
     @GetMapping("/database/{className}")

@@ -9,10 +9,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
 
 @FeignClient(name = "platform-service",
-        contextId = "IFrameworkSchemaDefineService",
-        path = "/platformSvr" + Constant.SAPI + "/schemaDefines",
-        fallback = ISchemaDefineServiceFallback.class)
-public interface ISchemaDefineService {
+        contextId = "IFrameworkFieldDefineService",
+        path = "/platformSvr" + Constant.SAPI + "/fieldDefines",
+        fallback = IFieldDefineServiceFallback.class)
+public interface IFieldDefineService {
 
     @GetMapping("/entity/{className}")
     List<Column> getSchemaMetaInfo(@PathVariable("className") String className) throws Exception;

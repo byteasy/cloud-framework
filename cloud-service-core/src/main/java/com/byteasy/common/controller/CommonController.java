@@ -16,7 +16,7 @@ import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.component.EntityDefineUtil;
 import com.byteasy.component.I18nUtil;
-import com.byteasy.component.SchemaDefineUtil;
+import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.dto.Column;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.RelationType;
@@ -56,7 +56,7 @@ public class CommonController {
     @Autowired
     private ICommonService commonService;
     @Autowired
-    private SchemaDefineUtil schemaDefineUtil;
+    private FieldDefineUtil fieldDefineUtil;
     @Autowired
     private EntityDefineUtil entityDefineUtil;
 
@@ -112,7 +112,7 @@ public class CommonController {
     @Authentication
     @Operation(summary = "下载Excel导入模板")
     public void downloadExcelTemplate(@PathVariable("className") String className, HttpServletResponse response) throws Exception {
-        List<Column> columns = schemaDefineUtil.getColumns(className, false);
+        List<Column> columns = fieldDefineUtil.getColumns(className, false);
 
         columns = columns.stream().filter(s -> YesNo.YES.equals(s.getIsForm())).toList();
 
@@ -176,7 +176,7 @@ public class CommonController {
             return Result.success(Collections.emptyList());
         }
 
-        List<Column> columns = schemaDefineUtil.getColumns(className, false);
+        List<Column> columns = fieldDefineUtil.getColumns(className, false);
         columns = columns.stream().filter(s -> YesNo.YES.equals(s.getIsForm())).toList();
 
         boolean success = true;
@@ -300,7 +300,7 @@ public class CommonController {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdateBatch: {}", JacksonUtil.toJson(entities));
         }
-        List<Column> columns = schemaDefineUtil.getColumns(className, false);
+        List<Column> columns = fieldDefineUtil.getColumns(className, false);
         for (Map<String, Object> entity : entities) {
             validEntity(entity, columns);
         }
@@ -322,7 +322,7 @@ public class CommonController {
     @Authentication
     @Operation(summary = "Excel数据导出")
     public void exportExcel(@PathVariable("className") String className, @RequestBody List<String> fieldNames, HttpServletResponse response) throws Exception {
-        List<Column> columns = schemaDefineUtil.getColumns(className, false);
+        List<Column> columns = fieldDefineUtil.getColumns(className, false);
         Map<String, Column> columnMap = CastUtil.listToMap(columns, Column::getName);
 
         List<String> displayNameRow = Lists.newArrayList();

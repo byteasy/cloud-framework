@@ -4,7 +4,7 @@ import com.byteasy.dto.Column;
 
 import java.util.List;
 
-public class ISchemaDefineServiceFallback implements ISchemaDefineService {
+public class IFieldDefineServiceFallback implements IFieldDefineService {
 
     @Override
     public List<Column> getSchemaMetaInfo(String className) throws Exception {
