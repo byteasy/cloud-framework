@@ -37,6 +37,16 @@ public @interface FieldMeta {
     int width() default 0;
 
     /**
+     * 分组编号
+     */
+    long groupId() default 0;
+
+    /**
+     * 是否主键
+     */
+    boolean isPrimary() default false;
+
+    /**
      * 是否显示
      */
     boolean isShow() default true;
@@ -90,7 +100,7 @@ public @interface FieldMeta {
     /**
      * 最大长度
      */
-    int maxLength() default 50;
+    int maxLength() default 120;
 
     /**
      * 最小长度
@@ -152,4 +162,9 @@ public @interface FieldMeta {
      * 前端组件类型，使用于枚举、外键关联选择，可通过radio、select、table三种方式选择
      */
     UiComponent uiComponent() default UiComponent.SELECT;
+
+    /**
+     * 拓展参数
+     */
+    String extrasParams() default "";
 }
