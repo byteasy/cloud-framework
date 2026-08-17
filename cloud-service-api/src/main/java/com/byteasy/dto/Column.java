@@ -22,6 +22,10 @@ public class Column {
     private ColumnType type;
     @Schema(description = "字段类名")
     private String typeClassName;
+    @Schema(description = "字段分组")
+    private Long groupId;
+    @Schema(description = "显示")
+    private YesNo isPrimary;
     @Schema(description = "显示")
     private YesNo isShow;
     @Schema(description = "排序")
@@ -84,4 +88,6 @@ public class Column {
     private String timezone;
     @Schema(description = "表格列自定义组件")
     private String columnComponent;
+    @Schema(description = "拓展参数")
+    private String extrasParams;
 }

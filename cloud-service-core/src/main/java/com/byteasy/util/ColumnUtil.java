@@ -76,6 +76,8 @@ public class ColumnUtil {
                 column.setShowOrder(fieldMeta.showOrder());
                 // 显示宽度（0 则用默认值 120）
                 column.setWidth(fieldMeta.width());
+                column.setGroupId(fieldMeta.groupId() == 0 ? null : fieldMeta.groupId());
+                column.setIsPrimary(fieldMeta.isPrimary() ? YesNo.YES : YesNo.NO);
                 // 是否显示（boolean 转 YesNo 枚举）
                 column.setIsShow(fieldMeta.isShow() ? YesNo.YES : YesNo.NO);
                 // 是否排序
@@ -113,9 +115,13 @@ public class ColumnUtil {
                         column.setRelationType(RelationType.DETAIL_TABLE);
                     }
                 }
+                column.setExtrasParams(fieldMeta.extrasParams());
             } else {
+                column.setIsPrimary(YesNo.NO);
                 column.setIsShow(YesNo.YES);
                 column.setIsForm(YesNo.YES);
+                column.setEncrypt(YesNo.NO);
+                column.setDesensitize(YesNo.NO);
             }
             JsonFormat jsonFormat = field.getAnnotation(JsonFormat.class);
             if (jsonFormat != null) {
@@ -222,8 +228,12 @@ public class ColumnUtil {
                 FieldMeta.class.getClassLoader(),
                 new Class[]{FieldMeta.class},
                 (proxy, method, args) -> {
-                    Method displayMethod = FieldDisplay.class.getMethod(method.getName());
-                    return displayMethod.invoke(display);
+                    try {
+                        Method displayMethod = FieldDisplay.class.getMethod(method.getName());
+                        return displayMethod.invoke(display);
+                    } catch (Exception e) {
+                        return null;
+                    }
                 }
         );
     }
