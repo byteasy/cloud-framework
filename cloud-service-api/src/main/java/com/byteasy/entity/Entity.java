@@ -3,7 +3,7 @@ package com.byteasy.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.byteasy.annotations.FieldDisplay;
+import com.byteasy.annotations.FieldMeta;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -21,14 +21,14 @@ public abstract class Entity<ID> implements Serializable {
      */
     @Schema(description = "编号")
     @TableId(type = IdType.AUTO)
-    @FieldDisplay(showOrder = 0, isShow = true, isForm = false)
+    @FieldMeta(showOrder = 0, isShow = true, isForm = false)
     private ID id;
 
     /**
      * 表之外的动态字段
      */
     @TableField(exist = false)
-    @FieldDisplay(isShow = false, isForm = false)
+    @FieldMeta(isShow = false, isForm = false)
     @JsonIgnore
     private final Map<String, Object> extendMap = new HashMap<>();
 
