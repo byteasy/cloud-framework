@@ -11,7 +11,7 @@ import com.byteasy.common.util.RequestUtil;
 import com.byteasy.component.EntityDefineUtil;
 import com.byteasy.component.EntityServiceFactory;
 import com.byteasy.component.I18nUtil;
-import com.byteasy.component.SchemaDefineUtil;
+import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.dto.Column;
 import com.byteasy.dto.EntityDefineDTO;
 import com.byteasy.dto.FormatMap;
@@ -58,7 +58,7 @@ public class CommonServiceImpl implements ICommonService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     @Autowired
-    private SchemaDefineUtil schemaDefineUtil;
+    private FieldDefineUtil fieldDefineUtil;
     @Autowired
     private EntityDefineUtil entityDefineUtil;
     @Autowired
@@ -84,7 +84,7 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     public Map<String, Object> saveOrUpdate(String className, Map<String, Object> entity) {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
         Object id = entity.get("id");
@@ -106,7 +106,7 @@ public class CommonServiceImpl implements ICommonService {
             return false;
         }
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
         // 根据 id 是否为空拆分为新增和更新列表
@@ -153,7 +153,7 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     public Map<String, Object> getById(String className, Object id) {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
         return getById(entityDefineDTO, id, columnMap);
     }
@@ -161,7 +161,7 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     public Page<Map<String, Object>> page(String className) {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
         Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
@@ -208,7 +208,7 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     public List<Map<String, Object>> list(String className) {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
         Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
@@ -245,7 +245,7 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     public List<Map<String, Object>> list(String className, Map<String, Object> args) {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
         Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
@@ -291,7 +291,7 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     public boolean removeById(String className, Object id) {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = schemaDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
         publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, getById(className, id), null, className)));
@@ -1058,7 +1058,7 @@ public class CommonServiceImpl implements ICommonService {
                     return value;
                 } catch (Exception e) {
                     // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
-                    List<Column> enumDefineList = schemaDefineUtil.getColumns(className, false);
+                    List<Column> enumDefineList = fieldDefineUtil.getColumns(className, false);
                     for (Column enumDef : enumDefineList) {
                         if (enumDef.getFieldName().equals(String.valueOf(value))) {
                             return enumDef.getName();
@@ -1118,7 +1118,7 @@ public class CommonServiceImpl implements ICommonService {
                     } catch (Exception e) {
                         // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
                         Object resultValue = null;
-                        List<Column> enumDefineList = schemaDefineUtil.getColumns(className, false);
+                        List<Column> enumDefineList = fieldDefineUtil.getColumns(className, false);
                         for (Column enumDef : enumDefineList) {
                             if (enumDef.getName().equals(valStr)) {
                                 switch (enumDef.getType()) {

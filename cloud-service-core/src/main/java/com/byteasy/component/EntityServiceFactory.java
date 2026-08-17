@@ -100,7 +100,7 @@ public class EntityServiceFactory implements ApplicationContextAware {
 //                            /**
 //                             * 将外键关联的对象塞入拓展字段中
 //                             */
-//                            List<Column> columns = schemaDefineUtil.getColumns(className, false);
+//                            List<Column> columns = fieldDefineUtil.getColumns(className, false);
 //                            Set<Column> fieldExternalKeys = columns.stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
 //                            if (!fieldExternalKeys.isEmpty() && !objList.isEmpty()) {
 //                                updateExternalEntity(fieldExternalKeys, objList);

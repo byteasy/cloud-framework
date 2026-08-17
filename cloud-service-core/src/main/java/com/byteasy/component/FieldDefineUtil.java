@@ -1,6 +1,6 @@
 package com.byteasy.component;
 
-import com.byteasy.api.ISchemaDefineService;
+import com.byteasy.api.IFieldDefineService;
 import com.byteasy.dto.Column;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IPlatformEntityChangeHandler;
@@ -19,16 +19,16 @@ import java.util.List;
 
 @Component
 @Log4j2
-public class SchemaDefineUtil implements IPlatformEntityChangeHandler {
+public class FieldDefineUtil implements IPlatformEntityChangeHandler {
 
     @Autowired
-    private ISchemaDefineService schemaDefineService;
+    private IFieldDefineService fieldDefineService;
 
     private LoadingCache<String, List<Column>> columnsCacheLoader = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
         @Override
         public List<Column> load(String key) {
             try {
-                List<Column> list = schemaDefineService.getSchemaMetaInfo(key);
+                List<Column> list = fieldDefineService.getSchemaMetaInfo(key);
                 if (!list.isEmpty()) {
                     return list;
                 }
@@ -79,7 +79,7 @@ public class SchemaDefineUtil implements IPlatformEntityChangeHandler {
 
     @Override
     public String className() {
-        return "com.byteasy.platform.entity.SchemaDefine";
+        return "com.byteasy.platform.entity.FieldDefine";
     }
 
     @Override
