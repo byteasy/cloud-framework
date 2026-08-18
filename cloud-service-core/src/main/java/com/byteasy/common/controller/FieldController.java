@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Collection;
 
 @RestController
-@RequestMapping(Constant.SAPI + "/schemas")
+@RequestMapping(Constant.SAPI + "/fields")
 @Log4j2
-public class SchemaController {
+public class FieldController {
 
     @Autowired
     private FieldDefineUtil fieldDefineUtil;
