@@ -1,6 +1,7 @@
 package com.byteasy.script;
 
 import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.exception.BizException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
@@ -47,7 +48,7 @@ public class JSONFunctions implements JsFunctions {
                     });
                 } else {
                     log.error("JSON parse error, {}", json);
-                    return "JSONParse err: " + json;
+                    throw new BizException("JSON parse error");
                 }
             }
         });

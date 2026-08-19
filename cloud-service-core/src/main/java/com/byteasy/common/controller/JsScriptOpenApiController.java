@@ -3,6 +3,7 @@ package com.byteasy.common.controller;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.service.IJsScriptApiService;
+import com.byteasy.util.MapUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,7 @@ public class JsScriptOpenApiController {
         request.getHeaderNames().asIterator().forEachRemaining(key -> {
             headers.put(key, request.getHeader(key));
         });
-        return jsScriptApiService.debugScript(apiCode, params, headers, body);
+        return jsScriptApiService.runScript(apiCode, MapUtil.convertToMap(params), headers, body);
     }
 
     @PostMapping("/debug/script")
@@ -47,7 +48,7 @@ public class JsScriptOpenApiController {
         String body = bodyMap.get("body").toString();
         Map<String, Object> script = (Map<String, Object>) bodyMap.get("script");
         try {
-            return jsScriptApiService.debugScript(script, params, headers, body);
+            return jsScriptApiService.debugScript(script, MapUtil.convertToMap(params), headers, body);
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }

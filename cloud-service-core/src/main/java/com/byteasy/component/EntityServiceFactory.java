@@ -163,7 +163,7 @@ public class EntityServiceFactory implements ApplicationContextAware {
                     }
                 }
             } catch (Exception e) {
-                log.error("entity class not found", e);
+                log.error(String.format("entity class not found, className: {} fieldName: {} external className: %s", externalKey.getClassName(), externalKey.getName(), externalKey.getExternalClass()), e);
             }
         }
     }
