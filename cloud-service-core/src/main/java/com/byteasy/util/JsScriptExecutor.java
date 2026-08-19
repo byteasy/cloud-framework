@@ -8,15 +8,12 @@ import com.byteasy.script.ProxyWrapper;
 import lombok.extern.log4j.Log4j2;
 import org.graalvm.polyglot.*;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
 
 @Log4j2
 public class JsScriptExecutor {
@@ -24,60 +21,21 @@ public class JsScriptExecutor {
     // 1. 提取全局唯一的共享 Engine，避免重复初始化 JS 编译器内核
     private static final Engine SHARED_ENGINE = Engine.newBuilder().build();
 
-
-    // 创建一个专用于执行 JS 脚本的隔离线程池（防止主业务线程被卡死）
-    private static final ExecutorService JS_EXECUTOR_POOL = new ThreadPoolExecutor(
-            Runtime.getRuntime().availableProcessors(), Runtime.getRuntime().availableProcessors() * 2, 60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(100),
-            new ThreadFactory() {
-                private int count = 1;
-
-                @Override
-                public Thread newThread(Runnable r) {
-                    Thread t = new Thread(r, "js-runner-" + count++);
-                    t.setDaemon(true); // 设为守护线程
-                    return t;
-                }
-            }
-    );
-
     public static Object runScriptWithTimeout(Map<String, Object> params, String jsScript, String jsName, long timeoutMillis) {
-        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
-        // 提交到线程池异步执行
-        Future<Object> future = JS_EXECUTOR_POOL.submit(() -> {
-            RequestContextHolder.setRequestAttributes(attributes);
-            long startTs = System.currentTimeMillis();
-            try {
-                Map<String, ScriptFunction> map = null;
-                try {
-                    JsFunctionFactory jsFunctionFactory = SpringUtil.getBean(JsFunctionFactory.class);
-                    map = jsFunctionFactory.getJsFunctionMap();
-                } catch (Exception e) {
-                }
-                // 这里执行原有的逻辑
-                return runScriptWithFunctions(params, map, jsScript, jsName);
-            } finally {
-                RequestContextHolder.resetRequestAttributes();
-                long endTs = System.currentTimeMillis();
-                log.info("runScriptWithTimeout, script: {} {} ms", jsName, endTs - startTs);
-            }
-        });
 
+        long startTs = System.currentTimeMillis();
         try {
-            // 在 Java 侧强制控制最大等待时间
-            return future.get(timeoutMillis, TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-            future.cancel(true); // 终断正在执行 JS 的线程
-            throw new RuntimeException("JS脚本执行超时，已被系统强制拦截！", e);
-        } catch (ExecutionException e) {
-            // 重新抛出内部的业务/语法异常
-            if (e.getCause() instanceof RuntimeException) {
-                throw (RuntimeException) e.getCause();
+            Map<String, ScriptFunction> map = null;
+            try {
+                JsFunctionFactory jsFunctionFactory = SpringUtil.getBean(JsFunctionFactory.class);
+                map = jsFunctionFactory.getJsFunctionMap();
+            } catch (Exception e) {
             }
-            throw new RuntimeException("JS脚本执行异常: " + e.getMessage(), e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("脚本执行被系统中断", e);
+            // 这里执行原有的逻辑
+            return runScriptWithFunctions(params, map, jsScript, jsName);
+        } finally {
+            long endTs = System.currentTimeMillis();
+            log.info("runScriptWithTimeout, script: {} {} ms", jsName, endTs - startTs);
         }
     }
 
