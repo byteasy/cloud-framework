@@ -26,7 +26,7 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
 
     @Override
     @Transactional
-    public Result debugScript(String apiCode, Map<String, String[]> params, Map<String, String> headers, String body) throws ExecutionException {
+    public Result runScript(String apiCode, Map<String, Object> params, Map<String, String> headers, String body) throws ExecutionException {
         log.info("runApiScript, api: {}, params: {}, headers: {}, body: {}", apiCode, params, headers, body);
 
         Map<String, Object> openApi = openApiFactory.getOpenApi(apiCode);
@@ -57,7 +57,7 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
     }
 
     @Override
-    public Result debugScript(Map<String, Object> jsScriptObj, Map<String, String[]> params, Map<String, String> headers, String body) throws ExecutionException {
+    public Result debugScript(Map<String, Object> jsScriptObj, Map<String, Object> params, Map<String, String> headers, String body) throws ExecutionException {
         String script = MapUtil.getStr(jsScriptObj, "script");
         if (StringUtils.isEmpty(script)) {
             log.error("script is null, scriptId: {}", script);
