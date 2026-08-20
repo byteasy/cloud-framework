@@ -1,6 +1,8 @@
 package com.byteasy.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.BooleanUtil;
+import cn.hutool.core.util.NumberUtil;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.byteasy.common.token.TokenUtil;
@@ -10,8 +12,8 @@ import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.component.EntityDefineUtil;
 import com.byteasy.component.EntityServiceFactory;
-import com.byteasy.component.I18nUtil;
 import com.byteasy.component.FieldDefineUtil;
+import com.byteasy.component.I18nUtil;
 import com.byteasy.dto.Column;
 import com.byteasy.dto.EntityDefineDTO;
 import com.byteasy.dto.FormatMap;
@@ -1075,18 +1077,16 @@ public class CommonServiceImpl implements ICommonService {
         if (value == null) {
             return null;
         }
-        if (!(value instanceof String valStr)) {
-            return value;
-        }
+        String valStr = value instanceof String ? (String) value : String.valueOf(value);
         if (valStr.isEmpty()) {
             return null;
         }
 
         try {
             return switch (column.getType()) {
-                case BYTE, SHORT, INT, LONG -> Long.valueOf(valStr);
-                case FLOAT, DOUBLE -> Double.valueOf(valStr);
-                case BOOL -> Boolean.valueOf(valStr);
+                case BYTE, SHORT, INT, LONG -> NumberUtil.parseLong(valStr);
+                case FLOAT, DOUBLE -> NumberUtil.parseDouble(valStr);
+                case BOOL -> BooleanUtil.toBoolean(valStr);
                 case LOCAL_DATE_TIME ->
                         Timestamp.valueOf(LocalDateTime.parse(valStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 case LOCAL_DATE ->
