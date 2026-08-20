@@ -10,6 +10,7 @@ import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.component.ServiceInstanceUtil;
 import com.byteasy.dto.ScriptFunction;
+import com.byteasy.exception.BizException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
@@ -43,8 +44,8 @@ public class JsFunctionFactory {
                     return entry.getValue().run(args);
                 } catch (Exception e) {
                     log.error(entry.getValue().name() + " run err", e);
+                    throw new BizException(e.getMessage());
                 }
-                return null;
             });
             jsFunctionMap.put(entry.getValue().name(), scriptFunction);
         }
@@ -64,8 +65,8 @@ public class JsFunctionFactory {
                         return jsFunction.run(args);
                     } catch (Exception e) {
                         log.error(jsFunction.name() + " run err", e);
+                        throw new BizException(e.getMessage());
                     }
-                    return null;
                 });
                 jsFunctionMap.put(jsFunction.name(), scriptFunction);
             }
@@ -105,12 +106,12 @@ public class JsFunctionFactory {
                         return JacksonUtil.parseObj(result);
                     } catch (Exception e) {
                         log.error(scriptFunction.getName() + " remote call err", e);
-                        return null;
+                        throw new BizException(e.getMessage());
                     }
-                } catch (Exception e) {
-                    log.error(scriptFunction.getName() + " run err", e);
+                } catch (Exception e1) {
+                    log.error(scriptFunction.getName() + " run err", e1);
+                    throw new BizException(e1.getMessage());
                 }
-                return null;
             });
             jsFunctionMap.put(scriptFunction.getName(), scriptFunction);
         }

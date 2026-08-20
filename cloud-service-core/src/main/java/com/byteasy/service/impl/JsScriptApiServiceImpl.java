@@ -57,6 +57,7 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
     }
 
     @Override
+    @Transactional
     public Result debugScript(Map<String, Object> jsScriptObj, Map<String, Object> params, Map<String, String> headers, String body) throws ExecutionException {
         String script = MapUtil.getStr(jsScriptObj, "script");
         if (StringUtils.isEmpty(script)) {

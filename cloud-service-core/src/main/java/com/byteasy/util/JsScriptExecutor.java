@@ -3,6 +3,7 @@ package com.byteasy.util;
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.component.JsScriptFactory;
 import com.byteasy.dto.ScriptFunction;
+import com.byteasy.exception.BizException;
 import com.byteasy.script.JsFunctionFactory;
 import com.byteasy.script.ProxyWrapper;
 import lombok.extern.log4j.Log4j2;
@@ -80,19 +81,23 @@ public class JsScriptExecutor {
                     // 使用 ProxyExecutable 将 Java 函数包装为标准的 JS 可执行函数
                     jsBindings.putMember(funcName, (ProxyExecutable) (Value[] arguments) -> {
                         // 1. 获取 JS 传过来的第一个参数（因为 Function 只有一个入参）
-                        Object[] inputArgs = null;
-                        if (arguments.length > 0) {
-                            // 利用现有的 convertGraalValueToJavaObject 把 Value 转回 Java 原生类型
-                            inputArgs = new Object[arguments.length];
-                            int i = 0;
-                            for (Value argument : arguments) {
-                                inputArgs[i++] = convertGraalValueToJavaObjectV1(argument);
+                        try {
+                            Object[] inputArgs = null;
+                            if (arguments.length > 0) {
+                                // 利用现有的 convertGraalValueToJavaObject 把 Value 转回 Java 原生类型
+                                inputArgs = new Object[arguments.length];
+                                int i = 0;
+                                for (Value argument : arguments) {
+                                    inputArgs[i++] = convertGraalValueToJavaObjectV1(argument);
+                                }
                             }
-                        }
 
-                        // 2. 回调你编写的 Java 业务逻辑 Lambda
-                        Object result = javaFunc.getFunction().apply(inputArgs);
-                        return ProxyWrapper.wrap(result);
+                            // 2. 回调你编写的 Java 业务逻辑 Lambda
+                            Object result = javaFunc.getFunction().apply(inputArgs);
+                            return ProxyWrapper.wrap(result);
+                        } catch (Exception e) {
+                            throw new BizException(e.getMessage(), e);
+                        }
                     });
                 });
             }
