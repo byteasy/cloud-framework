@@ -42,7 +42,7 @@ public class JdbcFunction implements JsFunctions {
             public Object run(Object[] args) throws Exception {
                 if (args == null || args.length == 0) return null;
 
-                Object[] tailerArgs = args.length < 2 ? null : Arrays.copyOfRange(args, 1, args.length);
+                Object[] tailerArgs = args[1] instanceof List ? ((List)args[1]).toArray() : Arrays.copyOfRange(args, 1, args.length);
                 return jdbcTemplate.queryForMap(String.valueOf(args[0]), tailerArgs);
             }
         });
@@ -71,7 +71,7 @@ public class JdbcFunction implements JsFunctions {
             public Object run(Object[] args) throws Exception {
                 if (args == null || args.length == 0) return null;
 
-                Object[] tailerArgs = args.length < 2 ? null : Arrays.copyOfRange(args, 1, args.length);
+                Object[] tailerArgs = args[1] instanceof List ? ((List)args[1]).toArray() : Arrays.copyOfRange(args, 1, args.length);
                 return jdbcTemplate.queryForList(String.valueOf(args[0]), tailerArgs);
             }
         });
@@ -100,7 +100,7 @@ public class JdbcFunction implements JsFunctions {
             public Object run(Object[] args) throws Exception {
                 if (args == null || args.length == 0) return null;
 
-                Object[] tailerArgs = args.length < 2 ? null : Arrays.copyOfRange(args, 1, args.length);
+                Object[] tailerArgs = args[1] instanceof List ? ((List)args[1]).toArray() : Arrays.copyOfRange(args, 1, args.length);
                 return jdbcTemplate.update(String.valueOf(args[0]), tailerArgs);
             }
         });
