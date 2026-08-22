@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.byteasy.Constant;
 import com.byteasy.Result;
-import com.byteasy.api.IEntityDefineService;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
@@ -43,7 +42,7 @@ public class EntityServiceFactory implements ApplicationContextAware {
     private static Map<Class<?>, ServiceImpl> entityServiceMap = new HashMap<Class<?>, ServiceImpl>();
 
     @Autowired
-    private IEntityDefineService entityDefineService;
+    private EntityDefineUtil entityDefineUtil;
     @Resource
     private DiscoveryClient discoveryClient;
 
@@ -67,7 +66,7 @@ public class EntityServiceFactory implements ApplicationContextAware {
         for (Column externalKey : externalKeys) {
             try {
                 String className = externalKey.getExternalClass();
-                EntityDefineDTO entityDefineDTO = entityDefineService.getEntityDefine(className);
+                EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
                 if (entityDefineDTO == null) {
                     log.error("entityDefineDTO is null, className: {}", className);
                     continue;
@@ -177,11 +176,6 @@ public class EntityServiceFactory implements ApplicationContextAware {
             }
         }
         return set;
-    }
-
-    private static String getClassFieldName(Class<?> cls) {
-        String simpleName = cls.getSimpleName();
-        return simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
     }
 
     private static String getClassFieldName(String cls) {
