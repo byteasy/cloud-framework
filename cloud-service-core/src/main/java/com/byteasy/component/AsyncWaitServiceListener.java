@@ -7,7 +7,6 @@ import com.byteasy.api.IEntityDefineService;
 import com.byteasy.api.IScriptFunctionService;
 import com.byteasy.api.IServiceInstanceService;
 import com.byteasy.common.util.JacksonUtil;
-import com.byteasy.controller.AbstractController;
 import com.byteasy.dto.EntityDefineDTO;
 import com.byteasy.dto.ScriptFunction;
 import com.byteasy.dto.ServiceInstanceDTO;
@@ -17,14 +16,12 @@ import com.byteasy.util.ColumnUtil;
 import com.byteasy.util.SpringContextUtil;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -112,11 +109,6 @@ public class AsyncWaitServiceListener {
             List<EntityDefineDTO> list = new ArrayList<>();
             for (ServiceImpl service : entityServiceFactory.getEntityService()) {
                 Class<?> entityClass = service.getEntityClass();
-                AbstractController controller = EntityControllerFactory.getController(entityClass);
-                Class<?> srcController = null;
-                if (controller != null) {
-                    srcController = AopUtils.getTargetClass(controller);
-                }
 
                 EntityDefineDTO entityDefineDTO = new EntityDefineDTO();
                 entityDefineDTO.setCode(entityClass.getName());
@@ -136,7 +128,6 @@ public class AsyncWaitServiceListener {
                 }
                 entityDefineDTO.setRemark(classDesc);
                 entityDefineDTO.setServiceCode(SpringUtil.getApplicationName());
-                entityDefineDTO.setUrl(getUrl(srcController));
                 list.add(entityDefineDTO);
             }
             Result result = entityDefineService.saveOrUpdateBatch(list);
@@ -144,16 +135,5 @@ public class AsyncWaitServiceListener {
         } catch (Exception e) {
             log.error("ServiceInstanceAutoRegister err", e);
         }
-    }
-
-    private String getUrl(Class<?> srcController) {
-        if (srcController == null) {
-            return null;
-        }
-        RequestMapping requestMapping = srcController.getAnnotation(RequestMapping.class);
-        if (requestMapping == null) {
-            return null;
-        }
-        return requestMapping.value()[0];
     }
 }

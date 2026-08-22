@@ -107,7 +107,7 @@ public class EntityServiceFactory implements ApplicationContextAware {
 //                            }
 //                        }
 //                    } else {
-                    String url = ((Map) entityDefineDTO.getExtendField().get("serviceInstance")).get("contextPath").toString() + entityDefineDTO.getUrl();
+                    String url = ((Map) entityDefineDTO.getExtendField().get("serviceInstance")).get("contextPath").toString() + Constant.SAPI + "/common/" + className;
                     List<ServiceInstance> instances = discoveryClient.getInstances(entityDefineDTO.getServiceCode());
                     if (instances.isEmpty()) {
                         log.error("updateExternalEntity err, because no instances for service {}", entityDefineDTO.getServiceCode());

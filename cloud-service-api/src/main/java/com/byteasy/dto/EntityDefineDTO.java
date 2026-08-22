@@ -1,5 +1,6 @@
 package com.byteasy.dto;
 
+import com.byteasy.annotations.FieldMeta;
 import com.byteasy.entity.AuditEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -20,19 +21,16 @@ public class EntityDefineDTO extends AuditEntity<Long> {
 
     @Schema(description = "编码")
     private String code;
-
+    @Schema(name = "菜单编号")
+    private Long resourceId;
+    @Schema(name = "菜单编号")
+    private Long stdLayoutParamsId;
     @Schema(description = "服务编号")
     private String serviceCode;
-
     @Schema(description = "名称")
     private String name;
-
     @Schema(description = "表名")
     private String tableName;
-
-    @Schema(description = "url")
-    private String url;
-
     @Schema(description = "说明")
     private String remark;
 }
