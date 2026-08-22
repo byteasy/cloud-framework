@@ -15,8 +15,8 @@ import com.byteasy.annotations.Log;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.component.EntityDefineUtil;
-import com.byteasy.component.I18nUtil;
 import com.byteasy.component.FieldDefineUtil;
+import com.byteasy.component.I18nUtil;
 import com.byteasy.dto.Column;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.RelationType;
@@ -65,6 +65,13 @@ public class CommonController {
     @Operation(summary = "分页查询")
     public Result<Page<Map<String, Object>>> page(@PathVariable("className") String className) throws Exception {
         return Result.success(commonService.page(className));
+    }
+
+    @GetMapping("/{className}/all")
+    @Authentication
+    @Operation(summary = "分页查询")
+    public Result<List<Map<String, Object>>> list(@PathVariable("className") String className) throws Exception {
+        return Result.success(commonService.list(className));
     }
 
     @PostMapping("/{className}")
