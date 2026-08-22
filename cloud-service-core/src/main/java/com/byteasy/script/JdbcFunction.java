@@ -2,12 +2,14 @@ package com.byteasy.script;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class JdbcFunction implements JsFunctions {
@@ -42,8 +44,9 @@ public class JdbcFunction implements JsFunctions {
             public Object run(Object[] args) throws Exception {
                 if (args == null || args.length == 0) return null;
 
-                Object[] tailerArgs = args[1] instanceof List ? ((List)args[1]).toArray() : Arrays.copyOfRange(args, 1, args.length);
-                return jdbcTemplate.queryForMap(String.valueOf(args[0]), tailerArgs);
+                NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+                MapSqlParameterSource paramSource = fromMap(args[1]);
+                return namedJdbcTemplate.queryForMap(String.valueOf(args[0]), paramSource);
             }
         });
 
@@ -71,8 +74,9 @@ public class JdbcFunction implements JsFunctions {
             public Object run(Object[] args) throws Exception {
                 if (args == null || args.length == 0) return null;
 
-                Object[] tailerArgs = args[1] instanceof List ? ((List)args[1]).toArray() : Arrays.copyOfRange(args, 1, args.length);
-                return jdbcTemplate.queryForList(String.valueOf(args[0]), tailerArgs);
+                NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+                MapSqlParameterSource paramSource = fromMap(args[1]);
+                return namedJdbcTemplate.queryForList(String.valueOf(args[0]), paramSource);
             }
         });
 
@@ -100,10 +104,22 @@ public class JdbcFunction implements JsFunctions {
             public Object run(Object[] args) throws Exception {
                 if (args == null || args.length == 0) return null;
 
-                Object[] tailerArgs = args[1] instanceof List ? ((List)args[1]).toArray() : Arrays.copyOfRange(args, 1, args.length);
-                return jdbcTemplate.update(String.valueOf(args[0]), tailerArgs);
+                NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+                MapSqlParameterSource paramSource = fromMap(args[1]);
+                return namedJdbcTemplate.update(String.valueOf(args[0]), paramSource);
             }
         });
         return list;
+    }
+
+    protected MapSqlParameterSource fromMap(Object args) {
+        MapSqlParameterSource paramSource = new MapSqlParameterSource();
+        if (args instanceof Map<?, ?>) {
+            Map<String, Object> map = (Map<String, Object>) args;
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                paramSource.addValue(entry.getKey(), entry.getValue());
+            }
+        }
+        return paramSource;
     }
 }
