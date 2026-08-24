@@ -69,7 +69,7 @@ public class CommonController {
 
     @GetMapping("/{className}/all")
     @Authentication
-    @Operation(summary = "分页查询")
+    @Operation(summary = "查询所有")
     public Result<List<Map<String, Object>>> list(@PathVariable("className") String className) throws Exception {
         return Result.success(commonService.list(className));
     }

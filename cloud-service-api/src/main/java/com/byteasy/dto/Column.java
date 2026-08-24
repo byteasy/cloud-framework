@@ -24,7 +24,7 @@ public class Column {
     private String typeClassName;
     @Schema(description = "字段分组")
     private Long groupId;
-    @Schema(description = "显示")
+    @Schema(description = "主键")
     private YesNo isPrimary;
     @Schema(description = "显示")
     private YesNo isShow;
@@ -32,7 +32,7 @@ public class Column {
     private YesNo isSort;
     @Schema(description = "省略")
     private YesNo isOverflow;
-    @Schema(description = "开启多语言")
+    @Schema(description = "多语言")
     private YesNo isI18n;
     @Schema(description = "搜索")
     private YesNo isSearch;
@@ -64,6 +64,8 @@ public class Column {
     private Integer min = 0;
     @Schema(description = "精度")
     private Integer precision = 0;
+    @Schema(description = "多行文本")
+    private Integer textareaRows = 1;
     @Schema(description = "多选")
     private YesNo multiple = YesNo.NO;
     @Schema(description = "校验规则")
@@ -80,6 +82,8 @@ public class Column {
     private String externalClassDisplayField;
     @Schema(description = "表单自定义组件")
     private String fieldComponent;
+    @Schema(description = "关联模型自动填充")
+    private Boolean externalClassAutoFill;
     @Schema(description = "序列化格式")
     private String serialPattern;
     @Schema(description = "时区")
