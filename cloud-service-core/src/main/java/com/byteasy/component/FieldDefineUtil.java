@@ -79,15 +79,20 @@ public class FieldDefineUtil implements IPlatformEntityChangeHandler {
 
     @Override
     public String className() {
-        return "com.byteasy.platform.entity.FieldDefine";
+        return "com.byteasy.platform.entity.FieldDefine,com.byteasy.platform.entity.FieldGroup";
     }
 
     @Override
     public void handle(EntityChangeEvent event) {
-        switch (event.getSource().getChangeType()) {
-            case DELETE -> columnsCacheLoader.invalidate(FieldValueUtil.getFieldValue(event.getSource().getBefore(), "className", String.class));
-            case CREATE, UPDATE -> columnsCacheLoader.invalidate(FieldValueUtil.getFieldValue(event.getSource().getAfter(), "className", String.class));
+        if (event.getSource().getClassName().equals("com.byteasy.platform.entity.FieldGroup")) {
+            columnsCacheLoader.invalidateAll();
+        } else {
+            switch (event.getSource().getChangeType()) {
+                case DELETE ->
+                        columnsCacheLoader.invalidate(FieldValueUtil.getFieldValue(event.getSource().getBefore(), "className", String.class));
+                case CREATE, UPDATE ->
+                        columnsCacheLoader.invalidate(FieldValueUtil.getFieldValue(event.getSource().getAfter(), "className", String.class));
+            }
         }
-
     }
 }

@@ -23,7 +23,14 @@ public class EntityChangeHandler implements IPlatformEventHandler<EntityChangeEv
             Map<String, IPlatformEntityChangeHandler> map = SpringUtil.getBeansOfType(IPlatformEntityChangeHandler.class);
             for (IPlatformEntityChangeHandler value : map.values()) {
                 log.info("register entity change handler, type: {}, handler: {}", value.className(), value.getClass().getName());
-                cache.put(value.className(), value);
+                if (value.className().contains(",")) {
+                    String[] clsNames = value.className().split(",");
+                    for (String clsName : clsNames) {
+                        cache.put(clsName, value);
+                    }
+                } else {
+                    cache.put(value.className(), value);
+                }
             }
         } catch (Exception e) {
             log.warn("EntityChangeHandler init error", e);
