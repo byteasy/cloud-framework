@@ -1,7 +1,6 @@
 package com.byteasy.annotations;
 
 import com.byteasy.enums.Align;
-import com.byteasy.enums.UiComponent;
 import com.byteasy.enums.ValidatorPattern;
 
 import java.lang.annotation.*;
@@ -157,11 +156,6 @@ public @interface FieldMeta {
      * 外键展示字段
      */
     String externalClassDisplayField() default "name";
-
-    /**
-     * 前端组件类型，使用于枚举、外键关联选择，可通过radio、select、table三种方式选择
-     */
-    UiComponent uiComponent() default UiComponent.SELECT;
 
     /**
      * 拓展参数

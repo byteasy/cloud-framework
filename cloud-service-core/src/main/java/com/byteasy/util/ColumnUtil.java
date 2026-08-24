@@ -103,7 +103,6 @@ public class ColumnUtil {
                 column.setExternalClass(fieldMeta.externalClass().equals(void.class) ? null : fieldMeta.externalClass().getName());
                 column.setExternalClassPrimaryField(fieldMeta.externalClassPrimaryField());
                 column.setExternalClassDisplayField(fieldMeta.externalClassDisplayField());
-                column.setUiComponent(fieldMeta.uiComponent());
                 column.setEncrypt(fieldMeta.encrypt() ? YesNo.YES : YesNo.NO);
                 column.setDesensitize(fieldMeta.desensitize() ? YesNo.YES : YesNo.NO);
                 if (column.getExternalClass() != null) {

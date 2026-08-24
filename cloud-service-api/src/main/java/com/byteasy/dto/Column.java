@@ -78,8 +78,6 @@ public class Column {
     private String innerPrimaryField;
     @Schema(description = "关联对象展示字段")
     private String externalClassDisplayField;
-    @Schema(description = "关联对象前端组件")
-    private UiComponent uiComponent;
     @Schema(description = "表单自定义组件")
     private String fieldComponent;
     @Schema(description = "序列化格式")
