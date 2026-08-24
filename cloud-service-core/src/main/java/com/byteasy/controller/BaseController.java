@@ -77,7 +77,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
          * 将外键关联的对象塞入拓展字段中
          */
         List<Column> columns = fieldDefineUtil.getColumns(getEntityClass().getName(), false);
-        Set<Column> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
+        Set<Column> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
         if (!externalKeys.isEmpty()) {
             entityServiceFactory.updateExternalEntity(externalKeys, page.getRecords());
         }
@@ -91,7 +91,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     public Result<? extends ENTITY> getById(@PathVariable("id") ID id) throws Exception {
         ENTITY entity = baseService.getById(id);
         List<Column> columns = fieldDefineUtil.getColumns(getEntityClass().getName(), false);
-        Set<Column> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
+        Set<Column> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
         if (!externalKeys.isEmpty()) {
             entityServiceFactory.updateExternalEntity(externalKeys, List.of(entity));
         }

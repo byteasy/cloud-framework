@@ -87,6 +87,29 @@ public class CastUtil {
         return resultList;
     }
 
+    public static List<Map<String, Object>> beanListToMapList(Collection<?> list) {
+        if (list == null) {
+            return null;
+        }
+        List<Map<String, Object>> resultList = Lists.newArrayList();
+        for (Object o : list) {
+            resultList.add(BeanUtil.beanToMap(o));
+        }
+        return resultList;
+    }
+
+    public static <T> List<T> mapListToBeanList(List<Map<String, Object>> mapList, Class<T> cls) {
+        if (mapList == null) return null;
+        List<T> resultList = Lists.newArrayList();
+        for (Map<String, Object> map : mapList) {
+            T target = ReflectUtil.newInstance(cls);
+            BeanUtil.fillBeanWithMap(map, target, true);
+            resultList.add(target);
+        }
+        return resultList;
+    }
+
+
     public static <T> T copyBean(Object src, Class<T> cls) {
         if (src == null) {
             return null;

@@ -166,7 +166,7 @@ public class CommonServiceImpl implements ICommonService {
         List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
-        Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
+        Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
 
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         Map<String, String[]> multiMap = request.getParameterMap();
@@ -213,7 +213,7 @@ public class CommonServiceImpl implements ICommonService {
         List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
-        Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
+        Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         Map<String, String[]> multiMap = request.getParameterMap();
 
@@ -250,7 +250,7 @@ public class CommonServiceImpl implements ICommonService {
         List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
-        Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
+        Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
 
         Pair<String, List<Object>> whereSql = buildWhereSql(columnMap, args);
 
@@ -982,7 +982,7 @@ public class CommonServiceImpl implements ICommonService {
 
     // ============= 根据ID查询（返回保存后的数据） =============
     private Map<String, Object> getById(EntityDefineDTO entityDefineDTO, Object id, Map<String, Column> columnMap) {
-        Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
+        Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
 
         String sql = String.format("SELECT %s FROM %s WHERE ID=?", getSelectSql(columnMap), entityDefineDTO.getTableName());
 
