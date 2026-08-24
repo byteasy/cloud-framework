@@ -5,7 +5,6 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.byteasy.Constant;
 import com.byteasy.Result;
@@ -74,39 +73,7 @@ public class EntityServiceFactory implements ApplicationContextAware {
                 if (RelationType.EXTERNAL_KEY.equals(externalKey.getRelationType())) {
                     // 虽然在本服务领域内定义的实体对象，但是低代码建的模型对象，没有实体类，所以统一通过接口获取
                     // 改为远程接口调用，方便递归填充参照对象
-//                    String serviceName = SpringUtil.getApplicationName();
-//                    if (serviceName.equalsIgnoreCase(entityDefineDTO.getServiceCode())) {
-//                        // 自身的领域实体，可直接从service调用
-//                        Set keys = getPrimaryKeys(externalKey.getName(), entities);
-//                        if (!CollectionUtil.isEmpty(keys)) {
-//                            QueryWrapper queryWrapper = new QueryWrapper();
-//                            queryWrapper.in(externalKey.getExternalClassPrimaryField(), keys);
-//                            Class<?> cls = Class.forName(className);
-//                            ServiceImpl service = getService(cls);
-//                            List objList = service.list(queryWrapper);
-//                            Map map = CastUtil.listToMap(objList, o -> ReflectUtil.getFieldValue(o, externalKey.getExternalClassPrimaryField()));
-//
-//                            String fieldName = getClassFieldName(cls);
-//                            for (Object entity : entities) {
-//                                if (entity instanceof Entity<?>) {
-//                                    Entity e = (Entity) entity;
-//                                    e.setExtendField(fieldName, map.get(ReflectUtil.getFieldValue(e, externalKey.getName())));
-//                                } else if (entity instanceof FormatMap) {
-//                                    ((FormatMap) entity).put(fieldName, map.get(((FormatMap) entity).get(externalKey.getName())));
-//                                }
-//                            }
-//                            // 判断是否需要递归调用
-//                            /**
-//                             * 将外键关联的对象塞入拓展字段中
-//                             */
-//                            List<Column> columns = fieldDefineUtil.getColumns(className, false);
-//                            Set<Column> fieldExternalKeys = columns.stream().filter(f -> f.getExternalClass() != null).collect(Collectors.toSet());
-//                            if (!fieldExternalKeys.isEmpty() && !objList.isEmpty()) {
-//                                updateExternalEntity(fieldExternalKeys, objList);
-//                            }
-//                        }
-//                    } else {
-                    String url = ((Map) entityDefineDTO.getExtendField().get("serviceInstance")).get("contextPath").toString() + Constant.SAPI + "/common/" + className;
+                    String url = ((Map) entityDefineDTO.getExtendField().get("serviceInstance")).get("contextPath").toString() + Constant.SAPI + "/common/" + className + "/all";
                     List<ServiceInstance> instances = discoveryClient.getInstances(entityDefineDTO.getServiceCode());
                     if (instances.isEmpty()) {
                         log.error("updateExternalEntity err, because no instances for service {}", entityDefineDTO.getServiceCode());
@@ -125,13 +92,12 @@ public class EntityServiceFactory implements ApplicationContextAware {
                         params.add(Pair.of(externalKey.getExternalClassPrimaryField() + "[]", key.toString()));
                     }
                     params.add(Pair.of(externalKey.getExternalClassPrimaryField() + "QueryType", "in"));
-                    params.add(Pair.of("current", "1"));
-                    params.add(Pair.of("size", "5000"));
 
                     ServiceInstance randomService = random(instances);
-                    Result<Page<JSONObject>> result = OkHttpUtil.get((randomService.isSecure() ? "https://" : "http://") + randomService.getHost() + ":" + randomService.getPort() + url, header, params, null, new TypeReference<Result<Page<JSONObject>>>() {
-                    });
-                    Map map = CastUtil.listToMap(result.getData().getRecords(), o -> ColumnUtil.toValue(o, externalKey.getType(), externalKey.getExternalClassPrimaryField()));
+                    Result<List<JSONObject>> result = OkHttpUtil.get((randomService.isSecure() ? "https://" : "http://") + randomService.getHost() + ":" + randomService.getPort() + url, header, params, null,
+                            new TypeReference<Result<List<JSONObject>>>() {
+                            });
+                    Map map = CastUtil.listToMap(result.getData(), o -> ColumnUtil.toValue(o, externalKey.getType(), externalKey.getExternalClassPrimaryField()));
 
                     String fieldName = getClassFieldName(className);
                     for (Object entity : entities) {
