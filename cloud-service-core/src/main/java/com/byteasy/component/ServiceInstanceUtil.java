@@ -1,6 +1,6 @@
 package com.byteasy.component;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.api.IServiceInstanceService;
 import com.byteasy.common.util.CastUtil;
@@ -12,11 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Component
 @Log4j2
-public class ServiceInstanceUtil implements IPlatformEntityChangeHandler {
+public class ServiceInstanceUtil implements IPlatformEntityChangeHandler, ICacheLoader<String, ServiceInstanceDTO> {
 
     @Autowired
     private IServiceInstanceService serviceInstanceService;
@@ -32,16 +34,23 @@ public class ServiceInstanceUtil implements IPlatformEntityChangeHandler {
     private void init() {
         if (System.currentTimeMillis() - loadedTime > 6 * 3600 * 1000) {
             serviceInstanceCache.clear();
-            Result<Page<ServiceInstanceDTO>> page = serviceInstanceService.page(1, 10000);
-            serviceInstanceCache.putAll(CastUtil.listToMap(page.getData().getRecords(), ServiceInstanceDTO::getCode));
+            Result<List<ServiceInstanceDTO>> result = serviceInstanceService.list(Map.of());
+            if (result.isSuccess()) {
+                serviceInstanceCache.putAll(CastUtil.listToMap(result.getData(), ServiceInstanceDTO::getCode));
+            }
             loadedTime = System.currentTimeMillis();
             log.info("Load service define. size: {}", serviceInstanceCache.size());
         }
     }
 
     @Override
-    public String className() {
-        return "com.byteasy.platform.entity.ServiceInstance";
+    public ServiceInstanceDTO load(String key) throws ExecutionException {
+        return getServiceInstance(key);
+    }
+
+    @Override
+    public String type() {
+        return Constant.CLS_SERVICE_INSTANCE;
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.byteasy.component;
 
+import cn.hutool.core.util.ArrayUtil;
+import com.byteasy.Constant;
 import com.byteasy.api.IFieldDefineService;
 import com.byteasy.dto.Column;
 import com.byteasy.event.EntityChangeEvent;
@@ -19,7 +21,7 @@ import java.util.List;
 
 @Component
 @Log4j2
-public class FieldDefineUtil implements IPlatformEntityChangeHandler {
+public class FieldDefineUtil implements IPlatformEntityChangeHandler, ICacheLoader<String, List<Column>> {
 
     @Autowired
     private IFieldDefineService fieldDefineService;
@@ -78,13 +80,18 @@ public class FieldDefineUtil implements IPlatformEntityChangeHandler {
 
 
     @Override
-    public String className() {
-        return "com.byteasy.platform.entity.FieldDefine,com.byteasy.platform.entity.FieldGroup";
+    public List<Column> load(String key) {
+        return getColumns(key, false);
+    }
+
+    @Override
+    public String type() {
+        return ArrayUtil.join(new String[]{Constant.CLS_FIELD_DEFINE, Constant.CLS_FIELD_GROUP}, ",");
     }
 
     @Override
     public void handle(EntityChangeEvent event) {
-        if (event.getSource().getClassName().equals("com.byteasy.platform.entity.FieldGroup")) {
+        if (event.getSource().getClassName().equals(Constant.CLS_FIELD_GROUP)) {
             columnsCacheLoader.invalidateAll();
         } else {
             switch (event.getSource().getChangeType()) {

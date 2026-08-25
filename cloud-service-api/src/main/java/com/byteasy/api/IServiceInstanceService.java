@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+import java.util.Map;
+
 @FeignClient(name = "platform-service",
         contextId = "IFrameworkServiceInstanceService",
         path = "/platformSvr" + Constant.SAPI + "/serviceInstances",
@@ -21,4 +24,7 @@ public interface IServiceInstanceService {
 
     @GetMapping
     Result<Page<ServiceInstanceDTO>> page(@RequestParam("current") long current, @RequestParam("size") long size);
+
+    @GetMapping("/list/match")
+    Result<List<ServiceInstanceDTO>> list(@RequestParam Map<String, Object> queryParams);
 }

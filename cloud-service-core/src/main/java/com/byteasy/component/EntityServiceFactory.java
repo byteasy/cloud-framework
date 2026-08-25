@@ -20,7 +20,9 @@ import com.byteasy.dto.FormatMap;
 import com.byteasy.entity.Entity;
 import com.byteasy.enums.RelationType;
 import com.byteasy.util.ColumnUtil;
+import com.byteasy.util.FieldValueUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.Maps;
 import jakarta.annotation.Resource;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.compress.utils.Lists;
@@ -40,6 +42,8 @@ import java.util.*;
 public class EntityServiceFactory implements ApplicationContextAware {
     private static Map<Class<?>, ServiceImpl> entityServiceMap = new HashMap<Class<?>, ServiceImpl>();
 
+    @Autowired
+    private CacheFactory cacheFactory;
     @Autowired
     private EntityDefineUtil entityDefineUtil;
     @Resource
@@ -73,31 +77,44 @@ public class EntityServiceFactory implements ApplicationContextAware {
                 if (RelationType.EXTERNAL_KEY.equals(externalKey.getRelationType())) {
                     // 虽然在本服务领域内定义的实体对象，但是低代码建的模型对象，没有实体类，所以统一通过接口获取
                     // 改为远程接口调用，方便递归填充参照对象
-                    String url = ((Map) entityDefineDTO.getExtendField().get("serviceInstance")).get("contextPath").toString() + Constant.SAPI + "/common/" + className + "/all";
-                    List<ServiceInstance> instances = discoveryClient.getInstances(entityDefineDTO.getServiceCode());
-                    if (instances.isEmpty()) {
-                        log.error("updateExternalEntity err, because no instances for service {}", entityDefineDTO.getServiceCode());
-                        return;
-                    }
-                    Map<String, String> header = new HashMap<>();
-                    List<Pair<String, String>> params = Lists.newArrayList();
-                    UserInfo token = TokenUtil.getUserinfo();
-                    if (token != null) {
-                        header.put(Constant.USER_INFO, Base64.encode(JacksonUtil.toJson(token)));
-                    } else {
-                        header.put(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
-                    }
+                    Map map;
                     Set keys = getPrimaryKeys(externalKey.getName(), entities);
-                    for (Object key : keys) {
-                        params.add(Pair.of(externalKey.getExternalClassPrimaryField() + "[]", key.toString()));
-                    }
-                    params.add(Pair.of(externalKey.getExternalClassPrimaryField() + "QueryType", "in"));
 
-                    ServiceInstance randomService = random(instances);
-                    Result<List<JSONObject>> result = OkHttpUtil.get((randomService.isSecure() ? "https://" : "http://") + randomService.getHost() + ":" + randomService.getPort() + url, header, params, null,
-                            new TypeReference<Result<List<JSONObject>>>() {
-                            });
-                    Map map = CastUtil.listToMap(result.getData(), o -> ColumnUtil.toValue(o, externalKey.getType(), externalKey.getExternalClassPrimaryField()));
+                    if (cacheFactory.cacheable(className)) {
+                        ICacheLoader loader = cacheFactory.getCacheLoader(className);
+                        map = Maps.newHashMap();
+                        for (Object key : keys) {
+                            Object externalEntity = loader.load(key);
+                            map.put(FieldValueUtil.getFieldValue(externalEntity, externalKey.getExternalClassPrimaryField()), externalEntity);
+                        }
+                    } else {
+                        String url = ((Map) entityDefineDTO.getExtendField().get("serviceInstance")).get("contextPath").toString() + Constant.SAPI + "/common/" + className + "/all";
+                        List<ServiceInstance> instances = discoveryClient.getInstances(entityDefineDTO.getServiceCode());
+                        if (instances.isEmpty()) {
+                            log.error("updateExternalEntity err, because no instances for service {}", entityDefineDTO.getServiceCode());
+                            return;
+                        }
+
+                        Map<String, String> header = new HashMap<>();
+                        UserInfo token = TokenUtil.getUserinfo();
+                        if (token != null) {
+                            header.put(Constant.USER_INFO, Base64.encode(JacksonUtil.toJson(token)));
+                        } else {
+                            header.put(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
+                        }
+
+                        List<Pair<String, String>> params = Lists.newArrayList();
+                        for (Object key : keys) {
+                            params.add(Pair.of(externalKey.getExternalClassPrimaryField() + "[]", key.toString()));
+                        }
+                        params.add(Pair.of(externalKey.getExternalClassPrimaryField() + "QueryType", "in"));
+
+                        ServiceInstance randomService = random(instances);
+                        Result<List<JSONObject>> result = OkHttpUtil.get((randomService.isSecure() ? "https://" : "http://") + randomService.getHost() + ":" + randomService.getPort() + url, header, params, null,
+                                new TypeReference<Result<List<JSONObject>>>() {
+                                });
+                        map = CastUtil.listToMap(result.getData(), o -> ColumnUtil.toValue(o, externalKey.getType(), externalKey.getExternalClassPrimaryField()));
+                    }
 
                     String fieldName = getClassFieldName(className);
                     for (Object entity : entities) {

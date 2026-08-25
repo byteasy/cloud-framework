@@ -21,8 +21,8 @@ import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.component.EntityDefineUtil;
 import com.byteasy.component.EntityServiceFactory;
-import com.byteasy.component.I18nUtil;
 import com.byteasy.component.FieldDefineUtil;
+import com.byteasy.component.I18nUtil;
 import com.byteasy.dto.Column;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.RelationType;
@@ -82,6 +82,23 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
             entityServiceFactory.updateExternalEntity(externalKeys, page.getRecords());
         }
         return Result.success(page);
+    }
+
+    @GetMapping("/list/match")
+    @Authentication
+    @Operation(summary = "匹配查询")
+    public Result<List<? extends ENTITY>> list() throws Exception {
+        List<? extends ENTITY> list = baseService.list(RequestUtil.getQueryWrapper(baseService.getEntityClass()));
+
+        /**
+         * 将外键关联的对象塞入拓展字段中
+         */
+        List<Column> columns = fieldDefineUtil.getColumns(getEntityClass().getName(), false);
+        Set<Column> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
+        if (!externalKeys.isEmpty()) {
+            entityServiceFactory.updateExternalEntity(externalKeys, list);
+        }
+        return Result.success(list);
     }
 
     @GetMapping("/{id}")

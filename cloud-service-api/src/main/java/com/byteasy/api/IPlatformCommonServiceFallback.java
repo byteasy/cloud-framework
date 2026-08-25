@@ -5,6 +5,7 @@ import com.byteasy.Result;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
 import java.util.Map;
 
 public class IPlatformCommonServiceFallback implements IPlatformCommonService {
@@ -16,6 +17,11 @@ public class IPlatformCommonServiceFallback implements IPlatformCommonService {
 
     @Override
     public Result<Page<Map<String, Object>>> page(String className, Map<String, Object> queryParams) {
+        return null;
+    }
+
+    @Override
+    public Result<List<Map<String, Object>>> list(String className, Map<String, Object> queryParams) {
         return null;
     }
 }
