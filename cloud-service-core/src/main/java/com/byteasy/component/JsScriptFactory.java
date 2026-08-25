@@ -1,5 +1,6 @@
 package com.byteasy.component;
 
+import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.api.IPlatformCommonService;
 import com.byteasy.event.EntityChangeEvent;
@@ -22,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @Log4j2
-public class JsScriptFactory implements IPlatformEntityChangeHandler {
+public class JsScriptFactory implements IPlatformEntityChangeHandler, ICacheLoader<Long, Map<String, Object>> {
 
     @Autowired
     private IPlatformCommonService platformCommonService;
@@ -46,8 +47,13 @@ public class JsScriptFactory implements IPlatformEntityChangeHandler {
     }
 
     @Override
-    public String className() {
-        return "com.byteasy.platform.entity.JsScript";
+    public Map<String, Object> load(Long key) throws ExecutionException {
+        return getScript(key);
+    }
+
+    @Override
+    public String type() {
+        return Constant.CLS_JS_SCRIPT;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.byteasy.component;
 
+import com.byteasy.Constant;
 import com.byteasy.api.IEntityDefineService;
 import com.byteasy.dto.EntityDefineDTO;
 import com.byteasy.event.EntityChangeEvent;
@@ -17,7 +18,7 @@ import java.util.concurrent.ExecutionException;
 
 @Component
 @Log4j2
-public class EntityDefineUtil implements IPlatformEntityChangeHandler {
+public class EntityDefineUtil implements IPlatformEntityChangeHandler, ICacheLoader<String, EntityDefineDTO> {
     @Autowired
     private IEntityDefineService entityDefineService;
 
@@ -29,8 +30,8 @@ public class EntityDefineUtil implements IPlatformEntityChangeHandler {
     });
 
     @Override
-    public String className() {
-        return "com.byteasy.platform.entity.EntityDefine";
+    public String type() {
+        return Constant.CLS_ENTITY_DEFINE;
     }
 
     @Override
@@ -66,5 +67,10 @@ public class EntityDefineUtil implements IPlatformEntityChangeHandler {
             log.error(e);
         }
         return entityDefine;
+    }
+
+    @Override
+    public EntityDefineDTO load(String key) {
+        return getEntityDefine(this.type());
     }
 }

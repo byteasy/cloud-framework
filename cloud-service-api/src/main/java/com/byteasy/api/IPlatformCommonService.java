@@ -8,12 +8,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
 import java.util.Map;
 
 @FeignClient(name = "platform-service",
         contextId = "IFrameworkPlatformCommonService",
         path = "/platformSvr" + Constant.SAPI + "/common",
-        fallback = IServiceInstanceServiceFallback.class)
+        fallback = IPlatformCommonServiceFallback.class)
 public interface IPlatformCommonService {
 
     @GetMapping("/{className}/{id}")
@@ -21,4 +22,7 @@ public interface IPlatformCommonService {
 
     @GetMapping("/{className}")
     Result<Page<Map<String, Object>>> page(@PathVariable("className") String className, @RequestParam Map<String, Object> queryParams);
+
+    @GetMapping("/{className}/all")
+    Result<List<Map<String, Object>>> list(@PathVariable("className") String className, @RequestParam Map<String, Object> queryParams);
 }

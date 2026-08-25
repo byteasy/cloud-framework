@@ -15,4 +15,12 @@ public class FieldValueUtil {
             return (T) value;
         }
     }
+
+    public static Object getFieldValue(Object object, String fieldName) {
+        if (object instanceof Map<?, ?>) {
+            return ((Map<?, ?>) object).get(fieldName);
+        } else {
+            return ReflectUtil.getFieldValue(object, fieldName);
+        }
+    }
 }

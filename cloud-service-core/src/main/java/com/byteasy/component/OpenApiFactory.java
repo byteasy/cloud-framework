@@ -1,7 +1,6 @@
 package com.byteasy.component;
 
-import cn.hutool.core.util.ReflectUtil;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.api.IPlatformCommonService;
 import com.byteasy.event.EntityChangeEvent;
@@ -16,11 +15,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @Component
-public class OpenApiFactory implements IPlatformEntityChangeHandler {
+public class OpenApiFactory implements IPlatformEntityChangeHandler, ICacheLoader<String, Map<String, Object>> {
 
     @Autowired
     private IPlatformCommonService platformCommonService;
@@ -30,9 +30,10 @@ public class OpenApiFactory implements IPlatformEntityChangeHandler {
         public Map<String, Object> load(String apiCode) {
             Map<String, Object> params = Maps.newHashMapWithExpectedSize(1);
             params.put("code", apiCode);
-            Result<Page<Map<String, Object>>> result = platformCommonService.page("com.byteasy.platform.entity.Openapi", params);
-            if (result.isSuccess() && result.getData() != null && result.getData().getRecords() != null && !result.getData().getRecords().isEmpty()) {
-                return result.getData().getRecords().getFirst();
+            params.put("codeQueryType", "eq");
+            Result<List<Map<String, Object>>> result = platformCommonService.list("com.byteasy.platform.entity.Openapi", params);
+            if (result.isSuccess() && !result.getData().isEmpty()) {
+                return result.getData().getFirst();
             } else {
                 return null;
             }
@@ -44,8 +45,13 @@ public class OpenApiFactory implements IPlatformEntityChangeHandler {
     }
 
     @Override
-    public String className() {
-        return "com.byteasy.platform.entity.OpenApi";
+    public Map<String, Object> load(String key) throws ExecutionException {
+        return getOpenApi(key);
+    }
+
+    @Override
+    public String type() {
+        return Constant.CLS_OPEN_API;
     }
 
     @Override
