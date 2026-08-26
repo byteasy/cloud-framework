@@ -349,6 +349,14 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     @Override
+    public void syncColumnsToDb(String className) {
+        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        String schema = databaseMetaService.getCurrentSchema();
+        databaseMetaService.syncColumnsToDb(columDefList, schema, entityDefineDTO.getTableName());
+    }
+
+    @Override
     public Collection<Column> getColumnsByTableName(String tableName) {
         String schema = databaseMetaService.getCurrentSchema();
         return databaseMetaService.getColumns(null, schema, tableName);

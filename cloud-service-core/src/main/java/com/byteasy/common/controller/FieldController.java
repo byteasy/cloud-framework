@@ -8,10 +8,7 @@ import com.byteasy.service.ICommonService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
 
@@ -26,26 +23,33 @@ public class FieldController {
     private ICommonService commonService;
 
     @GetMapping("/{className}")
-    @Operation(summary = "查询业务对象的字段信息")
+    @Operation(summary = "查询平台模型字段定义")
     public Result<Collection<Column>> getSchemaMetaInfo(@PathVariable("className") String className) {
         return Result.success(fieldDefineUtil.getColumns(className, false));
     }
 
     @GetMapping("/src/{className}")
-    @Operation(summary = "查询代码中业务对象的字段信息")
+    @Operation(summary = "查询模型代码字段定义")
     public Result<Collection<Column>> getSrcSchemaMetaInfo(@PathVariable("className") String className) {
         return Result.success(fieldDefineUtil.getColumns(className, true));
     }
 
     @GetMapping("/database/{className}")
-    @Operation(summary = "查询数据库表结构中的字段信息")
+    @Operation(summary = "查询数据库实体模型字段定义")
     public Result<Collection<Column>> getDatabaseSchemaMetaInfo(@PathVariable("className") String className) {
         return Result.success(commonService.getColumns(className));
     }
 
     @GetMapping("/database/currentSchema/{tableName}")
-    @Operation(summary = "查询数据库表结构中的字段信息")
+    @Operation(summary = "查询当前模式下数据库实体模型字段定义")
     public Result<Collection<Column>> getCurrentSchemaTableColumns(@PathVariable("tableName") String tableName) {
         return Result.success(commonService.getColumnsByTableName(tableName));
+    }
+
+    @PostMapping("/database/currentSchema/{className}")
+    @Operation(summary = "同步平台模型至数据库物理模型")
+    public Result saveDatabaseSchemaMetaInfo(@PathVariable("className") String className) {
+        commonService.syncColumnsToDb(className);
+        return Result.success();
     }
 }
