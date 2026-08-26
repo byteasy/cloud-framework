@@ -1,6 +1,9 @@
 package com.byteasy.util;
 
+import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.EnumUtil;
+import cn.hutool.core.util.NumberUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -8,10 +11,12 @@ import com.byteasy.annotations.FieldDisplay;
 import com.byteasy.annotations.FieldMeta;
 import com.byteasy.common.util.GenericTypeUtil;
 import com.byteasy.common.util.NameConvertUtil;
+import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.dto.Column;
 import com.byteasy.enums.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import io.swagger.v3.core.util.ReflectionUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +24,9 @@ import org.springframework.cglib.proxy.Proxy;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -270,5 +278,119 @@ public class ColumnUtil {
             }
         }
         return jsonObject.get(fieldName);
+    }
+
+    public static Set<Object> getPrimaryKeys(Column primaryKey, List<Map<String, Object>> entities) {
+        Set<Object> result = Sets.newHashSet();
+        for (Map<String, Object> entity : entities) {
+            result.add(convertToDbValue(entity.get(primaryKey.getName()), primaryKey));
+        }
+        return result;
+    }
+
+    public static Object convertToDbValue(Object value, Column column) {
+        if (value == null) {
+            return null;
+        }
+        String valStr = value instanceof String ? (String) value : String.valueOf(value);
+        if (valStr.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return switch (column.getType()) {
+                case BYTE, SHORT, INT, LONG -> NumberUtil.parseLong(valStr);
+                case FLOAT, DOUBLE -> NumberUtil.parseDouble(valStr);
+                case BOOL -> BooleanUtil.toBoolean(valStr);
+                case LOCAL_DATE_TIME ->
+                        Timestamp.valueOf(LocalDateTime.parse(valStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                case LOCAL_DATE ->
+                        Timestamp.valueOf(LocalDateTime.parse(valStr, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                case ENUM -> {
+                    String className = column.getTypeClassName();
+                    if (className == null) yield null;
+
+                    try {
+                        Class<?> clazz = Class.forName(className);
+
+                        // 必须是枚举，且实现 IBaseEnum
+                        if (!clazz.isEnum() || !IBaseEnum.class.isAssignableFrom(clazz)) {
+                            yield null;
+                        }
+
+                        // 拿到所有枚举实例
+                        Object[] enums = clazz.getEnumConstants();
+                        for (Object e : enums) {
+                            if (e instanceof IBaseEnum<?>) {
+                                IBaseEnum<?> enumObj = (IBaseEnum<?>) e;
+                                // 把枚举值转成字符串比较，匹配传入的 valStr
+                                if (String.valueOf(enumObj.getEnumName()).equals(valStr)) {
+                                    yield enumObj.getValue();
+                                }
+                            }
+                        }
+                        yield null;
+                    } catch (Exception e) {
+                        // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
+                        Object resultValue = null;
+                        FieldDefineUtil fieldDefineUtil = SpringUtil.getBean(FieldDefineUtil.class);
+                        List<Column> enumDefineList = fieldDefineUtil.getColumns(className, false);
+                        for (Column enumDef : enumDefineList) {
+                            if (enumDef.getName().equals(valStr)) {
+                                switch (enumDef.getType()) {
+                                    case BYTE, SHORT, INT, LONG -> resultValue = Long.valueOf(enumDef.getFieldName());
+                                    case BOOL -> resultValue = Boolean.valueOf(enumDef.getFieldName());
+                                    case FLOAT, DOUBLE -> resultValue = Double.valueOf(enumDef.getFieldName());
+                                    case STRING -> resultValue = enumDef.getFieldName();
+                                }
+                            }
+                        }
+                        yield resultValue;
+                    }
+                }
+                default -> valStr;
+            };
+        } catch (Exception e) {
+            return value;
+        }
+    }
+
+
+    public static Object convertToEntityValue(Object value, Column column) {
+        switch (column.getType()) {
+            case ENUM -> {
+                String className = column.getTypeClassName();
+                if (className == null) return value;
+                try {
+                    Class<?> clazz = Class.forName(className);
+                    // 必须是枚举，且实现 IBaseEnum
+                    if (!clazz.isEnum() || !IBaseEnum.class.isAssignableFrom(clazz)) {
+                        return value;
+                    }
+                    // 拿到所有枚举实例
+                    Object[] enums = clazz.getEnumConstants();
+                    for (Object e : enums) {
+                        if (e instanceof IBaseEnum<?>) {
+                            IBaseEnum<?> enumObj = (IBaseEnum<?>) e;
+                            if (enumObj.getValue().equals(value)) {
+                                return enumObj;
+                            }
+                        }
+                    }
+                    return value;
+                } catch (Exception e) {
+                    // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
+                    FieldDefineUtil fieldDefineUtil = SpringUtil.getBean(FieldDefineUtil.class);
+                    List<Column> enumDefineList = fieldDefineUtil.getColumns(className, false);
+                    for (Column enumDef : enumDefineList) {
+                        if (enumDef.getFieldName().equals(String.valueOf(value))) {
+                            return enumDef.getName();
+                        }
+                    }
+                    return value;
+                }
+            }
+        }
+        return value;
     }
 }

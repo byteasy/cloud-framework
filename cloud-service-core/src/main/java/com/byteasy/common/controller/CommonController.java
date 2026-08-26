@@ -115,6 +115,18 @@ public class CommonController {
         return Result.success(commonService.removeById(className, id));
     }
 
+    @DeleteMapping("/{className}/batch")
+    @Authentication
+    @Operation(summary = "批量删除")
+    @Log
+    public Result<Boolean> batchRemove(@PathVariable("className") String className, @RequestBody List<Map<String, Object>> entities) throws Exception {
+        if (log.isInfoEnabled()) {
+            log.info("className: {}, batchRemove: {}", className, JacksonUtil.toJson(entities));
+        }
+        commonService.batchRemove(className, entities);
+        return Result.success();
+    }
+
     @GetMapping("/{className}/excel/template")
     @Authentication
     @Operation(summary = "下载Excel导入模板")
