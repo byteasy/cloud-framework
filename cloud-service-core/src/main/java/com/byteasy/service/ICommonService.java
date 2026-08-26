@@ -27,5 +27,7 @@ public interface ICommonService {
 
     Collection<Column> getColumns(String className);
 
+    void syncColumnsToDb(String className);
+
     Collection<Column> getColumnsByTableName(String tableName);
 }
