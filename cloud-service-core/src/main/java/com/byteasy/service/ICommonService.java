@@ -25,6 +25,8 @@ public interface ICommonService {
 
     boolean removeById(String className, Object id);
 
+    boolean batchRemove(String className, List<Map<String, Object>> entities);
+
     Collection<Column> getColumns(String className);
 
     void syncColumnsToDb(String className);

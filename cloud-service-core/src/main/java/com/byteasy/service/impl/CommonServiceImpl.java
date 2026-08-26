@@ -1,8 +1,6 @@
 package com.byteasy.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.BooleanUtil;
-import cn.hutool.core.util.NumberUtil;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.byteasy.common.token.TokenUtil;
@@ -38,6 +36,8 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
@@ -48,17 +48,20 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.byteasy.util.ColumnUtil.convertToDbValue;
+import static com.byteasy.util.ColumnUtil.convertToEntityValue;
 
 @Service
 @Log4j2
 public class CommonServiceImpl implements ICommonService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     @Autowired
     private FieldDefineUtil fieldDefineUtil;
     @Autowired
@@ -334,6 +337,65 @@ public class CommonServiceImpl implements ICommonService {
             String sql = "DELETE FROM " + entityDefineDTO.getTableName();
             sql += " WHERE ID=?";
             int rows = jdbcTemplate.update(sql, convertToDbValue(id, columnMap.get("id")));
+            if (rows < 1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean batchRemove(String className, List<Map<String, Object>> entities) {
+        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
+        Optional<Column> primaryKeyOptional = columDefList.stream().filter(s -> YesNo.YES.equals(s.getIsPrimary())).findFirst();
+        if (!primaryKeyOptional.isPresent()) {
+            throw new BizException("className: " + className + " :缺少主键定义");
+        }
+        Column primaryKey = primaryKeyOptional.get();
+
+        publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.BATCH_DELETE, entities, null, className)));
+
+        MapSqlParameterSource paramSource = new MapSqlParameterSource();
+
+        if (isLogicDeleteEntity(columnMap)) {
+            StringJoiner setJoiner = new StringJoiner(",");
+
+            setJoiner.add("IS_DELETED=1");
+            // 处理审计相关信息
+            UserInfo userInfo = TokenUtil.getUserinfo();
+            if (columnMap.containsKey("deleterId")) {
+                setJoiner.add(columnMap.get("deleterId").getFieldName() + "=:deleterId");
+                paramSource.addValue("deleterId", userInfo.getUserId());
+            }
+            if (columnMap.containsKey("deletedBy")) {
+                setJoiner.add(columnMap.get("deletedBy").getFieldName() + "=:deletedBy");
+                paramSource.addValue("deletedBy", StringUtils.deleteWhitespace(userInfo.getName()));
+            }
+            if (columnMap.containsKey("deletedTime")) {
+                setJoiner.add(columnMap.get("deletedTime").getFieldName() + "=:deletedTime");
+                paramSource.addValue("deletedTime", convertToDbValue(LocalDateTime.now(), columnMap.get("deletedTime")));
+            }
+            // 处理乐观锁
+            setJoiner.add("VERSION=VERSION + 1");
+
+            paramSource.addValue(primaryKey.getName(), ColumnUtil.getPrimaryKeys(primaryKey, entities));
+            String sql = String.format(
+                    "UPDATE %s SET %s WHERE %s in (:id)",
+                    entityDefineDTO.getTableName(),
+                    setJoiner, primaryKey.getFieldName()
+            );
+            int rows = namedParameterJdbcTemplate.update(sql, paramSource);
+            if (rows < 1) {
+                return false;
+            }
+        } else {
+            String sql = String.format("DELETE FROM %s WHERE %s in(:%s)",
+                    entityDefineDTO.getTableName(), primaryKey.getName(), primaryKey.getName());
+            paramSource.addValue(primaryKey.getName(), ColumnUtil.getPrimaryKeys(primaryKey, entities));
+            int rows = namedParameterJdbcTemplate.update(sql, paramSource);
             if (rows < 1) {
                 return false;
             }
@@ -1042,108 +1104,5 @@ public class CommonServiceImpl implements ICommonService {
             selJoiner.add(String.format("%s as \"%s\"", column.getFieldName(), column.getName()));
         }
         return selJoiner.toString();
-    }
-
-    public Object convertToEntityValue(Object value, Column column) {
-        switch (column.getType()) {
-            case ENUM -> {
-                String className = column.getTypeClassName();
-                if (className == null) return value;
-                try {
-                    Class<?> clazz = Class.forName(className);
-                    // 必须是枚举，且实现 IBaseEnum
-                    if (!clazz.isEnum() || !IBaseEnum.class.isAssignableFrom(clazz)) {
-                        return value;
-                    }
-                    // 拿到所有枚举实例
-                    Object[] enums = clazz.getEnumConstants();
-                    for (Object e : enums) {
-                        if (e instanceof IBaseEnum<?>) {
-                            IBaseEnum<?> enumObj = (IBaseEnum<?>) e;
-                            if (enumObj.getValue().equals(value)) {
-                                return enumObj;
-                            }
-                        }
-                    }
-                    return value;
-                } catch (Exception e) {
-                    // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
-                    List<Column> enumDefineList = fieldDefineUtil.getColumns(className, false);
-                    for (Column enumDef : enumDefineList) {
-                        if (enumDef.getFieldName().equals(String.valueOf(value))) {
-                            return enumDef.getName();
-                        }
-                    }
-                    return value;
-                }
-            }
-        }
-        return value;
-    }
-
-    public Object convertToDbValue(Object value, Column column) {
-        if (value == null) {
-            return null;
-        }
-        String valStr = value instanceof String ? (String) value : String.valueOf(value);
-        if (valStr.isEmpty()) {
-            return null;
-        }
-
-        try {
-            return switch (column.getType()) {
-                case BYTE, SHORT, INT, LONG -> NumberUtil.parseLong(valStr);
-                case FLOAT, DOUBLE -> NumberUtil.parseDouble(valStr);
-                case BOOL -> BooleanUtil.toBoolean(valStr);
-                case LOCAL_DATE_TIME ->
-                        Timestamp.valueOf(LocalDateTime.parse(valStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-                case LOCAL_DATE ->
-                        Timestamp.valueOf(LocalDateTime.parse(valStr, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                case ENUM -> {
-                    String className = column.getTypeClassName();
-                    if (className == null) yield null;
-
-                    try {
-                        Class<?> clazz = Class.forName(className);
-
-                        // 必须是枚举，且实现 IBaseEnum
-                        if (!clazz.isEnum() || !IBaseEnum.class.isAssignableFrom(clazz)) {
-                            yield null;
-                        }
-
-                        // 拿到所有枚举实例
-                        Object[] enums = clazz.getEnumConstants();
-                        for (Object e : enums) {
-                            if (e instanceof IBaseEnum<?>) {
-                                IBaseEnum<?> enumObj = (IBaseEnum<?>) e;
-                                // 把枚举值转成字符串比较，匹配传入的 valStr
-                                if (String.valueOf(enumObj.getEnumName()).equals(valStr)) {
-                                    yield enumObj.getValue();
-                                }
-                            }
-                        }
-                        yield null;
-                    } catch (Exception e) {
-                        // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
-                        Object resultValue = null;
-                        List<Column> enumDefineList = fieldDefineUtil.getColumns(className, false);
-                        for (Column enumDef : enumDefineList) {
-                            if (enumDef.getName().equals(valStr)) {
-                                switch (enumDef.getType()) {
-                                    case BYTE, SHORT, INT, LONG -> resultValue = Long.valueOf(enumDef.getFieldName());
-                                    case BOOL -> resultValue = Boolean.valueOf(enumDef.getFieldName());
-                                    case FLOAT, DOUBLE -> resultValue = Double.valueOf(enumDef.getFieldName());
-                                    case STRING -> resultValue = enumDef.getFieldName();
-                                }
-                            }
-                        }
-                        yield resultValue;
-                    }
-                }
-                default -> valStr;
-            };
-        } catch (Exception e) {
-            return value;
-        }
     }
 }
