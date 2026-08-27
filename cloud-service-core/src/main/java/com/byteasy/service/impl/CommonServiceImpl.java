@@ -16,7 +16,10 @@ import com.byteasy.dto.Column;
 import com.byteasy.dto.EntityDefineDTO;
 import com.byteasy.dto.FormatMap;
 import com.byteasy.entity.LogicDeleteEntity;
-import com.byteasy.enums.*;
+import com.byteasy.enums.ColumnType;
+import com.byteasy.enums.Delete;
+import com.byteasy.enums.RelationType;
+import com.byteasy.enums.YesNo;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
 import com.byteasy.exception.BizException;
@@ -516,7 +519,9 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     private Pair<String, List<Object>> buildWhereSql(Map<String, Column> columnMap, Map<String, ?> multiMap) {
-        StringJoiner whereStr = new StringJoiner(" AND ");
+        Object matchLogic = multiMap.get("matchLogic");
+        String matchLogicVar = matchLogic != null ? (matchLogic.getClass().isArray() ? ((String[]) matchLogic)[0] : matchLogic.toString()) : "AND";
+        StringJoiner whereStr = new StringJoiner(" " + matchLogicVar + " ");
 
         // 保存查询参数，后面要传给 jdbcTemplate
         List<Object> params = new ArrayList<>();
@@ -648,14 +653,14 @@ public class CommonServiceImpl implements ICommonService {
                 case "likeright":
                     if (StringUtils.isNotBlank(valueArr[0])) {
                         finalSql = "\"" + dbFieldName + "\" LIKE ?";
-                        finalParams.add(valueArr[0] + "%");
+                        finalParams.add("%" + valueArr[0]);
                     }
                     break;
 
                 case "likeleft":
                     if (StringUtils.isNotBlank(valueArr[0])) {
                         finalSql = "\"" + dbFieldName + "\" LIKE ?";
-                        finalParams.add("%" + valueArr[0]);
+                        finalParams.add(valueArr[0] + "%");
                     }
                     break;
 
