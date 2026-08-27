@@ -17,59 +17,61 @@ import java.util.stream.Collectors;
 import static com.byteasy.util.ColumnUtil.convertToDbValue;
 
 public class SqlUtil {
-    private static Set<String> auditEntityPropSet = ColumnUtil.getFieldNames(LogicDeleteEntity.class);
+    private static final Set<String> auditEntityPropSet = ColumnUtil.getFieldNames(LogicDeleteEntity.class);
 
     public static String getSingleStringValue(Map<String, ?> multiMap, String key, String defaultValue) {
+        if (multiMap == null) return defaultValue;
         Object value = multiMap.get(key);
+        if (value == null) {
+            // 兼容带下划线的前缀参数如 _matchLogic
+            value = multiMap.get("_" + key);
+        }
         if (value == null) return defaultValue;
         return value.getClass().isArray() ? ((String[]) value)[0] : value.toString();
     }
 
+    /**
+     * 统一入口：自动路由单框快速搜索与多条件高级搜索
+     */
     public static Pair<String, List<Object>> buildWhereSql(Map<String, Column> columnMap, Map<String, ?> multiMap) {
-        String matchLogic = getSingleStringValue(multiMap, "matchLogic", null);
-        if (StringUtils.isNotEmpty(matchLogic)) {
-            return buildWhereSqlAdvance(columnMap, multiMap);
+        if (multiMap == null || multiMap.isEmpty()) {
+            return buildLogicDeleteWhere(columnMap);
         }
+
         String oneKeySearch = getSingleStringValue(multiMap, "oneKeySearch", null);
-        if (StringUtils.isNotEmpty(oneKeySearch)) {
+
+        // 判断是否存在具体字段的高级检索参数
+        boolean hasSpecificFieldQuery = multiMap.keySet().stream().anyMatch(key -> {
+            String cleanKey = key.replace("[]", "");
+            return columnMap.containsKey(cleanKey) && !key.endsWith("QueryType") && !key.endsWith("Readonly");
+        });
+
+        // 如果存在一键搜索且没有具体字段高级过滤，走一键快速搜索
+        if (StringUtils.isNotBlank(oneKeySearch) && !hasSpecificFieldQuery) {
             return buildWhereSqlOneWord(columnMap, multiMap);
         }
+
+        // 默认走高级复合查询
         return buildWhereSqlAdvance(columnMap, multiMap);
     }
 
+    /**
+     * 高级多条件复合查询
+     */
     public static Pair<String, List<Object>> buildWhereSqlAdvance(Map<String, Column> columnMap, Map<String, ?> multiMap) {
-        String matchLogic = getSingleStringValue(multiMap, "matchLogic", "AND");
-        StringJoiner whereStr = new StringJoiner(" " + matchLogic + " ");
+        String matchLogic = getSingleStringValue(multiMap, "matchLogic", "AND").trim().toUpperCase();
+        if (!"AND".equals(matchLogic) && !"OR".equals(matchLogic)) {
+            matchLogic = "AND";
+        }
 
-        // 保存查询参数，后面要传给 jdbcTemplate
+        StringJoiner conditionJoiner = new StringJoiner(" " + matchLogic + " ");
         List<Object> params = new ArrayList<>();
 
         for (String name : multiMap.keySet()) {
-            String fieldName = name;
-            Object mapValue = multiMap.get(name);
+            String fieldName = name.replace("[]", "");
 
-            // 处理数组参数 name[]
-            if (fieldName.contains("[]")) {
-                fieldName = fieldName.replace("[]", "");
-            }
-
-            // 不在字段定义里，跳过
-            if (!columnMap.containsKey(fieldName)) {
-                continue;
-            }
-
-            String[] valueArr = null;
-            if (mapValue.getClass().isArray()) {
-                valueArr = (String[]) mapValue;
-            } else if (mapValue instanceof Collection<?>) {
-                Collection<?> collection = (Collection<?>) mapValue;
-                valueArr = collection.stream().map(String::valueOf).toArray(String[]::new);
-            } else if (mapValue instanceof String) {
-                valueArr = new String[]{mapValue.toString()};
-            } else {
-                valueArr = new String[]{JacksonUtil.toJson(mapValue)};
-            }
-            if (valueArr == null || valueArr.length == 0) {
+            // 过滤系统保留字段和未在模型定义的字段
+            if (!columnMap.containsKey(fieldName) || fieldName.endsWith("QueryType") || fieldName.endsWith("Readonly")) {
                 continue;
             }
 
@@ -80,154 +82,68 @@ public class SqlUtil {
             }
 
             // 查询类型
-            String queryType = (String) (MapUtil.getSingleValue(multiMap, fieldName + "QueryType"));
+            String queryType = getSingleStringValue(multiMap, fieldName + "QueryType", null);
+            Object mapValue = multiMap.get(name);
 
-            // 日期自动 between
-            if (queryType == null && valueArr.length > 1) {
-                if (column.getType() == ColumnType.LOCAL_DATE
-                        || column.getType() == ColumnType.LOCAL_DATE_TIME) {
-                    queryType = "between";
+            // 解析参数数组
+            String[] valueArr = parseStringArray(mapValue);
+
+            // 智能推断缺省 QueryType
+            if (StringUtils.isBlank(queryType)) {
+                if (valueArr != null && valueArr.length > 1) {
+                    if (column.getType() == ColumnType.LOCAL_DATE || column.getType() == ColumnType.LOCAL_DATE_TIME) {
+                        queryType = "between";
+                    } else {
+                        queryType = "in";
+                    }
+                } else if (ColumnType.STRING.equals(column.getType())) {
+                    queryType = "like";
+                } else {
+                    queryType = "eq";
                 }
             }
 
-            // 字符串默认 like
-            if (queryType == null && ColumnType.STRING.equals(column.getType())) {
-                queryType = "like";
-            }
+            queryType = queryType.toLowerCase();
 
-            // 多值默认 in
-            if (queryType == null && valueArr.length > 1) {
-                queryType = "in";
-            }
-
-            // 默认 eq
-            if (queryType == null) {
-                queryType = "eq";
-            }
-
-            for (String v : valueArr) {
-                if (SqlInjectionUtils.check(v)) {
-                    throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + v);
+            // isNull / isNotNull 无需入参值
+            if (!"isnull".equals(queryType) && !"isnotnull".equals(queryType)) {
+                if (valueArr == null || valueArr.length == 0 || StringUtils.isBlank(valueArr[0])) {
+                    continue;
+                }
+                // SQL 防注入检查
+                for (String v : valueArr) {
+                    if (StringUtils.isNotBlank(v) && SqlInjectionUtils.check(v)) {
+                        throw new BizException("Discovering SQL injection in column: " + column.getName() + ", value: " + v);
+                    }
                 }
             }
-            // ==============================================
-            // 拼接 SQL 条件
-            // ==============================================
-            String finalSql = null;
-            List<Object> finalParams = new ArrayList<>();
 
-            switch (queryType.toLowerCase()) {
-                case "eq":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" = ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                    }
-                    break;
-
-                case "ne":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" != ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                    }
-                    break;
-
-                case "gt":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" > ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                    }
-                    break;
-
-                case "ge":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" >= ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                    }
-                    break;
-
-                case "lt":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" < ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                    }
-                    break;
-
-                case "le":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" <= ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                    }
-                    break;
-
-                case "like":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" LIKE ?";
-                        finalParams.add("%" + valueArr[0] + "%");
-                    }
-                    break;
-
-                case "likeright":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" LIKE ?";
-                        finalParams.add("%" + valueArr[0]);
-                    }
-                    break;
-
-                case "likeleft":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" LIKE ?";
-                        finalParams.add(valueArr[0] + "%");
-                    }
-                    break;
-
-                case "in":
-                    List<?> inList = Arrays.stream(valueArr)
-                            .map(v -> convertToDbValue(v, column))
-                            .collect(Collectors.toList());
-                    String placeholders = String.join(",", Collections.nCopies(inList.size(), "?"));
-                    finalSql = "\"" + dbFieldName + "\" IN (" + placeholders + ")";
-                    finalParams.addAll(inList);
-                    break;
-
-                case "between":
-                    if (valueArr.length >= 2
-                            && StringUtils.isNotBlank(valueArr[0])
-                            && StringUtils.isNotBlank(valueArr[1])) {
-                        finalSql = "\"" + dbFieldName + "\" BETWEEN ? AND ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                        finalParams.add(convertToDbValue(valueArr[1], column));
-                    }
-                    break;
-
-                case "isnull":
-                    finalSql = "\"" + dbFieldName + "\" IS NULL";
-                    break;
-
-                case "isnotnull":
-                    finalSql = "\"" + dbFieldName + "\" IS NOT NULL";
-                    break;
+            // 针对逗号分隔的 between / in 进行自动拆分
+            if (("between".equals(queryType) || "in".equals(queryType)) && valueArr.length == 1 && valueArr[0].contains(",")) {
+                valueArr = valueArr[0].split(",");
             }
 
-            if (finalSql != null) {
-                whereStr.add(finalSql);
-                params.addAll(finalParams);
-            }
+            // 构建单字段 SQL 片段
+            buildSingleFieldSql(column, dbFieldName, queryType, valueArr, conditionJoiner, params);
         }
 
-        if (isLogicDeleteEntity(columnMap)) {
-            whereStr.add("\"IS_DELETED\"=?");
-            params.add(convertToDbValue(Delete.NORMAL, columnMap.get("isDeleted")));
-        }
-
-        String where = whereStr.length() > 0 ? " WHERE " + whereStr : "";
-        return Pair.create(where, params);
+        return formatFinalWhereSql(columnMap, conditionJoiner, params);
     }
 
+    /**
+     * 单框一键全文搜索（跨所有可搜索字段进行 OR 匹配）
+     */
     public static Pair<String, List<Object>> buildWhereSqlOneWord(Map<String, Column> columnMap, Map<String, ?> multiMap) {
-        StringJoiner whereStr = new StringJoiner(" OR ");
-        String oneKeySearch = getSingleStringValue(multiMap, "oneKeySearch", null);
+        String oneKeySearch = getSingleStringValue(multiMap, "oneKeySearch", "").trim();
+        if (StringUtils.isBlank(oneKeySearch)) {
+            return buildLogicDeleteWhere(columnMap);
+        }
 
-        // 保存查询参数，后面要传给 jdbcTemplate
+        if (SqlInjectionUtils.check(oneKeySearch)) {
+            throw new BizException("Discovering SQL injection in oneKeySearch: " + oneKeySearch);
+        }
+
+        StringJoiner conditionJoiner = new StringJoiner(" OR ");
         List<Object> params = new ArrayList<>();
 
         for (Column column : columnMap.values()) {
@@ -238,52 +154,158 @@ public class SqlUtil {
             if (StringUtils.isBlank(dbFieldName)) {
                 continue;
             }
-            String queryType = "like";
 
-            switch (column.getType()) {
-                case ENUM, BOOL, INT, SHORT, BYTE, LONG:
-                    queryType = "eq";
-                    break;
-                case FLOAT, DOUBLE:
-                    // TODO
-                    break;
+            // 字符串字段直接 LIKE
+            if (ColumnType.STRING.equals(column.getType())) {
+                conditionJoiner.add("\"" + dbFieldName + "\" LIKE ?");
+                params.add("%" + oneKeySearch + "%");
             }
-
-            String finalSql = null;
-            List<Object> finalParams = new ArrayList<>();
-
-            switch (queryType.toLowerCase()) {
-                case "eq":
-                    if (StringUtils.isNotBlank(oneKeySearch)) {
-                        finalSql = "\"" + dbFieldName + "\" = ?";
-                        finalParams.add(convertToDbValue(oneKeySearch, column));
+            // 数字类型：只有当输入能转为数字时才匹配，防止抛出 NumberFormatException
+            else if (isNumericType(column.getType())) {
+                if (StringUtils.isNumeric(oneKeySearch)) {
+                    try {
+                        Object numVal = convertToDbValue(oneKeySearch, column);
+                        conditionJoiner.add("\"" + dbFieldName + "\" = ?");
+                        params.add(numVal);
+                    } catch (Exception ignored) {
                     }
-                    break;
-
-                case "like":
-                    if (StringUtils.isNotBlank(oneKeySearch)) {
-                        finalSql = "\"" + dbFieldName + "\" LIKE ?";
-                        finalParams.add("%" + oneKeySearch + "%");
-                    }
-                    break;
+                }
             }
-
-            if (finalSql != null) {
-                whereStr.add(finalSql);
-                params.addAll(finalParams);
+            // 枚举 / 布尔类型：尝试匹配
+            else if (column.getType() == ColumnType.ENUM || column.getType() == ColumnType.BOOL) {
+                try {
+                    Object enumVal = convertToDbValue(oneKeySearch, column);
+                    if (enumVal != null) {
+                        conditionJoiner.add("\"" + dbFieldName + "\" = ?");
+                        params.add(enumVal);
+                    }
+                } catch (Exception ignored) {
+                }
             }
         }
 
-        if (isLogicDeleteEntity(columnMap)) {
-            whereStr.add("\"IS_DELETED\"=?");
+        return formatFinalWhereSql(columnMap, conditionJoiner, params);
+    }
+
+    /**
+     * 内部单字段操作符 SQL 组装逻辑
+     */
+    private static void buildSingleFieldSql(Column column, String dbFieldName, String queryType, String[] valueArr, StringJoiner conditionJoiner, List<Object> params) {
+        String finalSql = null;
+        List<Object> finalParams = new ArrayList<>();
+
+        switch (queryType) {
+            case "eq":
+                finalSql = "\"" + dbFieldName + "\" = ?";
+                finalParams.add(convertToDbValue(valueArr[0], column));
+                break;
+            case "ne":
+                finalSql = "\"" + dbFieldName + "\" != ?";
+                finalParams.add(convertToDbValue(valueArr[0], column));
+                break;
+            case "gt":
+                finalSql = "\"" + dbFieldName + "\" > ?";
+                finalParams.add(convertToDbValue(valueArr[0], column));
+                break;
+            case "ge":
+                finalSql = "\"" + dbFieldName + "\" >= ?";
+                finalParams.add(convertToDbValue(valueArr[0], column));
+                break;
+            case "lt":
+                finalSql = "\"" + dbFieldName + "\" < ?";
+                finalParams.add(convertToDbValue(valueArr[0], column));
+                break;
+            case "le":
+                finalSql = "\"" + dbFieldName + "\" <= ?";
+                finalParams.add(convertToDbValue(valueArr[0], column));
+                break;
+            case "like":
+                finalSql = "\"" + dbFieldName + "\" LIKE ?";
+                finalParams.add("%" + valueArr[0] + "%");
+                break;
+            case "likeleft":
+                finalSql = "\"" + dbFieldName + "\" LIKE ?";
+                finalParams.add(valueArr[0] + "%");
+                break;
+            case "likeright":
+                finalSql = "\"" + dbFieldName + "\" LIKE ?";
+                finalParams.add("%" + valueArr[0]);
+                break;
+            case "in":
+                List<?> inList = Arrays.stream(valueArr).filter(StringUtils::isNotBlank).map(v -> convertToDbValue(v.trim(), column)).collect(Collectors.toList());
+                if (!inList.isEmpty()) {
+                    String placeholders = String.join(",", Collections.nCopies(inList.size(), "?"));
+                    finalSql = "\"" + dbFieldName + "\" IN (" + placeholders + ")";
+                    finalParams.addAll(inList);
+                }
+                break;
+            case "between":
+                if (valueArr.length >= 2 && StringUtils.isNotBlank(valueArr[0]) && StringUtils.isNotBlank(valueArr[1])) {
+                    finalSql = "\"" + dbFieldName + "\" BETWEEN ? AND ?";
+                    finalParams.add(convertToDbValue(valueArr[0].trim(), column));
+                    finalParams.add(convertToDbValue(valueArr[1].trim(), column));
+                }
+                break;
+            case "isnull":
+                finalSql = "\"" + dbFieldName + "\" IS NULL";
+                break;
+            case "isnotnull":
+                finalSql = "\"" + dbFieldName + "\" IS NOT NULL";
+                break;
+        }
+
+        if (finalSql != null) {
+            conditionJoiner.add(finalSql);
+            params.addAll(finalParams);
+        }
+    }
+
+    /**
+     * 🔥 核心修复：安全包装业务条件，并强制使用 AND 拼接待逻辑删除
+     */
+    private static Pair<String, List<Object>> formatFinalWhereSql(Map<String, Column> columnMap, StringJoiner conditionJoiner, List<Object> params) {
+        StringBuilder sqlBuilder = new StringBuilder();
+        boolean hasLogicDelete = isLogicDeleteEntity(columnMap);
+
+        if (conditionJoiner.length() > 0) {
+            // 必须带括号，防止 OR 条件污染逻辑删除！
+            sqlBuilder.append("(").append(conditionJoiner).append(")");
+            if (hasLogicDelete) {
+                sqlBuilder.append(" AND \"IS_DELETED\" = ?");
+                params.add(convertToDbValue(Delete.NORMAL, columnMap.get("isDeleted")));
+            }
+        } else if (hasLogicDelete) {
+            sqlBuilder.append("\"IS_DELETED\" = ?");
             params.add(convertToDbValue(Delete.NORMAL, columnMap.get("isDeleted")));
         }
 
-        String where = whereStr.length() > 0 ? " WHERE " + whereStr : "";
+        String where = sqlBuilder.length() > 0 ? " WHERE " + sqlBuilder : "";
         return Pair.create(where, params);
     }
 
+    private static Pair<String, List<Object>> buildLogicDeleteWhere(Map<String, Column> columnMap) {
+        return formatFinalWhereSql(columnMap, new StringJoiner(" AND "), new ArrayList<>());
+    }
+
+    private static boolean isNumericType(ColumnType type) {
+        return type == ColumnType.INT || type == ColumnType.LONG || type == ColumnType.SHORT || type == ColumnType.BYTE || type == ColumnType.FLOAT || type == ColumnType.DOUBLE;
+    }
+
+    private static String[] parseStringArray(Object mapValue) {
+        if (mapValue == null) return new String[0];
+        if (mapValue.getClass().isArray()) {
+            return (String[]) mapValue;
+        } else if (mapValue instanceof Collection<?>) {
+            return ((Collection<?>) mapValue).stream().map(String::valueOf).toArray(String[]::new);
+        } else if (mapValue instanceof String) {
+            return new String[]{(String) mapValue};
+        } else {
+            return new String[]{JacksonUtil.toJson(mapValue)};
+        }
+    }
+
     public static boolean isLogicDeleteEntity(Map<String, Column> columnMap) {
+        if (columnMap == null) return false;
         for (String s : auditEntityPropSet) {
             if (!columnMap.containsKey(s)) {
                 return false;
