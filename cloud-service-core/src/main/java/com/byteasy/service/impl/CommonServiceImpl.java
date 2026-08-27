@@ -28,6 +28,7 @@ import com.byteasy.service.IDatabaseMetaService;
 import com.byteasy.util.ColumnUtil;
 import com.byteasy.util.EventPublishUtil;
 import com.byteasy.util.MapUtil;
+import com.byteasy.util.SqlUtil;
 import com.google.common.collect.Lists;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
@@ -75,8 +76,6 @@ public class CommonServiceImpl implements ICommonService {
     private IDatabaseMetaService databaseMetaService;
     @Autowired
     private EventPublishUtil eventPublishUtil;
-
-    private Set<String> auditEntityPropSet = ColumnUtil.getFieldNames(LogicDeleteEntity.class);
 
     protected void publicEvent(EntityChangeEvent event) {
         eventPublishUtil.publishEvent(event);
@@ -177,7 +176,7 @@ public class CommonServiceImpl implements ICommonService {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         Map<String, String[]> multiMap = request.getParameterMap();
 
-        Pair<String, List<Object>> whereSql = buildWhereSql(columnMap, multiMap);
+        Pair<String, List<Object>> whereSql = SqlUtil.buildWhereSql(columnMap, multiMap);
 
         String fromSql = String.format("FROM %s %s", entityDefineDTO.getTableName(), whereSql.getFirst());
         String selectSql = String.format("SELECT %s %s %s %s", getSelectSql(columnMap), fromSql, buildOrderBySql(columnMap), buildLimitSql());
@@ -223,7 +222,7 @@ public class CommonServiceImpl implements ICommonService {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         Map<String, String[]> multiMap = request.getParameterMap();
 
-        Pair<String, List<Object>> whereSql = buildWhereSql(columnMap, multiMap);
+        Pair<String, List<Object>> whereSql = SqlUtil.buildWhereSql(columnMap, multiMap);
 
         String fromSql = String.format("FROM %s %s", entityDefineDTO.getTableName(), whereSql.getFirst());
         String selectSql = String.format("SELECT %s %s %s %s", getSelectSql(columnMap), fromSql, buildOrderBySql(columnMap), buildLimitSql());
@@ -258,7 +257,7 @@ public class CommonServiceImpl implements ICommonService {
 
         Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
 
-        Pair<String, List<Object>> whereSql = buildWhereSql(columnMap, args);
+        Pair<String, List<Object>> whereSql = SqlUtil.buildWhereSql(columnMap, args);
 
         String fromSql = String.format("FROM %s %s", entityDefineDTO.getTableName(), whereSql.getFirst());
         String selectSql = String.format("SELECT %s %s %s %s", getSelectSql(columnMap), fromSql, buildOrderBySql(columnMap, args), buildLimitSql(args));
@@ -306,7 +305,7 @@ public class CommonServiceImpl implements ICommonService {
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
         publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, getById(className, pirmaryKey), null, className)));
-        if (isLogicDeleteEntity(columnMap)) {
+        if (SqlUtil.isLogicDeleteEntity(columnMap)) {
             StringJoiner setJoiner = new StringJoiner(",");
             List<Object> params = new ArrayList<>();
 
@@ -366,7 +365,7 @@ public class CommonServiceImpl implements ICommonService {
 
         MapSqlParameterSource paramSource = new MapSqlParameterSource();
 
-        if (isLogicDeleteEntity(columnMap)) {
+        if (SqlUtil.isLogicDeleteEntity(columnMap)) {
             StringJoiner setJoiner = new StringJoiner(",");
 
             setJoiner.add("IS_DELETED=1");
@@ -428,15 +427,6 @@ public class CommonServiceImpl implements ICommonService {
     public Collection<Column> getColumnsByTableName(String tableName) {
         String schema = databaseMetaService.getCurrentSchema();
         return databaseMetaService.getColumns(null, schema, tableName);
-    }
-
-    private boolean isLogicDeleteEntity(Map<String, Column> columnMap) {
-        for (String s : auditEntityPropSet) {
-            if (!columnMap.containsKey(s)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private String buildLimitSql(Map<String, Object> args) {
@@ -518,195 +508,6 @@ public class CommonServiceImpl implements ICommonService {
         }
     }
 
-    private Pair<String, List<Object>> buildWhereSql(Map<String, Column> columnMap, Map<String, ?> multiMap) {
-        Object matchLogic = multiMap.get("matchLogic");
-        String matchLogicVar = matchLogic != null ? (matchLogic.getClass().isArray() ? ((String[]) matchLogic)[0] : matchLogic.toString()) : "AND";
-        StringJoiner whereStr = new StringJoiner(" " + matchLogicVar + " ");
-
-        // 保存查询参数，后面要传给 jdbcTemplate
-        List<Object> params = new ArrayList<>();
-
-        for (String name : multiMap.keySet()) {
-            String fieldName = name;
-            String defaultQueryType = null;
-            Object mapValue = multiMap.get(name);
-
-            // 处理数组参数 name[]
-            if (fieldName.contains("[]")) {
-                fieldName = fieldName.replace("[]", "");
-                defaultQueryType = "in";
-            }
-
-            // 不在字段定义里，跳过
-            if (!columnMap.containsKey(fieldName)) {
-                continue;
-            }
-
-            String[] valueArr = null;
-            if (mapValue.getClass().isArray()) {
-                valueArr = (String[]) mapValue;
-            } else if (mapValue instanceof Collection<?>) {
-                Collection<?> collection = (Collection<?>) mapValue;
-                valueArr = collection.stream().map(String::valueOf).toArray(String[]::new);
-            } else if (mapValue instanceof String) {
-                valueArr = new String[]{mapValue.toString()};
-            } else {
-                valueArr = new String[]{JacksonUtil.toJson(mapValue)};
-            }
-            if (valueArr == null || valueArr.length == 0) {
-                continue;
-            }
-
-            Column column = columnMap.get(fieldName);
-            String dbFieldName = column.getFieldName();
-            if (StringUtils.isBlank(dbFieldName)) {
-                continue;
-            }
-
-            // 查询类型
-            String queryType = (String) (MapUtil.getSingleValue(multiMap, fieldName + "QueryType"));
-
-            // 日期自动 between
-            if (queryType == null && valueArr.length > 1) {
-                if (column.getType() == ColumnType.LOCAL_DATE
-                        || column.getType() == ColumnType.LOCAL_DATE_TIME) {
-                    queryType = "between";
-                }
-            }
-
-            // 字符串默认 like
-            if (queryType == null && ColumnType.STRING.equals(column.getType())) {
-                queryType = "like";
-            }
-
-            // 多值默认 in
-            if (queryType == null && valueArr.length > 1) {
-                queryType = "in";
-            }
-
-            // 默认 eq
-            if (queryType == null) {
-                queryType = "eq";
-            }
-
-            for (String v : valueArr) {
-                if (SqlInjectionUtils.check(v)) {
-                    throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + v);
-                }
-            }
-            // ==============================================
-            // 拼接 SQL 条件
-            // ==============================================
-            String finalSql = null;
-            List<Object> finalParams = new ArrayList<>();
-
-            switch (queryType.toLowerCase()) {
-                case "eq":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" = ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                    }
-                    break;
-
-                case "ne":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" != ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                    }
-                    break;
-
-                case "gt":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" > ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                    }
-                    break;
-
-                case "ge":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" >= ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                    }
-                    break;
-
-                case "lt":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" < ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                    }
-                    break;
-
-                case "le":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" <= ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                    }
-                    break;
-
-                case "like":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" LIKE ?";
-                        finalParams.add("%" + valueArr[0] + "%");
-                    }
-                    break;
-
-                case "likeright":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" LIKE ?";
-                        finalParams.add("%" + valueArr[0]);
-                    }
-                    break;
-
-                case "likeleft":
-                    if (StringUtils.isNotBlank(valueArr[0])) {
-                        finalSql = "\"" + dbFieldName + "\" LIKE ?";
-                        finalParams.add(valueArr[0] + "%");
-                    }
-                    break;
-
-                case "in":
-                    List<?> inList = Arrays.stream(valueArr)
-                            .map(v -> convertToDbValue(v, column))
-                            .collect(Collectors.toList());
-                    String placeholders = String.join(",", Collections.nCopies(inList.size(), "?"));
-                    finalSql = "\"" + dbFieldName + "\" IN (" + placeholders + ")";
-                    finalParams.addAll(inList);
-                    break;
-
-                case "between":
-                    if (valueArr.length >= 2
-                            && StringUtils.isNotBlank(valueArr[0])
-                            && StringUtils.isNotBlank(valueArr[1])) {
-                        finalSql = "\"" + dbFieldName + "\" BETWEEN ? AND ?";
-                        finalParams.add(convertToDbValue(valueArr[0], column));
-                        finalParams.add(convertToDbValue(valueArr[1], column));
-                    }
-                    break;
-
-                case "isnull":
-                    finalSql = "\"" + dbFieldName + "\" IS NULL";
-                    break;
-
-                case "isnotnull":
-                    finalSql = "\"" + dbFieldName + "\" IS NOT NULL";
-                    break;
-            }
-
-            if (finalSql != null) {
-                whereStr.add(finalSql);
-                params.addAll(finalParams);
-            }
-        }
-
-        if (isLogicDeleteEntity(columnMap)) {
-            whereStr.add("\"IS_DELETED\"=?");
-            params.add(convertToDbValue(Delete.NORMAL, columnMap.get("isDeleted")));
-        }
-
-        String where = whereStr.length() > 0 ? " WHERE " + whereStr : "";
-        return Pair.create(where, params);
-    }
-
     private void insert(EntityDefineDTO entityDefineDTO, Map<String, Object> entity, Map<String, Column> columnMap) {
         Set<String> columns = entity.keySet();
         if (columns.isEmpty()) return;
@@ -718,7 +519,7 @@ public class CommonServiceImpl implements ICommonService {
         for (String col : columns) {
             Column column = columnMap.get(col);
             if (column == null) continue;
-            if (auditEntityPropSet.contains(col)) continue;
+            if (SqlUtil.isAuditEntityProps(col)) continue;
             if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) continue;
 
             colJoiner.add(column.getFieldName());
@@ -785,7 +586,7 @@ public class CommonServiceImpl implements ICommonService {
         for (String col : columns) {
             Column column = columnMap.get(col);
             if (column == null) continue;
-            if (auditEntityPropSet.contains(col)) continue;
+            if (SqlUtil.isAuditEntityProps(col)) continue;
             if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) continue;
             fieldList.add(col);
             colJoiner.add(column.getFieldName());
@@ -872,7 +673,7 @@ public class CommonServiceImpl implements ICommonService {
 
         for (String col : columns) {
             // 审计信息不允许修改
-            if (auditEntityPropSet.contains(col)) {
+            if (SqlUtil.isAuditEntityProps(col)) {
                 continue;
             }
             Column column = columnMap.get(col);
@@ -957,7 +758,7 @@ public class CommonServiceImpl implements ICommonService {
         // 构建 UPDATE SET 字段
         for (String col : columns) {
             // 审计属性不允许手动修改
-            if (auditEntityPropSet.contains(col)) {
+            if (SqlUtil.isAuditEntityProps(col)) {
                 continue;
             }
             Column column = columnMap.get(col);
@@ -1067,7 +868,7 @@ public class CommonServiceImpl implements ICommonService {
         List args = Lists.newArrayList();
         args.add(convertToDbValue(id, columnMap.get("id")));
 
-        if (isLogicDeleteEntity(columnMap)) {
+        if (SqlUtil.isLogicDeleteEntity(columnMap)) {
             sql += "AND \"IS_DELETED\"=?";
             args.add(convertToDbValue(Delete.NORMAL, columnMap.get("isDeleted")));
         }
