@@ -1,10 +1,10 @@
 package com.byteasy.util;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.component.JsScriptFactory;
 import com.byteasy.dto.ScriptFunction;
 import com.byteasy.exception.BizException;
+import com.byteasy.exception.JsScriptException;
 import com.byteasy.script.JsFunctionFactory;
 import com.byteasy.script.ProxyWrapper;
 import lombok.extern.log4j.Log4j2;
@@ -117,9 +117,9 @@ public class JsScriptExecutor {
                 resultValue = context.eval(cachedScript);
             } catch (Exception e) {
                 if (e instanceof PolyglotException) {
-                    throw new RuntimeException("JS脚本执行失败: " + jsName + " :" + formatJsError((PolyglotException) e) + "\n" + ExceptionUtil.stacktraceToString(e));
+                    throw new JsScriptException("JS脚本执行失败: " + jsName + " :" + formatJsError((PolyglotException) e), e);
                 } else {
-                    throw new RuntimeException("JS脚本执行失败: " + jsName + " :" + ExceptionUtil.stacktraceToString(e));
+                    throw new JsScriptException("JS脚本执行失败: " + jsName, e);
                 }
             }
 

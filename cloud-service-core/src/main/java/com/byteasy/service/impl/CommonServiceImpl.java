@@ -294,12 +294,15 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     @Override
-    public boolean removeById(String className, Object id) {
+    public boolean removeById(String className, Object pirmaryKey) {
+        if (ObjectUtils.isEmpty(pirmaryKey)) {
+            throw new BizException("primary key is null");
+        }
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
 
-        publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, getById(className, id), null, className)));
+        publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, getById(className, pirmaryKey), null, className)));
         if (isLogicDeleteEntity(columnMap)) {
             StringJoiner setJoiner = new StringJoiner(",");
             List<Object> params = new ArrayList<>();
@@ -323,7 +326,7 @@ public class CommonServiceImpl implements ICommonService {
             // 处理乐观锁
             setJoiner.add("VERSION=VERSION + 1");
 
-            params.add(convertToDbValue(id, columnMap.get("id")));
+            params.add(convertToDbValue(pirmaryKey, columnMap.get("id")));
             String sql = String.format(
                     "UPDATE %s SET %s WHERE ID=?",
                     entityDefineDTO.getTableName(),
@@ -336,7 +339,7 @@ public class CommonServiceImpl implements ICommonService {
         } else {
             String sql = "DELETE FROM " + entityDefineDTO.getTableName();
             sql += " WHERE ID=?";
-            int rows = jdbcTemplate.update(sql, convertToDbValue(id, columnMap.get("id")));
+            int rows = jdbcTemplate.update(sql, convertToDbValue(pirmaryKey, columnMap.get("id")));
             if (rows < 1) {
                 return false;
             }

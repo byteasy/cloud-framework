@@ -7,6 +7,7 @@ import com.byteasy.Result;
 import com.byteasy.Status;
 import com.byteasy.component.I18nUtil;
 import com.byteasy.exception.BizException;
+import com.byteasy.exception.JsScriptException;
 import com.byteasy.monitor.MonitorFacade;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
@@ -34,7 +35,7 @@ public class ExceptionAdvice {
     public Result<String> exceptionHandler(Exception e) {
         logger.error("exceptionHandler: " + e.getMessage(), e);
         doErrorMetric();
-        return Result.of(Status.DUPLICATE_KEY_EXCEPTION, ExceptionUtil.getSimpleMessage(e), ExceptionUtil.stacktraceToString(e), null);
+        return Result.of(Status.INTERNAL_SERVER_ERROR, ExceptionUtil.getSimpleMessage(e), ExceptionUtil.stacktraceToString(e), null);
     }
 
     @ExceptionHandler(value = RuntimeException.class)
@@ -45,6 +46,9 @@ public class ExceptionAdvice {
         if (e instanceof BizException) {
             BizException bizException = (BizException) e;
             return Result.of(Status.INTERNAL_SERVER_ERROR, I18nUtil.getMessage(bizException.getI18nKey()), ExceptionUtil.stacktraceToString(bizException), null);
+        }
+        if (e instanceof JsScriptException) {
+            return Result.of(Status.INTERNAL_SERVER_ERROR, e.getMessage(), ExceptionUtil.stacktraceToString(e), null);
         }
         if (e instanceof DuplicateKeyException) {
             return Result.of(Status.DUPLICATE_KEY_EXCEPTION, I18nUtil.getMessage(Status.DUPLICATE_KEY_EXCEPTION.getI18nKey()), ExceptionUtil.stacktraceToString(e), null);
