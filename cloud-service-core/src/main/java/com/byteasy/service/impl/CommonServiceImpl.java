@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.CastUtil;
-import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.component.EntityDefineUtil;
 import com.byteasy.component.EntityServiceFactory;
@@ -15,8 +14,6 @@ import com.byteasy.component.I18nUtil;
 import com.byteasy.dto.Column;
 import com.byteasy.dto.EntityDefineDTO;
 import com.byteasy.dto.FormatMap;
-import com.byteasy.entity.LogicDeleteEntity;
-import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.Delete;
 import com.byteasy.enums.RelationType;
 import com.byteasy.enums.YesNo;
@@ -27,7 +24,6 @@ import com.byteasy.service.ICommonService;
 import com.byteasy.service.IDatabaseMetaService;
 import com.byteasy.util.ColumnUtil;
 import com.byteasy.util.EventPublishUtil;
-import com.byteasy.util.MapUtil;
 import com.byteasy.util.SqlUtil;
 import com.google.common.collect.Lists;
 import jakarta.servlet.http.HttpServletRequest;
@@ -81,6 +77,14 @@ public class CommonServiceImpl implements ICommonService {
         eventPublishUtil.publishEvent(event);
     }
 
+    private Column getPrimaryColumn(Collection<Column> columDefList) {
+        Optional<Column> primaryKeyOptional = columDefList.stream().filter(s -> YesNo.YES.equals(s.getIsPrimary())).findFirst();
+        if (!primaryKeyOptional.isPresent()) {
+            throw new BizException("className: " + columDefList.stream().findAny().get().getClassName() + " :缺少主键定义");
+        }
+        return primaryKeyOptional.get();
+    }
+
     /**
      * 通用 新增/更新
      *
@@ -93,17 +97,18 @@ public class CommonServiceImpl implements ICommonService {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
+        Column primaryColumn = getPrimaryColumn(columDefList);
 
-        Object id = entity.get("id");
-        if (ObjectUtils.isEmpty(id)) {
+        Object primaryKeyValue = entity.get(primaryColumn.getName());
+        if (ObjectUtils.isEmpty(primaryKeyValue)) {
             insert(entityDefineDTO, entity, columnMap);
-            id = entity.get("id");
+            primaryKeyValue = entity.get(primaryColumn.getName());
             publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.CREATE, null, entity, className)));
         } else {
-            publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, getById(className, id), entity, className)));
+            publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, getByPrimaryKey(className, primaryKeyValue), entity, className)));
             update(entityDefineDTO, entity, columnMap);
         }
-        return getById(entityDefineDTO, id, columnMap);
+        return getByPrimaryKey(entityDefineDTO, primaryKeyValue, columnMap, primaryColumn);
     }
 
     @Override
@@ -115,13 +120,14 @@ public class CommonServiceImpl implements ICommonService {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
+        Column primaryColumn = getPrimaryColumn(columDefList);
 
         // 根据 id 是否为空拆分为新增和更新列表
         List<Map<String, Object>> insertList = new ArrayList<>();
         List<Map<String, Object>> updateList = new ArrayList<>();
 
         for (Map<String, Object> entity : entities) {
-            if (ObjectUtils.isEmpty(entity.get("id"))) {
+            if (ObjectUtils.isEmpty(entity.get(primaryColumn.getName()))) {
                 insertList.add(entity);
             } else {
                 updateList.add(entity);
@@ -147,8 +153,8 @@ public class CommonServiceImpl implements ICommonService {
         if (CollectionUtil.isNotEmpty(updateList)) {
             // 发布更新事件（需查询更新前的数据）
             for (Map<String, Object> entity : updateList) {
-                Object id = entity.get("id");
-                publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, getById(className, id), entity, className)));
+                Object primaryKeyValue = entity.get(primaryColumn.getName());
+                publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, getByPrimaryKey(className, primaryKeyValue), entity, className)));
             }
 
             batchUpdate(entityDefineDTO, updateList, columnMap);
@@ -158,11 +164,11 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     @Override
-    public Map<String, Object> getById(String className, Object id) {
+    public Map<String, Object> getByPrimaryKey(String className, Object primaryKeyValue) {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
-        return getById(entityDefineDTO, id, columnMap);
+        return getByPrimaryKey(entityDefineDTO, primaryKeyValue, columnMap, getPrimaryColumn(columDefList));
     }
 
     @Override
@@ -296,15 +302,24 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     @Override
-    public boolean removeById(String className, Object pirmaryKey) {
-        if (ObjectUtils.isEmpty(pirmaryKey)) {
+    public boolean removeByPrimaryKey(String className, Map<String, Object> entity) {
+        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        Column primaryColumn = getPrimaryColumn(columDefList);
+        return removeByPrimaryKey(className, entity.get(primaryColumn.getName()));
+    }
+
+    @Override
+    public boolean removeByPrimaryKey(String className, Object primaryKey) {
+        if (ObjectUtils.isEmpty(primaryKey)) {
             throw new BizException("primary key is null");
         }
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
+        Column primaryColumn = getPrimaryColumn(columDefList);
 
-        publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, getById(className, pirmaryKey), null, className)));
+        publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, getByPrimaryKey(className, primaryKey), null, className)));
         if (SqlUtil.isLogicDeleteEntity(columnMap)) {
             StringJoiner setJoiner = new StringJoiner(",");
             List<Object> params = new ArrayList<>();
@@ -328,11 +343,12 @@ public class CommonServiceImpl implements ICommonService {
             // 处理乐观锁
             setJoiner.add("VERSION=VERSION + 1");
 
-            params.add(convertToDbValue(pirmaryKey, columnMap.get("id")));
+            params.add(convertToDbValue(primaryKey, primaryColumn));
             String sql = String.format(
-                    "UPDATE %s SET %s WHERE ID=?",
+                    "UPDATE %s SET %s WHERE %s=?",
                     entityDefineDTO.getTableName(),
-                    setJoiner
+                    setJoiner,
+                    primaryColumn.getFieldName()
             );
             int rows = jdbcTemplate.update(sql, params.toArray());
             if (rows < 1) {
@@ -340,8 +356,8 @@ public class CommonServiceImpl implements ICommonService {
             }
         } else {
             String sql = "DELETE FROM " + entityDefineDTO.getTableName();
-            sql += " WHERE ID=?";
-            int rows = jdbcTemplate.update(sql, convertToDbValue(pirmaryKey, columnMap.get("id")));
+            sql += String.format(" WHERE %s=?", primaryColumn.getFieldName());
+            int rows = jdbcTemplate.update(sql, convertToDbValue(primaryKey, primaryColumn));
             if (rows < 1) {
                 return false;
             }
@@ -355,11 +371,7 @@ public class CommonServiceImpl implements ICommonService {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
-        Optional<Column> primaryKeyOptional = columDefList.stream().filter(s -> YesNo.YES.equals(s.getIsPrimary())).findFirst();
-        if (!primaryKeyOptional.isPresent()) {
-            throw new BizException("className: " + className + " :缺少主键定义");
-        }
-        Column primaryKey = primaryKeyOptional.get();
+        Column primaryColumn = getPrimaryColumn(columDefList);
 
         publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.BATCH_DELETE, entities, null, className)));
 
@@ -386,11 +398,11 @@ public class CommonServiceImpl implements ICommonService {
             // 处理乐观锁
             setJoiner.add("VERSION=VERSION + 1");
 
-            paramSource.addValue(primaryKey.getName(), ColumnUtil.getPrimaryKeys(primaryKey, entities));
+            paramSource.addValue(primaryColumn.getName(), ColumnUtil.getPrimaryKeys(primaryColumn, entities));
             String sql = String.format(
                     "UPDATE %s SET %s WHERE %s in (:id)",
                     entityDefineDTO.getTableName(),
-                    setJoiner, primaryKey.getFieldName()
+                    setJoiner, primaryColumn.getFieldName()
             );
             int rows = namedParameterJdbcTemplate.update(sql, paramSource);
             if (rows < 1) {
@@ -398,8 +410,8 @@ public class CommonServiceImpl implements ICommonService {
             }
         } else {
             String sql = String.format("DELETE FROM %s WHERE %s in(:%s)",
-                    entityDefineDTO.getTableName(), primaryKey.getName(), primaryKey.getName());
-            paramSource.addValue(primaryKey.getName(), ColumnUtil.getPrimaryKeys(primaryKey, entities));
+                    entityDefineDTO.getTableName(), primaryColumn.getName(), primaryColumn.getName());
+            paramSource.addValue(primaryColumn.getName(), ColumnUtil.getPrimaryKeys(primaryColumn, entities));
             int rows = namedParameterJdbcTemplate.update(sql, paramSource);
             if (rows < 1) {
                 return false;
@@ -667,7 +679,7 @@ public class CommonServiceImpl implements ICommonService {
     private void update(EntityDefineDTO entityDefineDTO, Map<String, Object> entity, Map<String, Column> columnMap) {
         Set<String> columns = entity.keySet();
         if (columns.isEmpty()) return;
-
+        Column primaryColumn = getPrimaryColumn(columnMap.values());
         StringJoiner setJoiner = new StringJoiner(",");
         List<Object> params = new ArrayList<>();
 
@@ -718,19 +730,21 @@ public class CommonServiceImpl implements ICommonService {
         }
 
         String sql = null;
-        params.add(convertToDbValue(entity.get("id"), columnMap.get("id")));
+        params.add(convertToDbValue(entity.get(primaryColumn.getName()), primaryColumn));
         if (columnMap.containsKey("version")) {
             params.add(convertToDbValue(entity.get("version"), columnMap.get("version")));
             sql = String.format(
-                    "UPDATE %s SET %s WHERE ID=? AND VERSION=?",
+                    "UPDATE %s SET %s WHERE %s=? AND VERSION=?",
                     entityDefineDTO.getTableName(),
-                    setJoiner
+                    setJoiner,
+                    primaryColumn.getFieldName()
             );
         } else {
             sql = String.format(
-                    "UPDATE %s SET %s WHERE ID=?",
+                    "UPDATE %s SET %s WHERE %s=?",
                     entityDefineDTO.getTableName(),
-                    setJoiner
+                    setJoiner,
+                    primaryColumn.getFieldName()
             );
         }
         int rows = jdbcTemplate.update(sql, params.toArray());
@@ -744,6 +758,7 @@ public class CommonServiceImpl implements ICommonService {
         if (CollectionUtil.isEmpty(entityList)) {
             return;
         }
+        Column primaryColumn = getPrimaryColumn(columnMap.values());
 
         // 取第一个实体作为模板字段（默认所有实体结构一致）
         Map<String, Object> firstEntity = entityList.get(0);
@@ -800,15 +815,17 @@ public class CommonServiceImpl implements ICommonService {
         String sql = null;
         if (columnMap.containsKey("version")) {
             sql = String.format(
-                    "UPDATE %s SET %s WHERE ID=? AND VERSION=?",
+                    "UPDATE %s SET %s WHERE %s=? AND VERSION=?",
                     entityDefineDTO.getTableName(),
-                    setJoiner
+                    setJoiner,
+                    primaryColumn.getFieldName()
             );
         } else {
             sql = String.format(
-                    "UPDATE %s SET %s WHERE ID=?",
+                    "UPDATE %s SET %s WHERE %s=?",
                     entityDefineDTO.getTableName(),
-                    setJoiner
+                    setJoiner,
+                    primaryColumn.getFieldName()
             );
         }
 
@@ -843,7 +860,7 @@ public class CommonServiceImpl implements ICommonService {
             }
 
             // 绑定 WHERE 条件参数：WHERE ID=? AND VERSION=?
-            params.add(convertToDbValue(entity.get("id"), columnMap.get("id")));
+            params.add(convertToDbValue(entity.get(primaryColumn.getName()), primaryColumn));
             if (columnMap.containsKey("version")) {
                 params.add(convertToDbValue(entity.get("version"), columnMap.get("version")));
             }
@@ -860,13 +877,13 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     // ============= 根据ID查询（返回保存后的数据） =============
-    private Map<String, Object> getById(EntityDefineDTO entityDefineDTO, Object id, Map<String, Column> columnMap) {
+    private Map<String, Object> getByPrimaryKey(EntityDefineDTO entityDefineDTO, Object primaryKeyValue, Map<String, Column> columnMap, Column primaryKey) {
         Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
 
-        String sql = String.format("SELECT %s FROM %s WHERE ID=?", getSelectSql(columnMap), entityDefineDTO.getTableName());
+        String sql = String.format("SELECT %s FROM %s WHERE %s=?", getSelectSql(columnMap), entityDefineDTO.getTableName(), primaryKey.getFieldName());
 
         List args = Lists.newArrayList();
-        args.add(convertToDbValue(id, columnMap.get("id")));
+        args.add(convertToDbValue(primaryKeyValue, primaryKey));
 
         if (SqlUtil.isLogicDeleteEntity(columnMap)) {
             sql += "AND \"IS_DELETED\"=?";
