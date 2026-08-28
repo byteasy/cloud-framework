@@ -52,7 +52,7 @@ import java.util.Map;
 @RestController
 @RequestMapping(Constant.SAPI + "/common")
 @Log4j2
-public class CommonController {
+public class OpenapiCommonController {
     @Autowired
     private ICommonService commonService;
     @Autowired

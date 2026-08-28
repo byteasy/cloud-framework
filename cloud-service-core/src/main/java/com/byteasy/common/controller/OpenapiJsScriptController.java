@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutionException;
 @RestController
 @RequestMapping(Constant.SAPI + "/script/api")
 @Log4j2
-public class JsScriptOpenApiController {
+public class OpenapiJsScriptController {
 
     @Autowired
     private IJsScriptApiService jsScriptApiService;
