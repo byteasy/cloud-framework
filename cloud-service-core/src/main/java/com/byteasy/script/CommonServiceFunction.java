@@ -91,7 +91,7 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public Object run(Object[] args) throws Exception {
-                return commonService.getById((String) args[0], args[1]);
+                return commonService.getByPrimaryKey((String) args[0], args[1]);
             }
         });
 
@@ -195,7 +195,7 @@ public class CommonServiceFunction implements JsFunctions {
 
             @Override
             public Object run(Object[] args) throws Exception {
-                return commonService.removeById((String) args[0], args[1]);
+                return commonService.removeByPrimaryKey((String) args[0], args[1]);
             }
         });
         return list;

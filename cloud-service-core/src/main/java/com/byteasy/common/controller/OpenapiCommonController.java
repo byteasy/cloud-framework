@@ -85,12 +85,12 @@ public class OpenapiCommonController {
         return Result.success(commonService.saveOrUpdate(className, entity));
     }
 
-    @GetMapping("/{className}/{id}")
+    @GetMapping("/{className}/{primaryKey}")
     @Authentication
     @Operation(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
-    public Result<Map<String, Object>> getById(@PathVariable("className") String className, @PathVariable("id") Object id) throws Exception {
-        return Result.success(commonService.getById(className, id));
+    public Result<Map<String, Object>> getByPrimaryKey(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
+        return Result.success(commonService.getByPrimaryKey(className, primaryKey));
     }
 
     @DeleteMapping("/{className}")
@@ -101,18 +101,18 @@ public class OpenapiCommonController {
         if (log.isInfoEnabled()) {
             log.info("className: {}, removeByEntity: {}", className, JacksonUtil.toJson(entity));
         }
-        return Result.success(commonService.removeById(className, entity.get("id")));
+        return Result.success(commonService.removeByPrimaryKey(className, entity));
     }
 
-    @DeleteMapping("/{className}/{id}")
+    @DeleteMapping("/{className}/{primaryKey}")
     @Authentication
     @Operation(summary = "根据主键删除记录")
     @Log
-    public Result<Boolean> removeById(@PathVariable("className") String className, @PathVariable("id") Object id) throws Exception {
+    public Result<Boolean> removeById(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("className: {}, removeById: {}", className, id);
+            log.info("className: {}, removeById: {}", className, primaryKey);
         }
-        return Result.success(commonService.removeById(className, id));
+        return Result.success(commonService.removeByPrimaryKey(className, primaryKey));
     }
 
     @DeleteMapping("/{className}/batch")

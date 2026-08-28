@@ -13,7 +13,7 @@ public interface ICommonService {
 
     boolean saveOrUpdateBatch(String className, List<Map<String, Object>> entities);
 
-    Map<String, Object> getById(String className, Object id);
+    Map<String, Object> getByPrimaryKey(String className, Object primaryKeyValue);
 
     Page<Map<String, Object>> page(String className);
 
@@ -23,7 +23,9 @@ public interface ICommonService {
 
     Map<String, Object> getOne(String className, Map<String, Object> args);
 
-    boolean removeById(String className, Object id);
+    boolean removeByPrimaryKey(String className, Object primaryKey);
+
+    boolean removeByPrimaryKey(String className, Map<String, Object> entity);
 
     boolean batchRemove(String className, List<Map<String, Object>> entities);
 
