@@ -46,7 +46,9 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -58,6 +60,7 @@ import static com.byteasy.util.ColumnUtil.convertToEntityValue;
 @Service
 @Log4j2
 public class CommonServiceImpl implements ICommonService {
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
     @Autowired
@@ -77,52 +80,60 @@ public class CommonServiceImpl implements ICommonService {
         eventPublishUtil.publishEvent(event);
     }
 
-    private Column getPrimaryColumn(Collection<Column> columDefList) {
-        Optional<Column> primaryKeyOptional = columDefList.stream().filter(s -> YesNo.YES.equals(s.getIsPrimary())).findFirst();
-        if (!primaryKeyOptional.isPresent()) {
-            throw new BizException("className: " + columDefList.stream().findAny().get().getClassName() + " :缺少主键定义");
+    private Column getPrimaryColumn(Collection<Column> columnDefList) {
+        if (CollectionUtil.isEmpty(columnDefList)) {
+            throw new BizException("实体字段定义列表为空，无法获取主键");
         }
-        return primaryKeyOptional.get();
+        return columnDefList.stream()
+                .filter(s -> YesNo.YES.equals(s.getIsPrimary()))
+                .findFirst()
+                .orElseThrow(() -> {
+                    String className = columnDefList.iterator().next().getClassName();
+                    return new BizException("className: " + className + " 缺少主键定义");
+                });
     }
 
     /**
      * 通用 新增/更新
      *
-     * @param className
+     * @param className 实体类名
      * @param entity    字段Map
-     * @return 保存后的实体
+     * @return 保存后的实体数据
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> saveOrUpdate(String className, Map<String, Object> entity) {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
-        Column primaryColumn = getPrimaryColumn(columDefList);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
+        Column primaryColumn = getPrimaryColumn(columnDefList);
 
         Object primaryKeyValue = entity.get(primaryColumn.getName());
         if (ObjectUtils.isEmpty(primaryKeyValue)) {
-            insert(entityDefineDTO, entity, columnMap);
+            insert(entityDefineDTO, entity, columnMap, primaryColumn);
             primaryKeyValue = entity.get(primaryColumn.getName());
             publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.CREATE, null, entity, className)));
         } else {
-            publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, getByPrimaryKey(className, primaryKeyValue), entity, className)));
-            update(entityDefineDTO, entity, columnMap);
+            Map<String, Object> oldEntity = getByPrimaryKey(className, primaryKeyValue);
+            update(entityDefineDTO, entity, columnMap, primaryColumn);
+            publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, oldEntity, entity, className)));
         }
         return getByPrimaryKey(entityDefineDTO, primaryKeyValue, columnMap, primaryColumn);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean saveOrUpdateBatch(String className, List<Map<String, Object>> entities) {
         if (CollectionUtil.isEmpty(entities)) {
             return false;
         }
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
-        Column primaryColumn = getPrimaryColumn(columDefList);
 
-        // 根据 id 是否为空拆分为新增和更新列表
+        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
+        Column primaryColumn = getPrimaryColumn(columnDefList);
+
+        // 拆分为新增和更新列表
         List<Map<String, Object>> insertList = new ArrayList<>();
         List<Map<String, Object>> updateList = new ArrayList<>();
 
@@ -136,28 +147,34 @@ public class CommonServiceImpl implements ICommonService {
 
         boolean success = true;
 
-        // 批量新增
+        // 1. 批量新增
         if (CollectionUtil.isNotEmpty(insertList)) {
             int rows = batchInsert(entityDefineDTO, insertList, columnMap);
             if (rows <= 0) {
                 success = false;
             } else {
-                // 发布新增事件
                 for (Map<String, Object> entity : insertList) {
                     publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.CREATE, null, entity, className)));
                 }
             }
         }
 
-        // 批量更新
+        // 2. 批量更新（使用 IN 查询消除 N+1 查询旧数据）
         if (CollectionUtil.isNotEmpty(updateList)) {
-            // 发布更新事件（需查询更新前的数据）
+            List<Object> ids = updateList.stream()
+                    .map(e -> e.get(primaryColumn.getName()))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            Map<Object, Map<String, Object>> oldDataMap = getEntitiesByIds(entityDefineDTO, ids, columnMap, primaryColumn);
+
+            batchUpdate(entityDefineDTO, updateList, columnMap, primaryColumn);
+
             for (Map<String, Object> entity : updateList) {
                 Object primaryKeyValue = entity.get(primaryColumn.getName());
-                publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, getByPrimaryKey(className, primaryKeyValue), entity, className)));
+                Map<String, Object> oldEntity = oldDataMap.get(primaryKeyValue);
+                publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, oldEntity, entity, className)));
             }
-
-            batchUpdate(entityDefineDTO, updateList, columnMap);
         }
 
         return success;
@@ -166,46 +183,25 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     public Map<String, Object> getByPrimaryKey(String className, Object primaryKeyValue) {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
-        return getByPrimaryKey(entityDefineDTO, primaryKeyValue, columnMap, getPrimaryColumn(columDefList));
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
+        return getByPrimaryKey(entityDefineDTO, primaryKeyValue, columnMap, getPrimaryColumn(columnDefList));
     }
 
     @Override
     public Page<Map<String, Object>> page(String className) {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
 
-        Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
-
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        Map<String, String[]> multiMap = request.getParameterMap();
+        HttpServletRequest request = getHttpServletRequest();
+        Map<String, String[]> multiMap = request != null ? request.getParameterMap() : Collections.emptyMap();
 
         Pair<String, List<Object>> whereSql = SqlUtil.buildWhereSql(columnMap, multiMap);
-
         String fromSql = String.format("FROM %s %s", entityDefineDTO.getTableName(), whereSql.getFirst());
-        String selectSql = String.format("SELECT %s %s %s %s", getSelectSql(columnMap), fromSql, buildOrderBySql(columnMap), buildLimitSql());
-        List list = jdbcTemplate.query(selectSql, whereSql.getValue().toArray(new Object[0]), (rs, rowNum) -> {
-            FormatMap map = new FormatMap();
-            ResultSetMetaData meta = rs.getMetaData();
-            int count = meta.getColumnCount();
+        String selectSql = String.format("SELECT %s %s %s %s", getSelectSql(columnMap), fromSql, buildOrderBySqlByRequest(columnMap, multiMap), buildLimitSql());
 
-            for (int i = 1; i <= count; i++) {
-                // 拿到你 AS 定义的驼峰别名（区分大小写）
-                String key = meta.getColumnLabel(i);
-                if (columnMap.get(key).getSerialPattern() != null) {
-                    map.rule(key, columnMap.get(key).getSerialPattern());
-                }
-
-                Object value = rs.getObject(i);
-                map.put(key, convertToEntityValue(value, columnMap.get(key)));
-            }
-            return map;
-        });
-        if (!externalKeys.isEmpty()) {
-            entityServiceFactory.updateExternalEntity(externalKeys, list);
-        }
+        List<FormatMap> list = queryListInternal(selectSql, whereSql.getValue().toArray(new Object[0]), columnMap);
 
         String countSql = "SELECT COUNT(*) " + fromSql;
         Long total = jdbcTemplate.queryForObject(countSql, whereSql.getValue().toArray(new Object[0]), Long.class);
@@ -214,126 +210,108 @@ public class CommonServiceImpl implements ICommonService {
         if (total != null) {
             page.setTotal(total);
         }
-        page.setRecords(list);
+        page.setRecords((List) list);
         return page;
     }
 
     @Override
     public List<Map<String, Object>> list(String className) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
-
-        Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        Map<String, String[]> multiMap = request.getParameterMap();
-
-        Pair<String, List<Object>> whereSql = SqlUtil.buildWhereSql(columnMap, multiMap);
-
-        String fromSql = String.format("FROM %s %s", entityDefineDTO.getTableName(), whereSql.getFirst());
-        String selectSql = String.format("SELECT %s %s %s %s", getSelectSql(columnMap), fromSql, buildOrderBySql(columnMap), buildLimitSql());
-        List list = jdbcTemplate.query(selectSql, whereSql.getValue().toArray(new Object[0]), (rs, rowNum) -> {
-            FormatMap map = new FormatMap();
-            ResultSetMetaData meta = rs.getMetaData();
-            int count = meta.getColumnCount();
-
-            for (int i = 1; i <= count; i++) {
-                // 拿到你 AS 定义的驼峰别名（区分大小写）
-                String key = meta.getColumnLabel(i);
-                if (columnMap.get(key).getSerialPattern() != null) {
-                    map.rule(key, columnMap.get(key).getSerialPattern());
-                }
-
-                Object value = rs.getObject(i);
-                map.put(key, convertToEntityValue(value, columnMap.get(key)));
-            }
-            return map;
-        });
-        if (!externalKeys.isEmpty()) {
-            entityServiceFactory.updateExternalEntity(externalKeys, list);
-        }
-        return list;
+        HttpServletRequest request = getHttpServletRequest();
+        Map<String, String[]> multiMap = request != null ? request.getParameterMap() : Collections.emptyMap();
+        return (List) listInternal(className, multiMap);
     }
 
     @Override
     public List<Map<String, Object>> list(String className, Map<String, Object> args) {
+        return (List) listInternal(className, args);
+    }
+
+    private List<FormatMap> listInternal(String className, Object queryArgs) {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
 
-        Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
+        Pair<String, List<Object>> whereSql;
+        String orderBySql;
+        String limitSql;
 
-        Pair<String, List<Object>> whereSql = SqlUtil.buildWhereSql(columnMap, args);
+        if (queryArgs instanceof Map && !((Map<?, ?>) queryArgs).isEmpty() && ((Map<?, ?>) queryArgs).values().iterator().next() instanceof String[]) {
+            // 来自 HTTP ParameterMap
+            Map<String, String[]> multiMap = (Map<String, String[]>) queryArgs;
+            whereSql = SqlUtil.buildWhereSql(columnMap, multiMap);
+            orderBySql = buildOrderBySqlByRequest(columnMap, multiMap);
+            limitSql = buildLimitSql();
+        } else {
+            // 来自业务 Map<String, Object>
+            Map<String, Object> args = queryArgs != null ? (Map<String, Object>) queryArgs : Collections.emptyMap();
+            whereSql = SqlUtil.buildWhereSql(columnMap, args);
+            orderBySql = buildOrderBySql(columnMap, args);
+            limitSql = buildLimitSql(args);
+        }
 
         String fromSql = String.format("FROM %s %s", entityDefineDTO.getTableName(), whereSql.getFirst());
-        String selectSql = String.format("SELECT %s %s %s %s", getSelectSql(columnMap), fromSql, buildOrderBySql(columnMap, args), buildLimitSql(args));
-        List list = jdbcTemplate.query(selectSql, whereSql.getValue().toArray(new Object[0]), (rs, rowNum) -> {
-            FormatMap map = new FormatMap();
-            ResultSetMetaData meta = rs.getMetaData();
-            int count = meta.getColumnCount();
+        String selectSql = String.format("SELECT %s %s %s %s", getSelectSql(columnMap), fromSql, orderBySql, limitSql);
 
-            for (int i = 1; i <= count; i++) {
-                // 拿到你 AS 定义的驼峰别名（区分大小写）
-                String key = meta.getColumnLabel(i);
-                if (columnMap.get(key).getSerialPattern() != null) {
-                    map.rule(key, columnMap.get(key).getSerialPattern());
-                }
-
-                Object value = rs.getObject(i);
-                map.put(key, convertToEntityValue(value, columnMap.get(key)));
-            }
-            return map;
-        });
-        if (!externalKeys.isEmpty()) {
-            entityServiceFactory.updateExternalEntity(externalKeys, list);
-        }
-        return list;
+        return queryListInternal(selectSql, whereSql.getValue().toArray(new Object[0]), columnMap);
     }
 
     @Override
     public Map<String, Object> getOne(String className, Map<String, Object> args) {
         List<Map<String, Object>> list = list(className, args);
-        if (list.size() == 1) {
-            return list.getFirst();
-        } else if (list.size() > 1) {
-            throw new BizException("Expect one row, but actual: " + list.size());
+        if (CollectionUtils.isEmpty(list)) {
+            return null;
         }
-        return null;
+        if (list.size() == 1) {
+            return list.get(0);
+        }
+        throw new BizException("Expect one row, but actual: " + list.size());
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean removeByPrimaryKey(String className, Map<String, Object> entity) {
+        if (MapUtils.isEmpty(entity)) {
+            return false;
+        }
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
-        Column primaryColumn = getPrimaryColumn(columDefList);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        Column primaryColumn = getPrimaryColumn(columnDefList);
         return removeByPrimaryKey(className, entity.get(primaryColumn.getName()));
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean removeByPrimaryKey(String className, Object primaryKey) {
         if (ObjectUtils.isEmpty(primaryKey)) {
             throw new BizException("primary key is null");
         }
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
-        Column primaryColumn = getPrimaryColumn(columDefList);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
+        Column primaryColumn = getPrimaryColumn(columnDefList);
 
-        publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, getByPrimaryKey(className, primaryKey), null, className)));
+        Map<String, Object> oldEntity = getByPrimaryKey(className, primaryKey);
+        publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, oldEntity, null, className)));
+
         if (SqlUtil.isLogicDeleteEntity(columnMap)) {
             StringJoiner setJoiner = new StringJoiner(",");
             List<Object> params = new ArrayList<>();
 
-            setJoiner.add("IS_DELETED=1");
-            // 处理审计相关信息
+            // 动态逻辑删除字段与物理列名
+            Column isDeletedCol = columnMap.get("isDeleted");
+            setJoiner.add(String.format("%s=1", isDeletedCol != null ? isDeletedCol.getFieldName() : "is_deleted"));
+
+            // 审计字段
             UserInfo userInfo = TokenUtil.getUserinfo();
-            if (columnMap.containsKey("deleterId")) {
-                setJoiner.add(columnMap.get("deleterId").getFieldName() + "=?");
-                params.add(userInfo.getUserId());
-            }
-            if (columnMap.containsKey("deletedBy")) {
-                setJoiner.add(columnMap.get("deletedBy").getFieldName() + "=?");
-                params.add(StringUtils.deleteWhitespace(userInfo.getName()));
+            if (userInfo != null) {
+                if (columnMap.containsKey("deleterId")) {
+                    setJoiner.add(columnMap.get("deleterId").getFieldName() + "=?");
+                    params.add(userInfo.getUserId());
+                }
+                if (columnMap.containsKey("deletedBy")) {
+                    setJoiner.add(columnMap.get("deletedBy").getFieldName() + "=?");
+                    params.add(StringUtils.deleteWhitespace(userInfo.getName()));
+                }
             }
             if (columnMap.containsKey("deletedTime")) {
                 setJoiner.add(columnMap.get("deletedTime").getFieldName() + "=?");
@@ -341,83 +319,81 @@ public class CommonServiceImpl implements ICommonService {
             }
 
             // 处理乐观锁
-            setJoiner.add("VERSION=VERSION + 1");
+            if (columnMap.containsKey("version")) {
+                String versionColName = columnMap.get("version").getFieldName();
+                setJoiner.add(String.format("%s=%s + 1", versionColName, versionColName));
+            }
 
             params.add(convertToDbValue(primaryKey, primaryColumn));
-            String sql = String.format(
-                    "UPDATE %s SET %s WHERE %s=?",
+            String sql = String.format("UPDATE %s SET %s WHERE %s=?",
                     entityDefineDTO.getTableName(),
                     setJoiner,
                     primaryColumn.getFieldName()
             );
-            int rows = jdbcTemplate.update(sql, params.toArray());
-            if (rows < 1) {
-                return false;
-            }
+            return jdbcTemplate.update(sql, params.toArray()) >= 1;
         } else {
-            String sql = "DELETE FROM " + entityDefineDTO.getTableName();
-            sql += String.format(" WHERE %s=?", primaryColumn.getFieldName());
-            int rows = jdbcTemplate.update(sql, convertToDbValue(primaryKey, primaryColumn));
-            if (rows < 1) {
-                return false;
-            }
+            String sql = String.format("DELETE FROM %s WHERE %s=?", entityDefineDTO.getTableName(), primaryColumn.getFieldName());
+            return jdbcTemplate.update(sql, convertToDbValue(primaryKey, primaryColumn)) >= 1;
         }
-        return true;
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean batchRemove(String className, List<Map<String, Object>> entities) {
+        if (CollectionUtil.isEmpty(entities)) {
+            return false;
+        }
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columDefList, Column::getName);
-        Column primaryColumn = getPrimaryColumn(columDefList);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
+        Column primaryColumn = getPrimaryColumn(columnDefList);
 
         publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.BATCH_DELETE, entities, null, className)));
 
         MapSqlParameterSource paramSource = new MapSqlParameterSource();
+        Set<Object> primaryKeys = ColumnUtil.getPrimaryKeys(primaryColumn, entities);
+        paramSource.addValue("primaryKeys", primaryKeys);
 
         if (SqlUtil.isLogicDeleteEntity(columnMap)) {
             StringJoiner setJoiner = new StringJoiner(",");
 
-            setJoiner.add("IS_DELETED=1");
-            // 处理审计相关信息
+            Column isDeletedCol = columnMap.get("isDeleted");
+            setJoiner.add(String.format("%s=1", isDeletedCol != null ? isDeletedCol.getFieldName() : "is_deleted"));
+
             UserInfo userInfo = TokenUtil.getUserinfo();
-            if (columnMap.containsKey("deleterId")) {
-                setJoiner.add(columnMap.get("deleterId").getFieldName() + "=:deleterId");
-                paramSource.addValue("deleterId", userInfo.getUserId());
-            }
-            if (columnMap.containsKey("deletedBy")) {
-                setJoiner.add(columnMap.get("deletedBy").getFieldName() + "=:deletedBy");
-                paramSource.addValue("deletedBy", StringUtils.deleteWhitespace(userInfo.getName()));
+            if (userInfo != null) {
+                if (columnMap.containsKey("deleterId")) {
+                    setJoiner.add(columnMap.get("deleterId").getFieldName() + "=:deleterId");
+                    paramSource.addValue("deleterId", userInfo.getUserId());
+                }
+                if (columnMap.containsKey("deletedBy")) {
+                    setJoiner.add(columnMap.get("deletedBy").getFieldName() + "=:deletedBy");
+                    paramSource.addValue("deletedBy", StringUtils.deleteWhitespace(userInfo.getName()));
+                }
             }
             if (columnMap.containsKey("deletedTime")) {
                 setJoiner.add(columnMap.get("deletedTime").getFieldName() + "=:deletedTime");
                 paramSource.addValue("deletedTime", convertToDbValue(LocalDateTime.now(), columnMap.get("deletedTime")));
             }
-            // 处理乐观锁
-            setJoiner.add("VERSION=VERSION + 1");
 
-            paramSource.addValue(primaryColumn.getName(), ColumnUtil.getPrimaryKeys(primaryColumn, entities));
-            String sql = String.format(
-                    "UPDATE %s SET %s WHERE %s in (:id)",
+            if (columnMap.containsKey("version")) {
+                String versionColName = columnMap.get("version").getFieldName();
+                setJoiner.add(String.format("%s=%s + 1", versionColName, versionColName));
+            }
+
+            String sql = String.format("UPDATE %s SET %s WHERE %s IN (:primaryKeys)",
                     entityDefineDTO.getTableName(),
-                    setJoiner, primaryColumn.getFieldName()
+                    setJoiner,
+                    primaryColumn.getFieldName()
             );
-            int rows = namedParameterJdbcTemplate.update(sql, paramSource);
-            if (rows < 1) {
-                return false;
-            }
+            return namedParameterJdbcTemplate.update(sql, paramSource) >= 1;
         } else {
-            String sql = String.format("DELETE FROM %s WHERE %s in(:%s)",
-                    entityDefineDTO.getTableName(), primaryColumn.getName(), primaryColumn.getName());
-            paramSource.addValue(primaryColumn.getName(), ColumnUtil.getPrimaryKeys(primaryColumn, entities));
-            int rows = namedParameterJdbcTemplate.update(sql, paramSource);
-            if (rows < 1) {
-                return false;
-            }
+            String sql = String.format("DELETE FROM %s WHERE %s IN (:primaryKeys)",
+                    entityDefineDTO.getTableName(),
+                    primaryColumn.getFieldName()
+            );
+            return namedParameterJdbcTemplate.update(sql, paramSource) >= 1;
         }
-        return true;
     }
 
     @Override
@@ -430,9 +406,9 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     public void syncColumnsToDb(String className) {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
-        List<Column> columDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         String schema = databaseMetaService.getCurrentSchema();
-        databaseMetaService.syncColumnsToDb(columDefList, schema, entityDefineDTO.getTableName());
+        databaseMetaService.syncColumnsToDb(columnDefList, schema, entityDefineDTO.getTableName());
     }
 
     @Override
@@ -441,86 +417,96 @@ public class CommonServiceImpl implements ICommonService {
         return databaseMetaService.getColumns(null, schema, tableName);
     }
 
-    private String buildLimitSql(Map<String, Object> args) {
-        int size = MapUtils.getIntValue(args, "size", 20);
-        int current = MapUtils.getIntValue(args, "current", 1);
-        return String.format("limit %s offset %s", size, (current - 1) * size);
+    // ======================== 私有通用查询与数据映射 ========================
+
+    private List<FormatMap> queryListInternal(String selectSql, Object[] params, Map<String, Column> columnMap) {
+        Set<Column> externalKeys = columnMap.values().stream()
+                .filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill()))
+                .collect(Collectors.toSet());
+
+        List<FormatMap> list = jdbcTemplate.query(selectSql, params, (rs, rowNum) -> mapRowToFormatMap(rs, columnMap));
+
+        if (!externalKeys.isEmpty() && CollectionUtils.isNotEmpty(list)) {
+            entityServiceFactory.updateExternalEntity(externalKeys, (List) list);
+        }
+        return list;
     }
 
-    private String buildLimitSql() {
-        Page page = RequestUtil.getPage();
-        return String.format("limit %s offset %s", page.getSize(), (page.getCurrent() - 1) * page.getSize());
+    private FormatMap mapRowToFormatMap(ResultSet rs, Map<String, Column> columnMap) throws SQLException {
+        FormatMap map = new FormatMap();
+        ResultSetMetaData meta = rs.getMetaData();
+        int count = meta.getColumnCount();
+
+        for (int i = 1; i <= count; i++) {
+            String key = meta.getColumnLabel(i);
+            Column colDef = columnMap.get(key);
+            if (colDef != null) {
+                if (colDef.getSerialPattern() != null) {
+                    map.rule(key, colDef.getSerialPattern());
+                }
+                Object value = rs.getObject(i);
+                map.put(key, convertToEntityValue(value, colDef));
+            } else {
+                map.put(key, rs.getObject(i));
+            }
+        }
+        return map;
     }
 
-    private String buildOrderBySql(Map<String, Column> columnMap, Map<String, Object> args) {
-        StringJoiner sql = new StringJoiner(",");
+    private Map<Object, Map<String, Object>> getEntitiesByIds(EntityDefineDTO entityDefineDTO, List<Object> ids, Map<String, Column> columnMap, Column primaryColumn) {
+        if (CollectionUtil.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        MapSqlParameterSource paramSource = new MapSqlParameterSource();
+        paramSource.addValue("ids", ids);
 
-        List descColumns = (List) args.get("descColumns");
-        if (!CollectionUtils.isEmpty(descColumns)) {
-            List<String> colNames = descColumns.stream().filter(f -> columnMap.containsKey(f) && StringUtils.isNotEmpty(columnMap.get(f).getFieldName()))
-                    .map(k -> columnMap.get(k).getFieldName()).toList();
-            for (String colName : colNames) {
-                if (SqlInjectionUtils.check(colName)) {
-                    throw new BizException("Discovering SQL injection column: " + colName);
-                }
-                sql.add(colName + " desc");
-            }
+        String sql = String.format("SELECT %s FROM %s WHERE %s IN (:ids)",
+                getSelectSql(columnMap),
+                entityDefineDTO.getTableName(),
+                primaryColumn.getFieldName()
+        );
+
+        List<FormatMap> list = namedParameterJdbcTemplate.query(sql, paramSource, (rs, rowNum) -> mapRowToFormatMap(rs, columnMap));
+        Map<Object, Map<String, Object>> resultMap = new HashMap<>();
+        for (FormatMap map : list) {
+            resultMap.put(map.get(primaryColumn.getName()), map);
+        }
+        return resultMap;
+    }
+
+    private Map<String, Object> getByPrimaryKey(EntityDefineDTO entityDefineDTO, Object primaryKeyValue, Map<String, Column> columnMap, Column primaryKey) {
+        Set<Column> externalKeys = columnMap.values().stream()
+                .filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill()))
+                .collect(Collectors.toSet());
+
+        StringBuilder sql = new StringBuilder(String.format("SELECT %s FROM %s WHERE %s=?",
+                getSelectSql(columnMap), entityDefineDTO.getTableName(), primaryKey.getFieldName()));
+
+        List<Object> args = Lists.newArrayList();
+        args.add(convertToDbValue(primaryKeyValue, primaryKey));
+
+        // 修复：补齐前置空格
+        if (SqlUtil.isLogicDeleteEntity(columnMap)) {
+            Column isDeletedCol = columnMap.get("isDeleted");
+            String isDeletedFieldName = isDeletedCol != null ? isDeletedCol.getFieldName() : "IS_DELETED";
+            sql.append(String.format(" AND %s=?", isDeletedFieldName));
+            args.add(convertToDbValue(Delete.NORMAL, isDeletedCol));
         }
 
-        List ascColumns = (List) args.get("ascColumns");
-        if (!CollectionUtils.isEmpty(ascColumns)) {
-            List<String> colNames = ascColumns.stream().filter(f -> columnMap.containsKey(f) && StringUtils.isNotEmpty(columnMap.get(f).getFieldName()))
-                    .map(k -> columnMap.get(k).getFieldName()).toList();
-            for (String colName : colNames) {
-                if (SqlInjectionUtils.check(colName)) {
-                    throw new BizException("Discovering SQL injection column: " + colName);
-                }
-                sql.add(colName + " asc");
+        try {
+            FormatMap formatMap = jdbcTemplate.queryForObject(sql.toString(), (rs, rowNum) -> mapRowToFormatMap(rs, columnMap), args.toArray());
+            if (formatMap != null && !externalKeys.isEmpty()) {
+                entityServiceFactory.updateExternalEntity(externalKeys, List.of(formatMap));
             }
-        }
-        if (sql.length() > 0) {
-            return String.format("order by %s", sql);
-        } else {
-            return "";
+            return formatMap;
+        } catch (EmptyResultDataAccessException e) {
+            return null;
         }
     }
 
-    private String buildOrderBySql(Map<String, Column> columnMap) {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        Map<String, String[]> multiMap = request.getParameterMap();
-        StringJoiner sql = new StringJoiner(",");
+    // ======================== 通用 Insert & Update ========================
 
-        String[] descColumns = multiMap.get("descColumns");
-        if (!(descColumns == null || descColumns.length < 1)) {
-            List<String> colNames = Arrays.stream(descColumns).filter(f -> columnMap.containsKey(f) && StringUtils.isNotEmpty(columnMap.get(f).getFieldName()))
-                    .map(k -> columnMap.get(k).getFieldName()).toList();
-            for (String colName : colNames) {
-                if (SqlInjectionUtils.check(colName)) {
-                    throw new BizException("Discovering SQL injection column: " + colName);
-                }
-                sql.add(colName + " desc");
-            }
-        }
-
-        String[] ascColumns = multiMap.get("ascColumns");
-        if (!(ascColumns == null || ascColumns.length < 1)) {
-            List<String> colNames = Arrays.stream(ascColumns).filter(f -> columnMap.containsKey(f) && StringUtils.isNotEmpty(columnMap.get(f).getFieldName()))
-                    .map(k -> columnMap.get(k).getFieldName()).toList();
-            for (String colName : colNames) {
-                if (SqlInjectionUtils.check(colName)) {
-                    throw new BizException("Discovering SQL injection column: " + colName);
-                }
-                sql.add(colName + " asc");
-            }
-        }
-        if (sql.length() > 0) {
-            return String.format("order by %s", sql);
-        } else {
-            return "";
-        }
-    }
-
-    private void insert(EntityDefineDTO entityDefineDTO, Map<String, Object> entity, Map<String, Column> columnMap) {
+    private void insert(EntityDefineDTO entityDefineDTO, Map<String, Object> entity, Map<String, Column> columnMap, Column primaryColumn) {
         Set<String> columns = entity.keySet();
         if (columns.isEmpty()) return;
 
@@ -530,29 +516,28 @@ public class CommonServiceImpl implements ICommonService {
 
         for (String col : columns) {
             Column column = columnMap.get(col);
-            if (column == null) continue;
+            if (column == null || StringUtils.isEmpty(column.getFieldName())) continue;
             if (SqlUtil.isAuditEntityProps(col)) continue;
             if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) continue;
 
             colJoiner.add(column.getFieldName());
             valJoiner.add("?");
-            if (SqlInjectionUtils.check(String.valueOf(entity.get(col)))) {
-                throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + entity.get(col));
-            }
             params.add(convertToDbValue(entity.get(col), column));
         }
 
-        // 处理创建人信息
+        // 审计字段填充
         UserInfo userInfo = TokenUtil.getUserinfo();
-        if (columnMap.containsKey("creatorId")) {
-            colJoiner.add(columnMap.get("creatorId").getFieldName());
-            valJoiner.add("?");
-            params.add(convertToDbValue(userInfo.getUserId(), columnMap.get("creatorId")));
-        }
-        if (columnMap.containsKey("createdBy")) {
-            colJoiner.add(columnMap.get("createdBy").getFieldName());
-            valJoiner.add("?");
-            params.add(convertToDbValue(userInfo.getName(), columnMap.get("createdBy")));
+        if (userInfo != null) {
+            if (columnMap.containsKey("creatorId")) {
+                colJoiner.add(columnMap.get("creatorId").getFieldName());
+                valJoiner.add("?");
+                params.add(convertToDbValue(userInfo.getUserId(), columnMap.get("creatorId")));
+            }
+            if (columnMap.containsKey("createdBy")) {
+                colJoiner.add(columnMap.get("createdBy").getFieldName());
+                valJoiner.add("?");
+                params.add(convertToDbValue(userInfo.getName(), columnMap.get("createdBy")));
+            }
         }
         if (columnMap.containsKey("createdTime")) {
             colJoiner.add(columnMap.get("createdTime").getFieldName());
@@ -560,16 +545,13 @@ public class CommonServiceImpl implements ICommonService {
             params.add(convertToDbValue(LocalDateTime.now(), columnMap.get("createdTime")));
         }
 
-        String sql = String.format(
-                "INSERT INTO %s (%s) VALUES (%s)",
+        String sql = String.format("INSERT INTO %s (%s) VALUES (%s)",
                 entityDefineDTO.getTableName(),
                 colJoiner,
                 valJoiner
         );
 
-        // ===================== 【关键：返回主键 ID】=====================
         KeyHolder keyHolder = new GeneratedKeyHolder();
-
         jdbcTemplate.update(con -> {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             for (int i = 0; i < params.size(); i++) {
@@ -577,224 +559,187 @@ public class CommonServiceImpl implements ICommonService {
             }
             return ps;
         }, keyHolder);
-        if (!CollectionUtil.isEmpty(keyHolder.getKeys()) && columnMap.containsKey("id")) {
-            entity.put("id", keyHolder.getKeys().get("id"));
+
+        // 修复：根据动态主键名回填主键
+        if (keyHolder.getKey() != null) {
+            entity.put(primaryColumn.getName(), keyHolder.getKey());
+        } else if (MapUtils.isNotEmpty(keyHolder.getKeys())) {
+            Object idVal = keyHolder.getKeys().get(primaryColumn.getFieldName());
+            if (idVal == null) {
+                idVal = keyHolder.getKeys().get(primaryColumn.getName());
+            }
+            if (idVal != null) {
+                entity.put(primaryColumn.getName(), idVal);
+            }
         }
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     protected int batchInsert(EntityDefineDTO entityDefineDTO, List<Map<String, Object>> entityList, Map<String, Column> columnMap) {
         if (CollectionUtil.isEmpty(entityList)) return 0;
 
-        // 取第一个实体，获取需要插入的字段（所有实体共用相同字段结构）
-        Map<String, Object> firstEntity = entityList.get(0);
-        Set<String> columns = firstEntity.keySet();
-        if (columns.isEmpty()) return 0;
+        // 计算所有实体的属性 Key 并集，避免异构 Map 丢失字段
+        Set<String> allKeys = new LinkedHashSet<>();
+        for (Map<String, Object> entity : entityList) {
+            allKeys.addAll(entity.keySet());
+        }
+        if (allKeys.isEmpty()) return 0;
 
-        // 构建字段部分（所有行共用）
         StringJoiner colJoiner = new StringJoiner(",");
         List<String> fieldList = new ArrayList<>();
 
-        for (String col : columns) {
+        for (String col : allKeys) {
             Column column = columnMap.get(col);
-            if (column == null) continue;
+            if (column == null || StringUtils.isEmpty(column.getFieldName())) continue;
             if (SqlUtil.isAuditEntityProps(col)) continue;
             if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) continue;
             fieldList.add(col);
             colJoiner.add(column.getFieldName());
         }
 
-        // 处理审计字段（创建人、时间）
         UserInfo userInfo = TokenUtil.getUserinfo();
-        if (columnMap.containsKey("creatorId")) {
-            fieldList.add("creatorId");
-            colJoiner.add(columnMap.get("creatorId").getFieldName());
-        }
-        if (columnMap.containsKey("createdBy")) {
-            fieldList.add("createdBy");
-            colJoiner.add(columnMap.get("createdBy").getFieldName());
+        if (userInfo != null) {
+            if (columnMap.containsKey("creatorId")) {
+                fieldList.add("creatorId");
+                colJoiner.add(columnMap.get("creatorId").getFieldName());
+            }
+            if (columnMap.containsKey("createdBy")) {
+                fieldList.add("createdBy");
+                colJoiner.add(columnMap.get("createdBy").getFieldName());
+            }
         }
         if (columnMap.containsKey("createdTime")) {
             fieldList.add("createdTime");
             colJoiner.add(columnMap.get("createdTime").getFieldName());
         }
 
-        // 批量参数集合
         List<Object> totalParams = new ArrayList<>();
-        String valuesPlaceholder;
-
-        // 构建单条记录的 ? 占位符
         StringJoiner valSingleJoiner = new StringJoiner(",");
         for (int i = 0; i < fieldList.size(); i++) {
             valSingleJoiner.add("?");
         }
-        valuesPlaceholder = "(" + valSingleJoiner + ")";
+        String valuesPlaceholder = "(" + valSingleJoiner + ")";
 
-        // 构建所有行的占位符
         StringJoiner allValues = new StringJoiner(",");
         for (Map<String, Object> entity : entityList) {
             allValues.add(valuesPlaceholder);
 
-            // 逐个字段加入参数
             for (String field : fieldList) {
                 Column column = columnMap.get(field);
-
-                // 审计字段自动填充
                 Object value;
                 if ("creatorId".equals(field)) {
-                    value = userInfo.getUserId();
+                    value = userInfo != null ? userInfo.getUserId() : null;
                 } else if ("createdBy".equals(field)) {
-                    value = userInfo.getName();
+                    value = userInfo != null ? userInfo.getName() : null;
                 } else if ("createdTime".equals(field)) {
                     value = LocalDateTime.now();
                 } else {
                     value = entity.get(field);
                 }
-
-                // SQL注入检查,脚本字段不做检查
-                if (!YesNo.NO.equals(column.getSqlInjectionCheck())) {
-                    if (SqlInjectionUtils.check(String.valueOf(value))) {
-                        throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + value);
-                    }
-                }
-
-                // 转换数据库类型
                 totalParams.add(convertToDbValue(value, column));
             }
         }
 
-        // 最终批量插入SQL
-        String sql = String.format(
-                "INSERT INTO %s (%s) VALUES %s",
+        String sql = String.format("INSERT INTO %s (%s) VALUES %s",
                 entityDefineDTO.getTableName(),
                 colJoiner,
                 allValues
         );
 
-        // 执行批量
         return jdbcTemplate.update(sql, totalParams.toArray());
     }
 
-    // ============= 通用更新 =============
-    private void update(EntityDefineDTO entityDefineDTO, Map<String, Object> entity, Map<String, Column> columnMap) {
+    private void update(EntityDefineDTO entityDefineDTO, Map<String, Object> entity, Map<String, Column> columnMap, Column primaryColumn) {
         Set<String> columns = entity.keySet();
         if (columns.isEmpty()) return;
-        Column primaryColumn = getPrimaryColumn(columnMap.values());
+
         StringJoiner setJoiner = new StringJoiner(",");
         List<Object> params = new ArrayList<>();
 
         for (String col : columns) {
-            // 审计信息不允许修改
-            if (SqlUtil.isAuditEntityProps(col)) {
-                continue;
-            }
+            if (SqlUtil.isAuditEntityProps(col)) continue;
             Column column = columnMap.get(col);
-            // 无明确字段定义
-            if (column == null) {
-                continue;
-            }
-            // 明细表，数据库无此字段
-            if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) {
-                continue;
-            }
-            // 数据库无此字段
-            if (StringUtils.isEmpty(column.getFieldName())) {
-                continue;
-            }
+            if (column == null || StringUtils.isEmpty(column.getFieldName())) continue;
+            if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) continue;
+            if (column.getName().equals(primaryColumn.getName())) continue; // 主键不放入 SET 子句
+
             setJoiner.add(column.getFieldName() + "=?");
-            if (!YesNo.NO.equals(column.getSqlInjectionCheck())) {
-                if (SqlInjectionUtils.check(String.valueOf(entity.get(col)))) {
-                    throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + entity.get(col));
-                }
-            }
-            params.add(convertToDbValue(entity.get(col), columnMap.get(col)));
+            params.add(convertToDbValue(entity.get(col), column));
         }
-        // 处理审计相关信息
+
+        // 审计字段
         UserInfo userInfo = TokenUtil.getUserinfo();
-        if (columnMap.containsKey("updaterId")) {
-            setJoiner.add(columnMap.get("updaterId").getFieldName() + "=?");
-            params.add(userInfo.getUserId());
-        }
-        if (columnMap.containsKey("updatedBy")) {
-            setJoiner.add(columnMap.get("updatedBy").getFieldName() + "=?");
-            params.add(StringUtils.deleteWhitespace(userInfo.getName()));
+        if (userInfo != null) {
+            if (columnMap.containsKey("updaterId")) {
+                setJoiner.add(columnMap.get("updaterId").getFieldName() + "=?");
+                params.add(userInfo.getUserId());
+            }
+            if (columnMap.containsKey("updatedBy")) {
+                setJoiner.add(columnMap.get("updatedBy").getFieldName() + "=?");
+                params.add(StringUtils.deleteWhitespace(userInfo.getName()));
+            }
         }
         if (columnMap.containsKey("updatedTime")) {
             setJoiner.add(columnMap.get("updatedTime").getFieldName() + "=?");
             params.add(convertToDbValue(LocalDateTime.now(), columnMap.get("updatedTime")));
         }
 
-        // 处理乐观锁
-        if (columnMap.containsKey("version")) {
-            setJoiner.add("VERSION=VERSION + 1");
+        // 乐观锁：动态列名
+        boolean hasVersion = columnMap.containsKey("version") && entity.get("version") != null;
+        if (hasVersion) {
+            String versionColName = columnMap.get("version").getFieldName();
+            setJoiner.add(String.format("%s=%s + 1", versionColName, versionColName));
         }
 
-        String sql = null;
         params.add(convertToDbValue(entity.get(primaryColumn.getName()), primaryColumn));
-        if (columnMap.containsKey("version")) {
+        String sql;
+        if (hasVersion) {
             params.add(convertToDbValue(entity.get("version"), columnMap.get("version")));
-            sql = String.format(
-                    "UPDATE %s SET %s WHERE %s=? AND VERSION=?",
+            sql = String.format("UPDATE %s SET %s WHERE %s=? AND %s=?",
                     entityDefineDTO.getTableName(),
                     setJoiner,
-                    primaryColumn.getFieldName()
+                    primaryColumn.getFieldName(),
+                    columnMap.get("version").getFieldName()
             );
         } else {
-            sql = String.format(
-                    "UPDATE %s SET %s WHERE %s=?",
+            sql = String.format("UPDATE %s SET %s WHERE %s=?",
                     entityDefineDTO.getTableName(),
                     setJoiner,
                     primaryColumn.getFieldName()
             );
         }
+
         int rows = jdbcTemplate.update(sql, params.toArray());
         if (rows < 1) {
             throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
         }
     }
 
-    @Transactional
-    protected void batchUpdate(EntityDefineDTO entityDefineDTO, List<Map<String, Object>> entityList, Map<String, Column> columnMap) {
-        if (CollectionUtil.isEmpty(entityList)) {
-            return;
-        }
-        Column primaryColumn = getPrimaryColumn(columnMap.values());
+    @Transactional(rollbackFor = Exception.class)
+    protected void batchUpdate(EntityDefineDTO entityDefineDTO, List<Map<String, Object>> entityList, Map<String, Column> columnMap, Column primaryColumn) {
+        if (CollectionUtil.isEmpty(entityList)) return;
 
-        // 取第一个实体作为模板字段（默认所有实体结构一致）
         Map<String, Object> firstEntity = entityList.get(0);
         Set<String> columns = firstEntity.keySet();
-        if (columns.isEmpty()) {
-            return;
-        }
+        if (columns.isEmpty()) return;
 
         StringJoiner setJoiner = new StringJoiner(",");
         List<String> validColumns = new ArrayList<>();
 
-        // 构建 UPDATE SET 字段
         for (String col : columns) {
-            // 审计属性不允许手动修改
-            if (SqlUtil.isAuditEntityProps(col)) {
-                continue;
-            }
+            if (SqlUtil.isAuditEntityProps(col)) continue;
             Column column = columnMap.get(col);
-            if (column == null) {
-                continue;
-            }
-            if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) {
-                continue;
-            }
-            if (StringUtils.isEmpty(column.getFieldName())) {
-                continue;
-            }
+            if (column == null || StringUtils.isEmpty(column.getFieldName())) continue;
+            if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) continue;
+            if (column.getName().equals(primaryColumn.getName())) continue;
 
             setJoiner.add(column.getFieldName() + "=?");
             validColumns.add(col);
         }
 
-        // 处理审计字段（更新人、更新时间）
         UserInfo userInfo = TokenUtil.getUserinfo();
-        boolean hasUpdaterId = columnMap.containsKey("updaterId");
-        boolean hasUpdatedBy = columnMap.containsKey("updatedBy");
+        boolean hasUpdaterId = columnMap.containsKey("updaterId") && userInfo != null;
+        boolean hasUpdatedBy = columnMap.containsKey("updatedBy") && userInfo != null;
         boolean hasUpdatedTime = columnMap.containsKey("updatedTime");
 
         if (hasUpdaterId) {
@@ -807,48 +752,37 @@ public class CommonServiceImpl implements ICommonService {
             setJoiner.add(columnMap.get("updatedTime").getFieldName() + "=?");
         }
 
-        // 处理乐观锁
-        if (columnMap.containsKey("version")) {
-            setJoiner.add("VERSION=VERSION + 1");
+        boolean hasVersion = columnMap.containsKey("version");
+        if (hasVersion) {
+            String versionColName = columnMap.get("version").getFieldName();
+            setJoiner.add(String.format("%s=%s + 1", versionColName, versionColName));
         }
 
-        String sql = null;
-        if (columnMap.containsKey("version")) {
-            sql = String.format(
-                    "UPDATE %s SET %s WHERE %s=? AND VERSION=?",
+        String sql;
+        if (hasVersion) {
+            sql = String.format("UPDATE %s SET %s WHERE %s=? AND %s=?",
                     entityDefineDTO.getTableName(),
                     setJoiner,
-                    primaryColumn.getFieldName()
+                    primaryColumn.getFieldName(),
+                    columnMap.get("version").getFieldName()
             );
         } else {
-            sql = String.format(
-                    "UPDATE %s SET %s WHERE %s=?",
+            sql = String.format("UPDATE %s SET %s WHERE %s=?",
                     entityDefineDTO.getTableName(),
                     setJoiner,
                     primaryColumn.getFieldName()
             );
         }
 
-        // 构建批量参数
         List<Object[]> batchParams = new ArrayList<>();
         for (Map<String, Object> entity : entityList) {
             List<Object> params = new ArrayList<>();
 
-            // 绑定业务字段参数
             for (String col : validColumns) {
                 Column column = columnMap.get(col);
-                Object val = entity.get(col);
-
-                if (!YesNo.NO.equals(column.getSqlInjectionCheck())) {
-                    if (SqlInjectionUtils.check(String.valueOf(val))) {
-                        log.error("Discovering SQL injection column: {} value: {}", column.getName(), val);
-                        throw new BizException("Discovering SQL injection column: " + column.getName() + ", value: " + val);
-                    }
-                }
-                params.add(convertToDbValue(val, column));
+                params.add(convertToDbValue(entity.get(col), column));
             }
 
-            // 绑定审计字段参数
             if (hasUpdaterId) {
                 params.add(userInfo.getUserId());
             }
@@ -859,15 +793,13 @@ public class CommonServiceImpl implements ICommonService {
                 params.add(convertToDbValue(LocalDateTime.now(), columnMap.get("updatedTime")));
             }
 
-            // 绑定 WHERE 条件参数：WHERE ID=? AND VERSION=?
             params.add(convertToDbValue(entity.get(primaryColumn.getName()), primaryColumn));
-            if (columnMap.containsKey("version")) {
+            if (hasVersion) {
                 params.add(convertToDbValue(entity.get("version"), columnMap.get("version")));
             }
             batchParams.add(params.toArray());
         }
 
-        // 执行批量更新并做乐观锁检查
         int[] updateCounts = jdbcTemplate.batchUpdate(sql, batchParams);
         for (int count : updateCounts) {
             if (count < 1) {
@@ -876,46 +808,91 @@ public class CommonServiceImpl implements ICommonService {
         }
     }
 
-    // ============= 根据ID查询（返回保存后的数据） =============
-    private Map<String, Object> getByPrimaryKey(EntityDefineDTO entityDefineDTO, Object primaryKeyValue, Map<String, Column> columnMap, Column primaryKey) {
-        Set<Column> externalKeys = columnMap.values().stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
+    // ======================== 辅助与 SQL 构建方法 ========================
 
-        String sql = String.format("SELECT %s FROM %s WHERE %s=?", getSelectSql(columnMap), entityDefineDTO.getTableName(), primaryKey.getFieldName());
-
-        List args = Lists.newArrayList();
-        args.add(convertToDbValue(primaryKeyValue, primaryKey));
-
-        if (SqlUtil.isLogicDeleteEntity(columnMap)) {
-            sql += "AND \"IS_DELETED\"=?";
-            args.add(convertToDbValue(Delete.NORMAL, columnMap.get("isDeleted")));
-        }
-        try {
-
-            FormatMap formatMap = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
-                FormatMap map = new FormatMap();
-                ResultSetMetaData meta = rs.getMetaData();
-                int count = meta.getColumnCount();
-
-                for (int i = 1; i <= count; i++) {
-                    // 拿到你 AS 定义的驼峰别名（区分大小写）
-                    String key = meta.getColumnLabel(i);
-                    if (columnMap.get(key).getSerialPattern() != null) {
-                        map.rule(key, columnMap.get(key).getSerialPattern());
-                    }
-
-                    Object value = rs.getObject(i);
-                    map.put(key, convertToEntityValue(value, columnMap.get(key)));
-                }
-                if (!externalKeys.isEmpty()) {
-                    entityServiceFactory.updateExternalEntity(externalKeys, List.of(map));
-                }
-                return map;
-            }, args.toArray());
-            return formatMap;
-        } catch (EmptyResultDataAccessException e) {
-            return null;
-        }
+    private HttpServletRequest getHttpServletRequest() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attributes != null ? attributes.getRequest() : null;
     }
+
+    private String buildLimitSql(Map<String, Object> args) {
+        int size = MapUtils.getIntValue(args, "size", 20);
+        int current = MapUtils.getIntValue(args, "current", 1);
+        return String.format("LIMIT %s OFFSET %s", size, (current - 1) * size);
+    }
+
+    private String buildLimitSql() {
+        Page page = RequestUtil.getPage();
+        return String.format("LIMIT %s OFFSET %s", page.getSize(), (page.getCurrent() - 1) * page.getSize());
+    }
+    private String buildOrderBySqlByRequest(Map<String, Column> columnMap, Map<String, String[]> multiMap) {
+        if (MapUtils.isEmpty(multiMap)) {
+            return "";
+        }
+        StringJoiner sql = new StringJoiner(",");
+
+        String[] descColumns = multiMap.get("descColumns");
+        if (descColumns != null && descColumns.length > 0) {
+            for (String col : descColumns) {
+                if (columnMap.containsKey(col) && StringUtils.isNotEmpty(columnMap.get(col).getFieldName())) {
+                    String colName = columnMap.get(col).getFieldName();
+                    if (SqlInjectionUtils.check(colName)) {
+                        throw new BizException("Discovering SQL injection column: " + colName);
+                    }
+                    sql.add(colName + " DESC");
+                }
+            }
+        }
+
+        String[] ascColumns = multiMap.get("ascColumns");
+        if (ascColumns != null && ascColumns.length > 0) {
+            for (String col : ascColumns) {
+                if (columnMap.containsKey(col) && StringUtils.isNotEmpty(columnMap.get(col).getFieldName())) {
+                    String colName = columnMap.get(col).getFieldName();
+                    if (SqlInjectionUtils.check(colName)) {
+                        throw new BizException("Discovering SQL injection column: " + colName);
+                    }
+                    sql.add(colName + " ASC");
+                }
+            }
+        }
+        return sql.length() > 0 ? "ORDER BY " + sql : "";
+    }
+
+    private String buildOrderBySql(Map<String, Column> columnMap, Map<String, Object> args) {
+        StringJoiner sql = new StringJoiner(",");
+
+        List descColumns = (List) args.get("descColumns");
+        if (!CollectionUtils.isEmpty(descColumns)) {
+            for (Object col : descColumns) {
+                String key = String.valueOf(col);
+                if (columnMap.containsKey(key) && StringUtils.isNotEmpty(columnMap.get(key).getFieldName())) {
+                    String colName = columnMap.get(key).getFieldName();
+                    if (SqlInjectionUtils.check(colName)) {
+                        throw new BizException("Discovering SQL injection column: " + colName);
+                    }
+                    sql.add(colName + " DESC");
+                }
+            }
+        }
+
+        List ascColumns = (List) args.get("ascColumns");
+        if (!CollectionUtils.isEmpty(ascColumns)) {
+            for (Object col : ascColumns) {
+                String key = String.valueOf(col);
+                if (columnMap.containsKey(key) && StringUtils.isNotEmpty(columnMap.get(key).getFieldName())) {
+                    String colName = columnMap.get(key).getFieldName();
+                    if (SqlInjectionUtils.check(colName)) {
+                        throw new BizException("Discovering SQL injection column: " + colName);
+                    }
+                    sql.add(colName + " ASC");
+                }
+            }
+        }
+        return sql.length() > 0 ? "ORDER BY " + sql : "";
+    }
+
+
 
     private String getSelectSql(Map<String, Column> columnMap) {
         StringJoiner selJoiner = new StringJoiner(",");
@@ -923,11 +900,10 @@ public class CommonServiceImpl implements ICommonService {
             if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) {
                 continue;
             }
-            // 数据库无此字段
             if (StringUtils.isEmpty(column.getFieldName())) {
                 continue;
             }
-            selJoiner.add(String.format("%s as \"%s\"", column.getFieldName(), column.getName()));
+            selJoiner.add(String.format("%s AS \"%s\"", column.getFieldName(), column.getName()));
         }
         return selJoiner.toString();
     }
