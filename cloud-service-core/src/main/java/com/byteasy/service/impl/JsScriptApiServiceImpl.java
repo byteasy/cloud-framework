@@ -53,7 +53,13 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
         input.put("params", params);
         input.put("body", body);
 
-        return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, MapUtil.getStr(jsScriptObj, "id"), 30000));
+        exePreScript(openApi, input);
+
+        try {
+            return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, MapUtil.getStr(jsScriptObj, "id"), 30000));
+        } finally {
+            exePostScript(openApi, input);
+        }
     }
 
     @Override
@@ -73,5 +79,29 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
         String scriptId = MapUtil.getStr(jsScriptObj, "id") + "-debug";
         com.byteasy.component.JsScriptFactory.invalidate(scriptId);
         return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, scriptId, 30000));
+    }
+
+    private void exePreScript(Map<String, Object> openapi, Map<String, Object> input) throws ExecutionException {
+        if (openapi.containsKey("preScriptId")) {
+            Long scriptId = MapUtil.getLong(openapi, "preScriptId");
+            Map<String, Object> jsScriptObj = jsScriptFactory.getScript(scriptId);
+            String script = MapUtil.getStr(jsScriptObj, "script");
+            if (StringUtils.isEmpty(script)) {
+                return;
+            }
+            JsScriptExecutor.runScriptWithTimeout(input, script, "PreScript-" + scriptId, 30000);
+        }
+    }
+
+    private void exePostScript(Map<String, Object> openapi, Map<String, Object> input) throws ExecutionException {
+        if (openapi.containsKey("postScriptId")) {
+            Long scriptId = MapUtil.getLong(openapi, "postScriptId");
+            Map<String, Object> jsScriptObj = jsScriptFactory.getScript(scriptId);
+            String script = MapUtil.getStr(jsScriptObj, "script");
+            if (StringUtils.isEmpty(script)) {
+                return;
+            }
+            JsScriptExecutor.runScriptWithTimeout(input, script, "PostScriptId-" + scriptId, 30000);
+        }
     }
 }
