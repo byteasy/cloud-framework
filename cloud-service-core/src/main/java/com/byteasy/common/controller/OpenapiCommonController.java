@@ -108,7 +108,7 @@ public class OpenapiCommonController {
     @Authentication
     @Operation(summary = "根据主键删除记录")
     @Log
-    public Result<Boolean> removeById(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
+    public Result<Boolean> removeByPrimaryKey(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("className: {}, removeById: {}", className, primaryKey);
         }

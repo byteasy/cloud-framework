@@ -89,6 +89,7 @@ public class CommonServiceImpl implements ICommonService {
                 .findFirst()
                 .orElseThrow(() -> {
                     String className = columnDefList.iterator().next().getClassName();
+                    log.error("className: {} 缺少主键定义", className);
                     return new BizException("className: " + className + " 缺少主键定义");
                 });
     }
