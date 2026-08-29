@@ -11,7 +11,7 @@ import java.util.Map;
 public class IPlatformCommonServiceFallback implements IPlatformCommonService {
 
     @Override
-    public Result<Map<String, Object>> getById(String className, Object id) {
+    public Result<Map<String, Object>> getByPrimaryKey(String className, Object id) {
         return null;
     }
 

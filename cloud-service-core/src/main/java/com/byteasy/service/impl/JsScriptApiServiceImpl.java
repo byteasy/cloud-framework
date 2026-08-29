@@ -8,6 +8,7 @@ import com.byteasy.service.IJsScriptApiService;
 import com.byteasy.util.JsScriptExecutor;
 import com.google.common.collect.Maps;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -82,7 +83,7 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
     }
 
     private void exePreScript(Map<String, Object> openapi, Map<String, Object> input) throws ExecutionException {
-        if (openapi.containsKey("preScriptId")) {
+        if (openapi.containsKey("preScriptId") && ObjectUtils.isNotEmpty(openapi.get("preScriptId"))) {
             Long scriptId = MapUtil.getLong(openapi, "preScriptId");
             Map<String, Object> jsScriptObj = jsScriptFactory.getScript(scriptId);
             String script = MapUtil.getStr(jsScriptObj, "script");
@@ -94,7 +95,7 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
     }
 
     private void exePostScript(Map<String, Object> openapi, Map<String, Object> input) throws ExecutionException {
-        if (openapi.containsKey("postScriptId")) {
+        if (openapi.containsKey("postScriptId") && ObjectUtils.isNotEmpty(openapi.get("postScriptId"))) {
             Long scriptId = MapUtil.getLong(openapi, "postScriptId");
             Map<String, Object> jsScriptObj = jsScriptFactory.getScript(scriptId);
             String script = MapUtil.getStr(jsScriptObj, "script");

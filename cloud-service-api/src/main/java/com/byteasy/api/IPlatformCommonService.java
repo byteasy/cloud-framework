@@ -17,8 +17,8 @@ import java.util.Map;
         fallback = IPlatformCommonServiceFallback.class)
 public interface IPlatformCommonService {
 
-    @GetMapping("/{className}/{id}")
-    Result<Map<String, Object>> getById(@PathVariable("className") String className, @PathVariable("id") Object id);
+    @GetMapping("/{className}/{key}")
+    Result<Map<String, Object>> getByPrimaryKey(@PathVariable("className") String className, @PathVariable("key") Object id);
 
     @GetMapping("/{className}")
     Result<Page<Map<String, Object>>> page(@PathVariable("className") String className, @RequestParam Map<String, Object> queryParams);
