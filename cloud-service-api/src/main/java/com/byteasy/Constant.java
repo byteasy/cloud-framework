@@ -58,7 +58,7 @@ public interface Constant {
 
     String CLS_JS_SCRIPT = "com.byteasy.platform.entity.JsScript";
 
-    String CLS_OPEN_API = "com.byteasy.platform.entity.OpenApi";
+    String CLS_OPEN_API = "com.byteasy.platform.entity.Openapi";
 
     String CLS_SERVICE_INSTANCE = "com.byteasy.platform.entity.ServiceInstance";
 }
