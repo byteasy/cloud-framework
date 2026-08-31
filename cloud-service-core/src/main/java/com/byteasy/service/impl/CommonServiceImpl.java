@@ -553,26 +553,52 @@ public class CommonServiceImpl implements ICommonService {
         );
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
+        String primaryDbField = primaryColumn.getFieldName();
+
         jdbcTemplate.update(con -> {
-            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            // 🔥 优化 1：显式指定只返回主键列名，PostgreSQL 底层会生成 RETURNING "id"
+            PreparedStatement ps = con.prepareStatement(sql, new String[]{primaryDbField});
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
             return ps;
         }, keyHolder);
 
-        // 修复：根据动态主键名回填主键
-        if (keyHolder.getKey() != null) {
-            entity.put(primaryColumn.getName(), keyHolder.getKey());
-        } else if (MapUtils.isNotEmpty(keyHolder.getKeys())) {
-            Object idVal = keyHolder.getKeys().get(primaryColumn.getFieldName());
-            if (idVal == null) {
-                idVal = keyHolder.getKeys().get(primaryColumn.getName());
-            }
+        // 🔥 优化 2：安全回填主键（完全避免调用不安全的 keyHolder.getKey()）
+        Map<String, Object> keys = keyHolder.getKeys();
+        if (MapUtils.isNotEmpty(keys)) {
+            Object idVal = getPrimaryKeyValueFromKeyMap(keys, primaryColumn);
             if (idVal != null) {
-                entity.put(primaryColumn.getName(), idVal);
+                // 转换为主键字段的对应实体类型并回填
+                entity.put(primaryColumn.getName(), convertToEntityValue(idVal, primaryColumn));
             }
         }
+    }
+
+    /**
+     * 从 KeyHolder 的 Map 中自适应提取主键值（兼容大小写与多种命名）
+     */
+    private Object getPrimaryKeyValueFromKeyMap(Map<String, Object> keys, Column primaryColumn) {
+        String dbField = primaryColumn.getFieldName();
+        String propName = primaryColumn.getName();
+
+        // 1. 直接匹配物理字段名
+        if (keys.containsKey(dbField)) return keys.get(dbField);
+        // 2. 匹配全小写（PG 默认小写）
+        if (dbField != null && keys.containsKey(dbField.toLowerCase())) return keys.get(dbField.toLowerCase());
+        // 3. 匹配全大写
+        if (dbField != null && keys.containsKey(dbField.toUpperCase())) return keys.get(dbField.toUpperCase());
+        // 4. 匹配属性名
+        if (keys.containsKey(propName)) return keys.get(propName);
+        // 5. 兜底匹配常见 id
+        if (keys.containsKey("id")) return keys.get("id");
+        if (keys.containsKey("ID")) return keys.get("ID");
+
+        // 6. 如果 Map 只有 1 个元素，直接取该值
+        if (keys.size() == 1) {
+            return keys.values().iterator().next();
+        }
+        return null;
     }
 
     @Transactional(rollbackFor = Exception.class)
