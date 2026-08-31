@@ -27,7 +27,7 @@ public interface ICommonService {
 
     boolean removeByPrimaryKey(String className, Map<String, Object> entity);
 
-    boolean batchRemove(String className, List<Map<String, Object>> entities);
+    boolean batchDelete(String className, List<Map<String, Object>> entities);
 
     Collection<Column> getColumns(String className);
 

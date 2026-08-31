@@ -49,6 +49,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 对外公开的api入口
+ */
 @RestController
 @RequestMapping(Constant.SAPI + "/common")
 @Log4j2
@@ -119,18 +122,18 @@ public class OpenapiCommonController {
     @Authentication
     @Operation(summary = "批量删除")
     @Log
-    public Result<Boolean> batchRemove(@PathVariable("className") String className, @RequestBody List<Map<String, Object>> entities) throws Exception {
+    public Result<Boolean> batchDelete(@PathVariable("className") String className, @RequestBody List<Map<String, Object>> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("className: {}, batchRemove: {}", className, JacksonUtil.toJson(entities));
         }
-        commonService.batchRemove(className, entities);
+        commonService.batchDelete(className, entities);
         return Result.success();
     }
 
     @GetMapping("/{className}/excel/template")
     @Authentication
     @Operation(summary = "下载Excel导入模板")
-    public void downloadExcelTemplate(@PathVariable("className") String className, HttpServletResponse response) throws Exception {
+    public void downloadImportTemplate(@PathVariable("className") String className, HttpServletResponse response) throws Exception {
         List<Column> columns = fieldDefineUtil.getColumns(className, false);
 
         columns = columns.stream().filter(s -> YesNo.YES.equals(s.getIsForm())).toList();
@@ -188,7 +191,7 @@ public class OpenapiCommonController {
     @PostMapping("/{className}/excel/importPreview")
     @Authentication
     @Operation(summary = "Excel导入预览")
-    public Result<List<Map<String, Object>>> uploadExcelPreview(@PathVariable("className") String className, @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+    public Result<List<Map<String, Object>>> importPreview(@PathVariable("className") String className, @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
         ExcelReader excelReader = ExcelUtil.getReader(file.getInputStream(), 0);
         int rowCount = excelReader.getRowCount();
         if (rowCount < 3) {

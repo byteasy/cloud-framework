@@ -340,7 +340,7 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean batchRemove(String className, List<Map<String, Object>> entities) {
+    public boolean batchDelete(String className, List<Map<String, Object>> entities) {
         if (CollectionUtil.isEmpty(entities)) {
             return false;
         }

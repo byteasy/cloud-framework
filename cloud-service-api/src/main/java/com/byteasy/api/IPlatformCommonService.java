@@ -13,7 +13,7 @@ import java.util.Map;
 
 @FeignClient(name = "platform-service",
         contextId = "IFrameworkPlatformCommonService",
-        path = "/platformSvr" + Constant.SAPI + "/common",
+        path = "/platformSvr" + Constant.SAPI + "/platform",
         fallback = IPlatformCommonServiceFallback.class)
 public interface IPlatformCommonService {
 
