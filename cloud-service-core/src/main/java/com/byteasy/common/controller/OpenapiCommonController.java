@@ -24,6 +24,7 @@ import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;
 import com.byteasy.service.ICommonService;
 import com.byteasy.util.XlsxUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -81,11 +82,11 @@ public class OpenapiCommonController {
     @Authentication
     @Operation(summary = "存在更新记录，否则插入一条记录")
     @Log
-    public Result<Map<String, Object>> saveOrUpdate(@PathVariable("className") String className, @RequestBody Map<String, Object> entity) throws Exception {
+    public Result<Map<String, Object>> saveOrUpdate(@PathVariable("className") String className, @RequestBody String body) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("className: {}, saveOrUpdate: {}", className, JacksonUtil.toJson(entity));
+            log.info("className: {}, saveOrUpdate: {}", className, body);
         }
-        return Result.success(commonService.saveOrUpdate(className, entity));
+        return Result.success(commonService.saveOrUpdate(className, JacksonUtil.nativeRead(body, new TypeReference<Map<String, Object>>() {})));
     }
 
     @GetMapping("/{className}/{primaryKey}")
@@ -100,11 +101,11 @@ public class OpenapiCommonController {
     @Authentication
     @Operation(summary = "根据主键删除记录")
     @Log
-    public Result<Boolean> removeByEntity(@PathVariable("className") String className, @RequestBody Map<String, Object> entity) throws Exception {
+    public Result<Boolean> removeByEntity(@PathVariable("className") String className, @RequestBody String body) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("className: {}, removeByEntity: {}", className, JacksonUtil.toJson(entity));
+            log.info("className: {}, removeByEntity: {}", className, body);
         }
-        return Result.success(commonService.removeByPrimaryKey(className, entity));
+        return Result.success(commonService.removeByPrimaryKey(className, JacksonUtil.nativeRead(body, new TypeReference<Map<String, Object>>() {})));
     }
 
     @DeleteMapping("/{className}/{primaryKey}")
@@ -122,11 +123,11 @@ public class OpenapiCommonController {
     @Authentication
     @Operation(summary = "批量删除")
     @Log
-    public Result<Boolean> batchDelete(@PathVariable("className") String className, @RequestBody List<Map<String, Object>> entities) throws Exception {
+    public Result<Boolean> batchDelete(@PathVariable("className") String className, @RequestBody String body) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("className: {}, batchRemove: {}", className, JacksonUtil.toJson(entities));
+            log.info("className: {}, batchRemove: {}", className, body);
         }
-        commonService.batchDelete(className, entities);
+        commonService.batchDelete(className, JacksonUtil.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {}));
         return Result.success();
     }
 
@@ -318,10 +319,11 @@ public class OpenapiCommonController {
     @Authentication
     @Operation(summary = "存在更新记录，否则插入记录（批量）")
     @Log
-    public Result<List<Map<String, Object>>> saveOrUpdateBatch(@PathVariable("className") String className, @RequestBody List<Map<String, Object>> entities) throws Exception {
+    public Result<List<Map<String, Object>>> saveOrUpdateBatch(@PathVariable("className") String className, @RequestBody String body) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("saveOrUpdateBatch: {}", JacksonUtil.toJson(entities));
+            log.info("saveOrUpdateBatch: {}", body);
         }
+        List<Map<String, Object>> entities = JacksonUtil.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {});
         List<Column> columns = fieldDefineUtil.getColumns(className, false);
         for (Map<String, Object> entity : entities) {
             validEntity(entity, columns);

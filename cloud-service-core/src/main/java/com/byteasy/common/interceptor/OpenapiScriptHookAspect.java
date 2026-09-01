@@ -35,45 +35,51 @@ public class OpenapiScriptHookAspect {
 
     @Autowired
     private JsScriptFactory jsScriptFactory;
+    @Autowired
+    private org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
     /**
      * 环绕拦截 OpenapiCommonController 下的所有公开方法
      */
     @Around("execution(public * com.byteasy.common.controller.OpenapiCommonController.*(..))")
     public Object aroundOpenapiCall(ProceedingJoinPoint joinPoint) throws Throwable {
-        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        Method method = signature.getMethod();
-        String methodName = method.getName();
-        Object[] args = joinPoint.getArgs();
+        // 使用编程式事务包裹整个调用链
+        return transactionTemplate.execute(status -> {
+            try {
+                MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+                Method method = signature.getMethod();
+                String methodName = method.getName();
+                Object[] args = joinPoint.getArgs();
 
-        // 1. 获取当前 HTTP 请求上下文
-        HttpServletRequest request = getHttpServletRequest();
+                HttpServletRequest request = getHttpServletRequest();
+                String className = extractClassName(signature, args);
+                Map<String, Object> openApi = findOpenApi(className, methodName);
+                Map<String, Object> scriptContext = buildScriptContext(className, signature, args, request);
 
-        // 2. 智能提取 className, params, body
-        String className = extractClassName(signature, args);
+                // 1. 前置脚本
+                if (openApi != null) {
+                    executePreScript(openApi, scriptContext);
+                }
 
-        // 3. 查找当前操作对应的 Openapi 模型配置
-        Map<String, Object> openApi = findOpenApi(className, methodName);
+                // 2. Controller & Service
+                Object result = joinPoint.proceed();
 
-        // 4. 构建标准脚本入参 Context
-        Map<String, Object> scriptContext = buildScriptContext(className, signature, args, request);
+                // 3. 后置脚本
+                if (openApi != null) {
+                    scriptContext.put("result", result instanceof Result ? ((Result<?>) result).getData() : result);
+                    executePostScript(openApi, scriptContext);
+                }
 
-        // 5. 🔥【执行前置脚本钩子】
-        if (openApi != null) {
-            executePreScript(openApi, scriptContext);
-        }
-
-        // 6. 执行核心 Controller 业务逻辑
-        Object result = joinPoint.proceed();
-
-        // 7. 🔥【执行后置脚本钩子】
-        if (openApi != null) {
-            // 如果返回的是 Result 对象，解包或直接传入
-            scriptContext.put("result", result instanceof Result ? ((Result<?>) result).getData() : result);
-            executePostScript(openApi, scriptContext);
-        }
-
-        return result;
+                return result;
+            } catch (Throwable ex) {
+                // 标记事务回滚
+                status.setRollbackOnly();
+                if (ex instanceof RuntimeException) {
+                    throw (RuntimeException) ex;
+                }
+                throw new RuntimeException("OpenAPI 切面执行异常，事务已回滚", ex);
+            }
+        });
     }
 
     // =========================================================================
@@ -89,7 +95,7 @@ public class OpenapiScriptHookAspect {
         if (StringUtils.isBlank(script)) return;
 
         log.debug("【AOP 触发前置脚本】apiCode={}, scriptId={}", openapi.get("code"), scriptId);
-        JsScriptExecutor.runScriptWithTimeout(input, script, "PreScript-" + scriptId, 30000);
+        JsScriptExecutor.runScriptWithTimeout(input, script, Long.toString(scriptId), 30000);
     }
 
     private void executePostScript(Map<String, Object> openapi, Map<String, Object> input) throws ExecutionException {
@@ -101,7 +107,7 @@ public class OpenapiScriptHookAspect {
         if (StringUtils.isBlank(script)) return;
 
         log.debug("【AOP 触发后置脚本】apiCode={}, scriptId={}", openapi.get("code"), scriptId);
-        JsScriptExecutor.runScriptWithTimeout(input, script, "PostScript-" + scriptId, 30000);
+        JsScriptExecutor.runScriptWithTimeout(input, script, Long.toString(scriptId), 30000);
     }
 
     /**
@@ -138,25 +144,15 @@ public class OpenapiScriptHookAspect {
         input.put("className", className);
         input.put("headers", extractHeaders(request));
 
-        Map<String, Object> params = Maps.newHashMap();
-        Object body = null;
+        Map<String, String[]> params = request.getParameterMap();
 
         String[] paramNames = signature.getParameterNames();
         for (int i = 0; i < paramNames.length; i++) {
             String pName = paramNames[i];
             Object pVal = args[i];
-
-            if ("params".equals(pName) && pVal instanceof Map) {
-                params.putAll((Map<String, Object>) pVal);
-            } else if ("id".equals(pName)) {
-                params.put("id", pVal);
-            } else if ("entity".equals(pName) || "entities".equals(pName)) {
-                body = pVal;
-            }
+            input.put(pName, pVal);
         }
-
-        input.put("params", params);
-        input.put("body", body != null ? body : Maps.newHashMap());
+        input.put("params", com.byteasy.util.MapUtil.convertToMap(params));
         return input;
     }
 
