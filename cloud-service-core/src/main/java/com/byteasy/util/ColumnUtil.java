@@ -301,7 +301,7 @@ public class ColumnUtil {
             return switch (column.getType()) {
                 case BYTE, SHORT, INT, LONG -> NumberUtil.parseLong(valStr);
                 case FLOAT, DOUBLE -> NumberUtil.parseDouble(valStr);
-                case BOOL -> BooleanUtil.toBoolean(valStr);
+                case BOOL -> BooleanUtil.toBooleanObject(valStr);
                 case LOCAL_DATE_TIME ->
                         Timestamp.valueOf(LocalDateTime.parse(valStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 case LOCAL_DATE ->

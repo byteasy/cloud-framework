@@ -94,7 +94,7 @@ public class OpenapiScriptHookAspect {
         String script = MapUtil.getStr(jsScriptObj, "script");
         if (StringUtils.isBlank(script)) return;
 
-        log.debug("【AOP 触发前置脚本】apiCode={}, scriptId={}", openapi.get("code"), scriptId);
+        log.info("【AOP 触发前置脚本】apiCode={}, scriptId={}", openapi.get("code"), scriptId);
         JsScriptExecutor.runScriptWithTimeout(input, script, Long.toString(scriptId), 30000);
     }
 
@@ -106,7 +106,7 @@ public class OpenapiScriptHookAspect {
         String script = MapUtil.getStr(jsScriptObj, "script");
         if (StringUtils.isBlank(script)) return;
 
-        log.debug("【AOP 触发后置脚本】apiCode={}, scriptId={}", openapi.get("code"), scriptId);
+        log.info("【AOP 触发后置脚本】apiCode={}, scriptId={}", openapi.get("code"), scriptId);
         JsScriptExecutor.runScriptWithTimeout(input, script, Long.toString(scriptId), 30000);
     }
 
