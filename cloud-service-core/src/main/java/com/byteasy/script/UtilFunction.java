@@ -37,7 +37,8 @@ public class UtilFunction implements JsFunctions {
 
             @Override
             public Object run(Object[] args) throws Exception {
-                return EntityCodeUtil.generateCode((String) args[0]);
+                Object arg = args == null ? null : args[0];
+                return EntityCodeUtil.generateCode((String) arg);
             }
         });
         return list;
