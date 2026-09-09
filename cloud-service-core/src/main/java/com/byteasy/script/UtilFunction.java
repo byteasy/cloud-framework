@@ -15,6 +15,7 @@ public class UtilFunction implements JsFunctions {
     @Override
     public Collection<JsFunction> jsFunctions() {
         List<JsFunction> list = new ArrayList<>();
+
         list.add(new JsFunction() {
             @Override
             public String group() {

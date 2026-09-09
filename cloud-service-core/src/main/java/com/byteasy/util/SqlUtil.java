@@ -52,7 +52,14 @@ public class SqlUtil {
         }
 
         // 默认走高级复合查询
-        return buildWhereSqlAdvance(columnMap, multiMap);
+        if (StringUtils.isBlank(oneKeySearch)) {
+            return buildWhereSqlAdvance(columnMap, multiMap);
+        } else {
+            Pair<String, List<Object>> advanceSql = buildWhereSqlAdvance(columnMap, multiMap);
+            Pair<String, List<Object>> onekeySql = buildWhereSqlOneWord(columnMap, multiMap);
+            advanceSql.getSecond().addAll(onekeySql.getSecond());
+            return Pair.create(StringUtils.joinWith(" AND ", advanceSql.getFirst(), onekeySql.getFirst().replace(" WHERE", "")), advanceSql.getSecond());
+        }
     }
 
     /**
