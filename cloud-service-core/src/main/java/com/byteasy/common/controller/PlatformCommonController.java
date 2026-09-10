@@ -8,7 +8,6 @@ import com.byteasy.Result;
 import com.byteasy.annotations.Authentication;
 import com.byteasy.annotations.Log;
 import com.byteasy.common.util.JacksonUtil;
-import com.byteasy.component.EntityDefineUtil;
 import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.component.I18nUtil;
 import com.byteasy.dto.Column;
@@ -38,8 +37,6 @@ public class PlatformCommonController {
     private ICommonService commonService;
     @Autowired
     private FieldDefineUtil fieldDefineUtil;
-    @Autowired
-    private EntityDefineUtil entityDefineUtil;
 
     @GetMapping("/{className}")
     @Authentication
