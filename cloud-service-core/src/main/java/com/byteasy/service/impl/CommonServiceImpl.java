@@ -219,35 +219,39 @@ public class CommonServiceImpl implements ICommonService {
     public List<Map<String, Object>> list(String className) {
         HttpServletRequest request = getHttpServletRequest();
         Map<String, String[]> multiMap = request != null ? request.getParameterMap() : Collections.emptyMap();
-        return (List) listInternal(className, multiMap);
+        return (List) listInternal(className, multiMap, false);
     }
 
     @Override
     public List<Map<String, Object>> list(String className, Map<String, Object> args) {
-        return (List) listInternal(className, args);
+        return (List) listInternal(className, args, false);
     }
 
-    private List<FormatMap> listInternal(String className, Object queryArgs) {
+    private List<FormatMap> listInternal(String className, Object queryArgs, boolean limitSqlEnable) {
         EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
         List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
 
         Pair<String, List<Object>> whereSql;
         String orderBySql;
-        String limitSql;
+        String limitSql = "";
 
         if (queryArgs instanceof Map && !((Map<?, ?>) queryArgs).isEmpty() && ((Map<?, ?>) queryArgs).values().iterator().next() instanceof String[]) {
             // 来自 HTTP ParameterMap
             Map<String, String[]> multiMap = (Map<String, String[]>) queryArgs;
             whereSql = SqlUtil.buildWhereSql(columnMap, multiMap);
             orderBySql = buildOrderBySqlByRequest(columnMap, multiMap);
-            limitSql = buildLimitSql();
+            if (limitSqlEnable) {
+                limitSql = buildLimitSql();
+            }
         } else {
             // 来自业务 Map<String, Object>
             Map<String, Object> args = queryArgs != null ? (Map<String, Object>) queryArgs : Collections.emptyMap();
             whereSql = SqlUtil.buildWhereSql(columnMap, args);
             orderBySql = buildOrderBySql(columnMap, args);
-            limitSql = buildLimitSql(args);
+            if (limitSqlEnable) {
+                limitSql = buildLimitSql(args);
+            }
         }
 
         String fromSql = String.format("FROM %s %s", entityDefineDTO.getTableName(), whereSql.getFirst());

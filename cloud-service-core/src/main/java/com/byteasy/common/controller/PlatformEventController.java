@@ -3,6 +3,7 @@ package com.byteasy.common.controller;
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.Constant;
 import com.byteasy.Result;
+import com.byteasy.annotations.Authentication;
 import com.byteasy.annotations.Log;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.event.PlatformEvent;
@@ -21,6 +22,7 @@ public class PlatformEventController {
     @PostMapping("")
     @Operation(summary = "接收事件")
     @Log
+    @Authentication(serviceOnly = true)
     public Result receivePublishEvent(@RequestBody String eventJson) {
         if (log.isInfoEnabled()) {
             log.info("receivePublishEvent : {}", eventJson);

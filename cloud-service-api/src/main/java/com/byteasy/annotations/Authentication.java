@@ -16,4 +16,6 @@ public @interface Authentication {
     String group() default "";
 
     boolean authenticated() default false;
+
+    boolean serviceOnly() default false;
 }

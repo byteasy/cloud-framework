@@ -65,21 +65,21 @@ public class OpenapiCommonController {
     private EntityDefineUtil entityDefineUtil;
 
     @GetMapping("/{className}")
-    @Authentication
+    @Authentication(authenticated = true)
     @Operation(summary = "分页查询")
     public Result<Page<Map<String, Object>>> page(@PathVariable("className") String className) throws Exception {
         return Result.success(commonService.page(className));
     }
 
     @GetMapping("/{className}/all")
-    @Authentication
+    @Authentication(authenticated = true)
     @Operation(summary = "查询所有")
     public Result<List<Map<String, Object>>> list(@PathVariable("className") String className) throws Exception {
         return Result.success(commonService.list(className));
     }
 
     @PostMapping("/{className}")
-    @Authentication
+    @Authentication(authenticated = true)
     @Operation(summary = "存在更新记录，否则插入一条记录")
     @Log
     public Result<Map<String, Object>> saveOrUpdate(@PathVariable("className") String className, @RequestBody String body) throws Exception {
@@ -90,7 +90,7 @@ public class OpenapiCommonController {
     }
 
     @GetMapping("/{className}/{primaryKey}")
-    @Authentication
+    @Authentication(authenticated = true)
     @Operation(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
     public Result<Map<String, Object>> getByPrimaryKey(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
@@ -98,7 +98,7 @@ public class OpenapiCommonController {
     }
 
     @DeleteMapping("/{className}")
-    @Authentication
+    @Authentication(authenticated = true)
     @Operation(summary = "根据主键删除记录")
     @Log
     public Result<Boolean> removeByEntity(@PathVariable("className") String className, @RequestBody String body) throws Exception {
@@ -109,7 +109,7 @@ public class OpenapiCommonController {
     }
 
     @DeleteMapping("/{className}/{primaryKey}")
-    @Authentication
+    @Authentication(authenticated = true)
     @Operation(summary = "根据主键删除记录")
     @Log
     public Result<Boolean> removeByPrimaryKey(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
@@ -120,7 +120,7 @@ public class OpenapiCommonController {
     }
 
     @DeleteMapping("/{className}/batch")
-    @Authentication
+    @Authentication(authenticated = true)
     @Operation(summary = "批量删除")
     @Log
     public Result<Boolean> batchDelete(@PathVariable("className") String className, @RequestBody String body) throws Exception {
@@ -132,7 +132,7 @@ public class OpenapiCommonController {
     }
 
     @GetMapping("/{className}/excel/template")
-    @Authentication
+    @Authentication(authenticated = true)
     @Operation(summary = "下载Excel导入模板")
     public void downloadImportTemplate(@PathVariable("className") String className, HttpServletResponse response) throws Exception {
         List<Column> columns = fieldDefineUtil.getColumns(className, false);
@@ -190,7 +190,7 @@ public class OpenapiCommonController {
     }
 
     @PostMapping("/{className}/excel/importPreview")
-    @Authentication
+    @Authentication(authenticated = true)
     @Operation(summary = "Excel导入预览")
     public Result<List<Map<String, Object>>> importPreview(@PathVariable("className") String className, @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
         ExcelReader excelReader = ExcelUtil.getReader(file.getInputStream(), 0);
@@ -316,7 +316,7 @@ public class OpenapiCommonController {
     }
 
     @PostMapping("/{className}/batch")
-    @Authentication
+    @Authentication(authenticated = true)
     @Operation(summary = "存在更新记录，否则插入记录（批量）")
     @Log
     public Result<List<Map<String, Object>>> saveOrUpdateBatch(@PathVariable("className") String className, @RequestBody String body) throws Exception {
@@ -343,7 +343,7 @@ public class OpenapiCommonController {
     }
 
     @PostMapping("/{className}/excel/export")
-    @Authentication
+    @Authentication(authenticated = true)
     @Operation(summary = "Excel数据导出")
     public void exportExcel(@PathVariable("className") String className, @RequestBody List<String> fieldNames, HttpServletResponse response) throws Exception {
         List<Column> columns = fieldDefineUtil.getColumns(className, false);

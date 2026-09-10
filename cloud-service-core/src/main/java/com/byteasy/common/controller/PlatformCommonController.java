@@ -39,21 +39,21 @@ public class PlatformCommonController {
     private FieldDefineUtil fieldDefineUtil;
 
     @GetMapping("/{className}")
-    @Authentication
+    @Authentication(serviceOnly = true)
     @Operation(summary = "分页查询")
     public Result<Page<Map<String, Object>>> page(@PathVariable("className") String className) throws Exception {
         return Result.success(commonService.page(className));
     }
 
     @GetMapping("/{className}/all")
-    @Authentication
+    @Authentication(serviceOnly = true)
     @Operation(summary = "查询所有")
     public Result<List<Map<String, Object>>> list(@PathVariable("className") String className) throws Exception {
         return Result.success(commonService.list(className));
     }
 
     @PostMapping("/{className}")
-    @Authentication
+    @Authentication(serviceOnly = true)
     @Operation(summary = "存在更新记录，否则插入一条记录")
     @Log
     public Result<Map<String, Object>> saveOrUpdate(@PathVariable("className") String className, @RequestBody Map<String, Object> entity) throws Exception {
@@ -64,7 +64,7 @@ public class PlatformCommonController {
     }
 
     @GetMapping("/{className}/{primaryKey}")
-    @Authentication
+    @Authentication(serviceOnly = true)
     @Operation(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
     public Result<Map<String, Object>> getByPrimaryKey(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
@@ -72,7 +72,7 @@ public class PlatformCommonController {
     }
 
     @DeleteMapping("/{className}")
-    @Authentication
+    @Authentication(serviceOnly = true)
     @Operation(summary = "根据主键删除记录")
     @Log
     public Result<Boolean> removeByEntity(@PathVariable("className") String className, @RequestBody Map<String, Object> entity) throws Exception {
@@ -83,7 +83,7 @@ public class PlatformCommonController {
     }
 
     @DeleteMapping("/{className}/{primaryKey}")
-    @Authentication
+    @Authentication(serviceOnly = true)
     @Operation(summary = "根据主键删除记录")
     @Log
     public Result<Boolean> removeByPrimaryKey(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
@@ -94,7 +94,7 @@ public class PlatformCommonController {
     }
 
     @DeleteMapping("/{className}/batch")
-    @Authentication
+    @Authentication(serviceOnly = true)
     @Operation(summary = "批量删除")
     @Log
     public Result<Boolean> batchDelete(@PathVariable("className") String className, @RequestBody List<Map<String, Object>> entities) throws Exception {
@@ -177,7 +177,7 @@ public class PlatformCommonController {
     }
 
     @PostMapping("/{className}/batch")
-    @Authentication
+    @Authentication(serviceOnly = true)
     @Operation(summary = "存在更新记录，否则插入记录（批量）")
     @Log
     public Result<List<Map<String, Object>>> saveOrUpdateBatch(@PathVariable("className") String className, @RequestBody List<Map<String, Object>> entities) throws Exception {
