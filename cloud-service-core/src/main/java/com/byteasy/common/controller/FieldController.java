@@ -2,6 +2,7 @@ package com.byteasy.common.controller;
 
 import com.byteasy.Constant;
 import com.byteasy.Result;
+import com.byteasy.annotations.Authentication;
 import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.dto.Column;
 import com.byteasy.service.ICommonService;
@@ -24,30 +25,35 @@ public class FieldController {
 
     @GetMapping("/{className}")
     @Operation(summary = "查询平台模型字段定义")
+    @Authentication
     public Result<Collection<Column>> getSchemaMetaInfo(@PathVariable("className") String className) {
         return Result.success(fieldDefineUtil.getColumns(className, false));
     }
 
     @GetMapping("/src/{className}")
     @Operation(summary = "查询模型代码字段定义")
+    @Authentication
     public Result<Collection<Column>> getSrcSchemaMetaInfo(@PathVariable("className") String className) {
         return Result.success(fieldDefineUtil.getColumns(className, true));
     }
 
     @GetMapping("/database/{className}")
     @Operation(summary = "查询数据库实体模型字段定义")
+    @Authentication
     public Result<Collection<Column>> getDatabaseSchemaMetaInfo(@PathVariable("className") String className) {
         return Result.success(commonService.getColumns(className));
     }
 
     @GetMapping("/database/currentSchema/{tableName}")
     @Operation(summary = "查询当前模式下数据库实体模型字段定义")
+    @Authentication
     public Result<Collection<Column>> getCurrentSchemaTableColumns(@PathVariable("tableName") String tableName) {
         return Result.success(commonService.getColumnsByTableName(tableName));
     }
 
     @PostMapping("/database/currentSchema/{className}")
     @Operation(summary = "同步平台模型至数据库物理模型")
+    @Authentication
     public Result saveDatabaseSchemaMetaInfo(@PathVariable("className") String className) {
         commonService.syncColumnsToDb(className);
         return Result.success();

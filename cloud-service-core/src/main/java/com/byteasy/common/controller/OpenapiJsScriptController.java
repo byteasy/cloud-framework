@@ -2,6 +2,7 @@ package com.byteasy.common.controller;
 
 import com.byteasy.Constant;
 import com.byteasy.Result;
+import com.byteasy.annotations.Authentication;
 import com.byteasy.service.IJsScriptApiService;
 import com.byteasy.util.MapUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +23,7 @@ public class OpenapiJsScriptController {
     private IJsScriptApiService jsScriptApiService;
 
     @PostMapping("/{apiCode}")
+    @Authentication(authenticated = true)
     public Result runScriptApi(@PathVariable String apiCode, @RequestBody String body, HttpServletRequest request) throws ExecutionException {
         Map<String, String[]> params = request.getParameterMap();
         Map<String, String> headers = new HashMap<>();
@@ -32,6 +34,7 @@ public class OpenapiJsScriptController {
     }
 
     @PostMapping("/debug/script")
+    @Authentication(authenticated = true)
     public Result debugScript(@RequestBody Map<String, Object> bodyMap, HttpServletRequest request) throws ExecutionException {
         Map<String, String[]> params = request.getParameterMap();
         Map<String, String> headers = new HashMap<>();

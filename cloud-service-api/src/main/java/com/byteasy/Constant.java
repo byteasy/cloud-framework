@@ -3,12 +3,6 @@ package com.byteasy;
 public interface Constant {
 
     /**
-     * public api
-     * 对外网通过网关直接公开即可访问，无token认证.
-     */
-    String PAPI = "/papi";
-
-    /**
      * service api
      * 供前端登录用户通过UI、第三方系统、南北流量（其它微服务）调用
      */
