@@ -79,7 +79,16 @@ public class SqlUtil {
 
             // 过滤系统保留字段和未在模型定义的字段
             if (!columnMap.containsKey(fieldName) || fieldName.endsWith("QueryType") || fieldName.endsWith("Readonly")) {
-                continue;
+                if (fieldName.endsWith("QueryType")) {
+                    String queryType = getSingleStringValue(multiMap, fieldName, null);
+                    if (queryType.equalsIgnoreCase("isnull") || queryType.equalsIgnoreCase("isnotnull")) {
+                        fieldName = fieldName.replace("QueryType", "");
+                    } else {
+                        continue;
+                    }
+                } else {
+                    continue;
+                }
             }
 
             Column column = columnMap.get(fieldName);
