@@ -1,5 +1,6 @@
 package com.byteasy.script;
 
+import com.byteasy.common.util.CastUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -77,6 +78,37 @@ public class JdbcFunction implements JsFunctions {
                 NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
                 MapSqlParameterSource paramSource = fromMap(args[1]);
                 return namedJdbcTemplate.queryForList(String.valueOf(args[0]), paramSource);
+            }
+        });
+
+        list.add(new JsFunction() {
+            @Override
+            public String group() {
+                return "basic";
+            }
+
+            @Override
+            public String name() {
+                return "dbQueryForOneColumn";
+            }
+
+            @Override
+            public String description() {
+                return """
+                        Use jdbcTemplate to query a object column list.
+                        函数原型:
+                                List<Object> queryForList(String sql, @Nullable Object... args) throws DataAccessException;
+                        """;
+            }
+
+            @Override
+            public Object run(Object[] args) throws Exception {
+                if (args == null || args.length == 0) return null;
+
+                NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+                MapSqlParameterSource paramSource = fromMap(args[1]);
+                List<Map<String, Object>> list = namedJdbcTemplate.queryForList(String.valueOf(args[0]), paramSource);
+                return CastUtil.listToSet(list, map -> map.get(map.keySet().stream().findAny().get()));
             }
         });
 
