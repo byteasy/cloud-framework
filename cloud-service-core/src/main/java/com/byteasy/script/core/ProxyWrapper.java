@@ -49,7 +49,7 @@ public class ProxyWrapper {
         /**
          * HostAccess.ALL，性能优先，直接返回obj
          */
-        return obj;
+        return new ObjectProxy(obj);
         // 5. 其他普通 POJO 实体类
         // 如果你的实体类上有 @HostAccess.Export，直接 return obj 即可。
         // 如果没有，转成 Map 再用 MapProxy 包装（这里可以引入 BeanMap 等轻量级反射工具，避免序列化）
