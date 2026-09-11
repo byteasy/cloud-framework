@@ -1,12 +1,12 @@
-package com.byteasy.util;
+package com.byteasy.script;
 
 import com.byteasy.common.util.JacksonUtil;
-import com.byteasy.dto.ScriptFunction;
+import com.byteasy.platform.dto.ScriptFunctionDTO;
+import com.byteasy.script.util.JsScriptExecutor;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 public class JsFunctionTestDemo {
 
@@ -20,10 +20,10 @@ public class JsFunctionTestDemo {
         frontParams.put("userId", "USER_12345");
 
         // 2. 准备要传递给 JS 的 Java 函数
-        Map<String, ScriptFunction> functions = new HashMap<>();
+        Map<String, ScriptFunctionDTO> functions = new HashMap<>();
 
         // 函数 A：根据用户 ID 获取折扣（模拟查库或调用远程 RPC）
-        ScriptFunction scriptFunction = new ScriptFunction();
+        ScriptFunctionDTO scriptFunction = new ScriptFunctionDTO();
         scriptFunction.setName("getDiscountByUserId");
         scriptFunction.setFunction((userIdObj) -> {
             String userId = String.valueOf(userIdObj[0]);
@@ -37,7 +37,7 @@ public class JsFunctionTestDemo {
         functions.put("getDiscountByUserId", scriptFunction);
 
         // 函数 B：记录日志工具
-        ScriptFunction scriptFunction1 = new ScriptFunction();
+        ScriptFunctionDTO scriptFunction1 = new ScriptFunctionDTO();
         scriptFunction1.setName("logFromJs");
         scriptFunction1.setFunction((msg) -> {
             System.out.println("[JS Log]: " + JacksonUtil.toJson(msg));

@@ -1,5 +1,6 @@
 package com.byteasy.script.core;
 
+import com.byteasy.script.util.JsScriptExecutor;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyObject;
 
@@ -39,7 +40,7 @@ public class MapProxy implements ProxyObject {
         // 当 JS 执行 service.children = [...] 时，会触发这里
         // 注意：要把 JS 传过来的 Value 解包成 Java 原生对象再 put 进去
         // 这里可以直接借用我们刚才在 JsScriptExecutor 里写好的脱壳方法
-        Object javaObj = com.byteasy.util.JsScriptExecutor.extractFinalResult(value);
+        Object javaObj = JsScriptExecutor.extractFinalResult(value);
         targetMap.put(key, javaObj);
     }
 

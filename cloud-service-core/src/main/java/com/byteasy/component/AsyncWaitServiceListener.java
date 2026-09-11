@@ -4,14 +4,12 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.byteasy.Result;
 import com.byteasy.api.IEntityDefineService;
-import com.byteasy.api.IScriptFunctionService;
 import com.byteasy.api.IServiceInstanceService;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.dto.EntityDefineDTO;
-import com.byteasy.dto.ScriptFunction;
 import com.byteasy.dto.ServiceInstanceDTO;
 import com.byteasy.enums.Enable;
-import com.byteasy.script.JsFunctionFactory;
+import com.byteasy.event.IPlatformReady;
 import com.byteasy.util.ColumnUtil;
 import com.byteasy.util.SpringContextUtil;
 import lombok.extern.log4j.Log4j2;
@@ -24,8 +22,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -40,17 +38,12 @@ public class AsyncWaitServiceListener {
     private IEntityDefineService entityDefineService;
     @Autowired
     private EntityServiceFactory entityServiceFactory;
-    @Autowired
-    private JsFunctionFactory jsFunctionFactory;
-    @Autowired
-    private IScriptFunctionService scriptFunctionService;
 
     private static final String TARGET_SERVICE = "platform-service";
 
     @Async // 异步执行，不阻塞 Spring Boot 主线程启动
     @EventListener(ApplicationReadyEvent.class)
     public void waitUntilServiceReady() {
-        jsFunctionFactory.init();
 
         int maxRetries = 30; // 最多等待 30 次
         int retryIntervalSec = 2; // 每次间隔 2 秒
@@ -75,20 +68,15 @@ public class AsyncWaitServiceListener {
     }
 
     private void callRemoteApi() {
-        registerJsFunctionToPlatform();
         registerSelfToPlatform();
         registerEntityDefine();
-    }
 
-    private void registerJsFunctionToPlatform() {
-        try {
-            Collection<ScriptFunction> scriptFunctions = jsFunctionFactory.getLocalFunctions();
-            Collection<ScriptFunction> allFunctions = scriptFunctionService.register(scriptFunctions);
-            jsFunctionFactory.addRemoteFunction(allFunctions);
-        } catch (Exception e) {
-            log.error("registerJsFunctionToPlatform err", e);
+        Map<String, IPlatformReady> beans = SpringUtil.getBeansOfType(IPlatformReady.class);
+        for (IPlatformReady value : beans.values()) {
+            value.platformReady();
         }
     }
+
 
     private void registerSelfToPlatform() {
         try {

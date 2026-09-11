@@ -9,9 +9,13 @@ import com.byteasy.common.token.UserInfoBuilder;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.component.ServiceInstanceUtil;
-import com.byteasy.dto.ScriptFunction;
+import com.byteasy.event.IPlatformReady;
 import com.byteasy.exception.BizException;
+import com.byteasy.platform.api.IScriptFunctionService;
+import com.byteasy.platform.dto.ScriptFunctionDTO;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.stereotype.Component;
@@ -25,16 +29,20 @@ import static com.byteasy.util.RandomUtil.random;
 
 @Component
 @Log4j2
-public class JsFunctionFactory {
+public class JsFunctionFactory implements IPlatformReady {
 
-    private Map<String, ScriptFunction> jsFunctionMap = new HashMap<>();
+    private Map<String, ScriptFunctionDTO> jsFunctionMap = new HashMap<>();
 
+    @Autowired
+    private IScriptFunctionService scriptFunctionService;
+
+    @PostConstruct
     public void init() {
         Map<String, JsFunction> map = SpringUtil.getBeansOfType(JsFunction.class);
         for (Map.Entry<String, JsFunction> entry : map.entrySet()) {
             log.info("JsFunction name: {}, description: {}", entry.getValue().name(), entry.getValue().description());
             JsFunction jsFunction = entry.getValue();
-            ScriptFunction scriptFunction = new ScriptFunction();
+            ScriptFunctionDTO scriptFunction = new ScriptFunctionDTO();
             scriptFunction.setServiceCode(jsFunction.serviceName());
             scriptFunction.setGroupName(jsFunction.group());
             scriptFunction.setName(jsFunction.name());
@@ -55,7 +63,7 @@ public class JsFunctionFactory {
             JsFunctions jsFunctions = functionsEntry.getValue();
             for (JsFunction jsFunction : jsFunctions.jsFunctions()) {
                 log.info("JsFunction name: {}, description: {}", jsFunction.name(), jsFunction.description());
-                ScriptFunction scriptFunction = new ScriptFunction();
+                ScriptFunctionDTO scriptFunction = new ScriptFunctionDTO();
                 scriptFunction.setServiceCode(jsFunction.serviceName());
                 scriptFunction.setGroupName(jsFunction.group());
                 scriptFunction.setName(jsFunction.name());
@@ -73,16 +81,16 @@ public class JsFunctionFactory {
         }
     }
 
-    public Map<String, ScriptFunction> getJsFunctionMap() {
+    public Map<String, ScriptFunctionDTO> getJsFunctionMap() {
         return jsFunctionMap;
     }
 
-    public Collection<ScriptFunction> getLocalFunctions() {
+    public Collection<ScriptFunctionDTO> getLocalFunctions() {
         return jsFunctionMap.values();
     }
 
-    public void addRemoteFunction(Collection<ScriptFunction> scriptFunctions) {
-        for (ScriptFunction scriptFunction : scriptFunctions) {
+    public void addRemoteFunction(Collection<ScriptFunctionDTO> scriptFunctions) {
+        for (ScriptFunctionDTO scriptFunction : scriptFunctions) {
             if (jsFunctionMap.containsKey(scriptFunction.getName())) {
                 continue;
             }
@@ -116,4 +124,16 @@ public class JsFunctionFactory {
             jsFunctionMap.put(scriptFunction.getName(), scriptFunction);
         }
     }
+
+    @Override
+    public void platformReady() {
+        try {
+            Collection<ScriptFunctionDTO> scriptFunctions = getLocalFunctions();
+            Collection<ScriptFunctionDTO> allFunctions = scriptFunctionService.register(scriptFunctions);
+            addRemoteFunction(allFunctions);
+        } catch (Exception e) {
+            log.error("registerJsFunctionToPlatform err", e);
+        }
+    }
+
 }

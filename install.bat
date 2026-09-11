@@ -13,6 +13,9 @@ rem call mvn source:jar install
 cd ../cloud-service-starter
 call mvn clean install
 rem call mvn source:jar install
+cd ../cloud-script-sdk
+call mvn clean install
+rem call mvn source:jar install
 cd ../cloud-redis-service
 call mvn clean install
 rem call mvn source:jar install
