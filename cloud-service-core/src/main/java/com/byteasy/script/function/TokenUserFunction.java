@@ -5,7 +5,7 @@ import com.byteasy.script.JsFunction;
 import org.springframework.stereotype.Component;
 
 @Component
-public class LoginUserFunction implements JsFunction {
+public class TokenUserFunction implements JsFunction {
     @Override
     public String group() {
         return "basic";
@@ -13,13 +13,13 @@ public class LoginUserFunction implements JsFunction {
 
     @Override
     public String name() {
-        return "currentUser";
+        return "getTokenUser";
     }
 
     @Override
     public String description() {
         return """
-                Get current login user info. Has no args, will get user info from http header of param name: x-userinfo.
+                Get current token user info in http header. Has no args, will get user info from http header of param name: x-userinfo.
                 函数原型:
                 getUserinfo();
                 """;
