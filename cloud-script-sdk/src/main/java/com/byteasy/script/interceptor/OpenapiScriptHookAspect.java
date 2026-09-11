@@ -1,10 +1,10 @@
-package com.byteasy.common.interceptor;
+package com.byteasy.script.interceptor;
 
 import cn.hutool.core.map.MapUtil;
 import com.byteasy.Result;
-import com.byteasy.component.JsScriptFactory;
 import com.byteasy.component.OpenApiFactory;
-import com.byteasy.util.JsScriptExecutor;
+import com.byteasy.script.component.JsScriptFactory;
+import com.byteasy.script.util.JsScriptExecutor;
 import com.google.common.collect.Maps;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;

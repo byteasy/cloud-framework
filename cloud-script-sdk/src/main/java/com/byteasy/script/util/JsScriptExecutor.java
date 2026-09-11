@@ -1,11 +1,11 @@
-package com.byteasy.util;
+package com.byteasy.script.util;
 
 import cn.hutool.extra.spring.SpringUtil;
-import com.byteasy.component.JsScriptFactory;
-import com.byteasy.dto.ScriptFunction;
 import com.byteasy.exception.BizException;
 import com.byteasy.exception.JsScriptException;
+import com.byteasy.platform.dto.ScriptFunctionDTO;
 import com.byteasy.script.JsFunctionFactory;
+import com.byteasy.script.component.JsScriptFactory;
 import com.byteasy.script.core.ProxyWrapper;
 import lombok.extern.log4j.Log4j2;
 import org.graalvm.polyglot.*;
@@ -27,7 +27,7 @@ public class JsScriptExecutor {
 
         long startTs = System.currentTimeMillis();
         try {
-            Map<String, ScriptFunction> map = null;
+            Map<String, ScriptFunctionDTO> map = null;
             try {
                 JsFunctionFactory jsFunctionFactory = SpringUtil.getBean(JsFunctionFactory.class);
                 map = jsFunctionFactory.getJsFunctionMap();
@@ -50,7 +50,7 @@ public class JsScriptExecutor {
      *
      * @param functions 要注入的 Java 函数映射，Key 为 JS 中的函数名，Value 为 Java 的 Function
      */
-    public static Object runScriptWithFunctions(Map<String, Object> params, Map<String, ScriptFunction> functions, String jsScript, String jsName) {
+    public static Object runScriptWithFunctions(Map<String, Object> params, Map<String, ScriptFunctionDTO> functions, String jsScript, String jsName) {
         if (jsScript == null || jsScript.isBlank()) {
             throw new IllegalArgumentException("JS脚本不能为空");
         }
@@ -106,7 +106,7 @@ public class JsScriptExecutor {
             // 4. 执行脚本
             Value resultValue;
             try {
-                Source cachedScript = com.byteasy.component.JsScriptFactory.getScriptSource(jsName);
+                Source cachedScript = JsScriptFactory.getScriptSource(jsName);
                 if (cachedScript == null) {
                     cachedScript = Source.newBuilder("js", jsScript, jsName + ".js")
                             .cached(true)
@@ -203,11 +203,11 @@ public class JsScriptExecutor {
 
         // 日期处理
         if (val.isInstant())
-            return java.time.LocalDateTime.ofInstant(val.asInstant(), java.time.ZoneId.systemDefault());
+            return LocalDateTime.ofInstant(val.asInstant(), ZoneId.systemDefault());
 
         // 3. 数组类型：必须遍历深拷贝为纯 ArrayList
         if (val.hasArrayElements()) {
-            java.util.List<Object> list = new java.util.ArrayList<>((int) val.getArraySize());
+            List<Object> list = new java.util.ArrayList<>((int) val.getArraySize());
             for (long i = 0; i < val.getArraySize(); i++) {
                 list.add(extractFinalResult(val.getArrayElement(i)));
             }
@@ -216,7 +216,7 @@ public class JsScriptExecutor {
 
         // 4. 对象类型：必须遍历深拷贝为纯 HashMap
         if (val.hasMembers()) {
-            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            Map<String, Object> map = new java.util.HashMap<>();
             for (String key : val.getMemberKeys()) {
                 map.put(key, extractFinalResult(val.getMember(key)));
             }

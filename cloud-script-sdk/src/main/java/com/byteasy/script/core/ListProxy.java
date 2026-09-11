@@ -2,6 +2,7 @@ package com.byteasy.script.core;
 
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyArray;
+
 import java.util.List;
 
 public class ListProxy implements ProxyArray {

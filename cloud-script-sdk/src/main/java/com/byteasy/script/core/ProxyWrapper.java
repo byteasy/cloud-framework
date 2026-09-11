@@ -1,12 +1,12 @@
 package com.byteasy.script.core;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+
 import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import com.baomidou.mybatisplus.core.metadata.IPage;
 
 public class ProxyWrapper {
 

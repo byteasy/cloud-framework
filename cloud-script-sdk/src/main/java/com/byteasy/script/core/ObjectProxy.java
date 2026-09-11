@@ -6,7 +6,8 @@ import org.graalvm.polyglot.proxy.ProxyObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ObjectProxy implements ProxyObject {

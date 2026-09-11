@@ -1,4 +1,4 @@
-package com.byteasy.service;
+package com.byteasy.script.service;
 
 import com.byteasy.Result;
 

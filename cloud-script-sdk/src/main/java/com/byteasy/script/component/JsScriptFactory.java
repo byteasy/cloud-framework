@@ -1,8 +1,9 @@
-package com.byteasy.component;
+package com.byteasy.script.component;
 
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.api.IPlatformCommonService;
+import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
 import com.byteasy.event.IPlatformEntityChangeHandler;

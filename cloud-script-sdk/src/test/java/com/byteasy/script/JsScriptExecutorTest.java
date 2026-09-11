@@ -1,5 +1,6 @@
-package com.byteasy.util;
+package com.byteasy.script;
 
+import com.byteasy.script.util.JsScriptExecutor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

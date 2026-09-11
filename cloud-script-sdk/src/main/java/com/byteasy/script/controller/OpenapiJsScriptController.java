@@ -1,9 +1,9 @@
-package com.byteasy.common.controller;
+package com.byteasy.script.controller;
 
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Authentication;
-import com.byteasy.service.IJsScriptApiService;
+import com.byteasy.script.service.IJsScriptApiService;
 import com.byteasy.util.MapUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;

@@ -1,11 +1,10 @@
-package com.byteasy.service.impl;
+package com.byteasy.script.service;
 
 import cn.hutool.core.map.MapUtil;
 import com.byteasy.Result;
-import com.byteasy.component.JsScriptFactory;
 import com.byteasy.component.OpenApiFactory;
-import com.byteasy.service.IJsScriptApiService;
-import com.byteasy.util.JsScriptExecutor;
+import com.byteasy.script.component.JsScriptFactory;
+import com.byteasy.script.util.JsScriptExecutor;
 import com.google.common.collect.Maps;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.ObjectUtils;
@@ -78,7 +77,7 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
         input.put("body", body);
 
         String scriptId = MapUtil.getStr(jsScriptObj, "id") + "-debug";
-        com.byteasy.component.JsScriptFactory.invalidate(scriptId);
+        JsScriptFactory.invalidate(scriptId);
         return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, scriptId, 30000));
     }
 
