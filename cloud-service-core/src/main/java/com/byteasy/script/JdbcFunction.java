@@ -108,7 +108,68 @@ public class JdbcFunction implements JsFunctions {
                 NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
                 MapSqlParameterSource paramSource = fromMap(args[1]);
                 List<Map<String, Object>> list = namedJdbcTemplate.queryForList(String.valueOf(args[0]), paramSource);
-                return CastUtil.listToSet(list, map -> map.get(map.keySet().stream().findAny().get()));
+                return CastUtil.objectListToColumnList(list, map -> map.get(map.keySet().stream().findAny().get()));
+            }
+        });
+
+        list.add(new JsFunction() {
+            @Override
+            public String group() {
+                return "basic";
+            }
+
+            @Override
+            public String name() {
+                return "dbQueryForLong";
+            }
+
+            @Override
+            public String description() {
+                return """
+                        Use jdbcTemplate to query a column to Long.
+                        函数原型:
+                                Long queryForList(String sql, @Nullable Object... args) throws DataAccessException;
+                        """;
+            }
+
+            @Override
+            public Object run(Object[] args) throws Exception {
+                if (args == null || args.length == 0) return null;
+
+                NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+                MapSqlParameterSource paramSource = fromMap(args[1]);
+                return namedJdbcTemplate.queryForObject(String.valueOf(args[0]), paramSource, Long.class);
+            }
+        });
+
+
+        list.add(new JsFunction() {
+            @Override
+            public String group() {
+                return "basic";
+            }
+
+            @Override
+            public String name() {
+                return "dbQueryForString";
+            }
+
+            @Override
+            public String description() {
+                return """
+                        Use jdbcTemplate to query a column to String.
+                        函数原型:
+                                String queryForObject(String sql, @Nullable Object... args) throws DataAccessException;
+                        """;
+            }
+
+            @Override
+            public Object run(Object[] args) throws Exception {
+                if (args == null || args.length == 0) return null;
+
+                NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+                MapSqlParameterSource paramSource = fromMap(args[1]);
+                return namedJdbcTemplate.queryForObject(String.valueOf(args[0]), paramSource, String.class);
             }
         });
 

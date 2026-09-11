@@ -67,6 +67,13 @@ public class CastUtil {
         return entities.stream().map(function).collect(Collectors.toSet());
     }
 
+    public static <T, V> List<V> objectListToColumnList(List<T> entities, Function<T, V> function) {
+        if (entities == null) {
+            return null;
+        }
+        return entities.stream().map(function).collect(Collectors.toList());
+    }
+
     public static <T> List<T> copyList(List<?> list, Class<T> cls) {
         return copyList(list, cls, null);
     }

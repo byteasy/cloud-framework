@@ -1,5 +1,7 @@
-package com.byteasy.script;
+package com.byteasy.script.function;
 
+import com.byteasy.script.JsFunction;
+import com.byteasy.script.JsFunctions;
 import com.byteasy.service.ICommonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

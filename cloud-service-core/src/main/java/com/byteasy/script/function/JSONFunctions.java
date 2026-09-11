@@ -1,7 +1,9 @@
-package com.byteasy.script;
+package com.byteasy.script.function;
 
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.exception.BizException;
+import com.byteasy.script.JsFunction;
+import com.byteasy.script.JsFunctions;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;

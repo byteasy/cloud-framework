@@ -1,6 +1,7 @@
-package com.byteasy.script;
+package com.byteasy.script.function;
 
 import com.byteasy.common.token.TokenUtil;
+import com.byteasy.script.JsFunction;
 import org.springframework.stereotype.Component;
 
 @Component
