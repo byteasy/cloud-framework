@@ -63,12 +63,14 @@ public class JsScriptFactory implements IPlatformEntityChangeHandler, ICacheLoad
         switch (source.getChangeType()) {
             case DELETE: {
                 Long id = FieldValueUtil.getFieldValue(source.getBefore(), "id", Long.class);
+                log.info("JsScriptFactory cache delete id:{}", id);
                 cache.invalidate((Long) id);
                 SCRIPT_CACHE.invalidate(String.valueOf(id));
                 break;
             }
             case UPDATE: {
                 Long id = FieldValueUtil.getFieldValue(source.getAfter(), "id", Long.class);
+                log.info("JsScriptFactory cache update id:{}", id);
                 cache.invalidate((Long) id);
                 SCRIPT_CACHE.invalidate(String.valueOf(id));
                 break;

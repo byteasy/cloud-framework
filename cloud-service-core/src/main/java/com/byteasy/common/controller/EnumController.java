@@ -2,7 +2,7 @@ package com.byteasy.common.controller;
 
 import com.byteasy.Constant;
 import com.byteasy.Result;
-import com.byteasy.annotations.Authentication;
+import com.byteasy.annotations.Openapi;
 import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.dto.Column;
 import com.google.common.collect.Lists;
@@ -27,7 +27,7 @@ public class EnumController {
 
     @GetMapping("/{enumClassName}")
     @Operation(summary = "查询枚举对象的定义")
-    @Authentication
+    @Openapi
     public Result<List<Map<String, String>>> getEnumByClassName(@PathVariable("enumClassName") String enumClassName) {
         try {
             List<Column> columns = fieldDefineUtil.getColumns(enumClassName, false);

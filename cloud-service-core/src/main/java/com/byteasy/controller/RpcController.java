@@ -3,8 +3,7 @@ package com.byteasy.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.byteasy.Result;
-import com.byteasy.annotations.Authentication;
-import com.byteasy.annotations.Log;
+import com.byteasy.annotations.Openapi;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.component.I18nUtil;
@@ -27,14 +26,14 @@ import java.util.List;
 public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID extends Serializable> extends AbstractController<SERVICE, ENTITY, ID> {
 
     @GetMapping("")
-    @Authentication
+    @Openapi
     @Operation(summary = "分页查询")
     public Page<? extends ENTITY> page() throws Exception {
         return baseService.page(RequestUtil.getPage(), RequestUtil.getQueryWrapper(baseService.getEntityClass()));
     }
 
     @GetMapping("/{id}")
-    @Authentication
+    @Openapi
     @Operation(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
     public <T extends ENTITY> T getById(@PathVariable("id") ID id) throws Exception {
@@ -42,7 +41,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @PostMapping("/ids")
-    @Authentication
+    @Openapi
     @Operation(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
     public <T extends ENTITY> List<T> listByIds(@RequestBody List<ID> ids) throws Exception {
@@ -50,10 +49,9 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @DeleteMapping("/ids")
-    @Authentication
+    @Openapi
     @Operation(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
-    @Log
     public boolean removeBatchByIds(@RequestBody List<ID> ids) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeBatchByIds: {}", JacksonUtil.toJson(ids));
@@ -62,9 +60,8 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @PostMapping("")
-    @Authentication
+    @Openapi
     @Operation(summary = "存在更新记录，否则插入一条记录")
-    @Log
     public <T extends ENTITY> T saveOrUpdate(@RequestBody T entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdate: {}", JacksonUtil.toJson(entity));
@@ -76,9 +73,8 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @PostMapping("/batch")
-    @Authentication
+    @Openapi
     @Operation(summary = "存在更新记录，否则插入记录（批量）")
-    @Log
     public List<ENTITY> saveOrUpdateBatch(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdateBatch: {}", JacksonUtil.toJson(entities));
@@ -90,9 +86,8 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @PutMapping("")
-    @Authentication
+    @Openapi
     @Operation(summary = "根据主键更新记录")
-    @Log
     public <T extends ENTITY> T updateById(@RequestBody T entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("updateById: {}", JacksonUtil.toJson(entity));
@@ -104,9 +99,8 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @PutMapping("/batch")
-    @Authentication
+    @Openapi
     @Operation(summary = "根据主键批量更新记录")
-    @Log
     public List<ENTITY> updateBatchById(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("updateBatchById: {}", JacksonUtil.toJson(entities));
@@ -118,9 +112,8 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @DeleteMapping("/{id}")
-    @Authentication
+    @Openapi
     @Operation(summary = "根据主键删除记录")
-    @Log
     public Boolean removeById(@PathVariable("id") ID id) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeById: {}", id);
@@ -129,9 +122,8 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @DeleteMapping("/batch")
-    @Authentication
+    @Openapi
     @Operation(summary = "根据主键批量删除记录")
-    @Log
     public Result<Boolean> removeByIds(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeByIds: {}", JacksonUtil.toJson(entities));
@@ -140,9 +132,8 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @DeleteMapping("")
-    @Authentication
+    @Openapi
     @Operation(summary = "根据条件批量删除记录（慎重）")
-    @Log
     public Result<Boolean> removeByWrapper(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeByWrapper: {}", JacksonUtil.toJson(entity));
