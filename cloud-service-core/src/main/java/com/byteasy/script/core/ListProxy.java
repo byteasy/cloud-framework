@@ -1,4 +1,4 @@
-package com.byteasy.script;
+package com.byteasy.script.core;
 
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyArray;

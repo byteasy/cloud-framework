@@ -6,7 +6,7 @@ import com.byteasy.dto.ScriptFunction;
 import com.byteasy.exception.BizException;
 import com.byteasy.exception.JsScriptException;
 import com.byteasy.script.JsFunctionFactory;
-import com.byteasy.script.ProxyWrapper;
+import com.byteasy.script.core.ProxyWrapper;
 import lombok.extern.log4j.Log4j2;
 import org.graalvm.polyglot.*;
 import org.graalvm.polyglot.proxy.ProxyExecutable;

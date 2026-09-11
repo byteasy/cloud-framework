@@ -1,6 +1,8 @@
-package com.byteasy.script;
+package com.byteasy.script.function;
 
 import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.script.JsFunction;
+import com.byteasy.script.JsFunctions;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
