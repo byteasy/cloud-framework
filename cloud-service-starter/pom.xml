@@ -20,7 +20,7 @@
     <dependencies>
         <dependency>
             <groupId>com.byteasy</groupId>
-            <artifactId>cloud-service-core</artifactId>
+            <artifactId>cloud-script-sdk</artifactId>
             <version>${project.version}</version>
         </dependency>
 

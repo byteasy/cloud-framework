@@ -12,9 +12,6 @@
     <artifactId>cloud-script-sdk</artifactId>
     <version>1.0.0</version>
 
-    <properties>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.byteasy</groupId>
