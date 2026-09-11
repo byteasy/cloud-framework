@@ -1,7 +1,5 @@
 package com.byteasy.common.configuration;
 
-import com.byteasy.Constant;
-import com.byteasy.common.interceptor.AuthenticationInterceptor;
 import com.byteasy.common.interceptor.I18nLocaleInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.LocaleResolver;
@@ -19,7 +17,6 @@ public class InterceptorConfiguration implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new AuthenticationInterceptor()).addPathPatterns(Constant.SAPI + "/**");
         registry.addInterceptor(new I18nLocaleInterceptor(localeResolver)).addPathPatterns("/**");
     }
 

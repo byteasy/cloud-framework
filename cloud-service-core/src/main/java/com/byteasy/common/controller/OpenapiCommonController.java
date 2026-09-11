@@ -10,8 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.Status;
-import com.byteasy.annotations.Authentication;
-import com.byteasy.annotations.Log;
+import com.byteasy.annotations.Openapi;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.component.EntityDefineUtil;
@@ -65,32 +64,32 @@ public class OpenapiCommonController {
     private EntityDefineUtil entityDefineUtil;
 
     @GetMapping("/{className}")
-    @Authentication(authenticated = true)
+    @Openapi
     @Operation(summary = "分页查询")
     public Result<Page<Map<String, Object>>> page(@PathVariable("className") String className) throws Exception {
         return Result.success(commonService.page(className));
     }
 
     @GetMapping("/{className}/all")
-    @Authentication(authenticated = true)
+    @Openapi
     @Operation(summary = "查询所有")
     public Result<List<Map<String, Object>>> list(@PathVariable("className") String className) throws Exception {
         return Result.success(commonService.list(className));
     }
 
     @PostMapping("/{className}")
-    @Authentication(authenticated = true)
+    @Openapi
     @Operation(summary = "存在更新记录，否则插入一条记录")
-    @Log
     public Result<Map<String, Object>> saveOrUpdate(@PathVariable("className") String className, @RequestBody String body) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("className: {}, saveOrUpdate: {}", className, body);
         }
-        return Result.success(commonService.saveOrUpdate(className, JacksonUtil.nativeRead(body, new TypeReference<Map<String, Object>>() {})));
+        return Result.success(commonService.saveOrUpdate(className, JacksonUtil.nativeRead(body, new TypeReference<Map<String, Object>>() {
+        })));
     }
 
     @GetMapping("/{className}/{primaryKey}")
-    @Authentication(authenticated = true)
+    @Openapi
     @Operation(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
     public Result<Map<String, Object>> getByPrimaryKey(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
@@ -98,20 +97,19 @@ public class OpenapiCommonController {
     }
 
     @DeleteMapping("/{className}")
-    @Authentication(authenticated = true)
+    @Openapi
     @Operation(summary = "根据主键删除记录")
-    @Log
     public Result<Boolean> removeByEntity(@PathVariable("className") String className, @RequestBody String body) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("className: {}, removeByEntity: {}", className, body);
         }
-        return Result.success(commonService.removeByPrimaryKey(className, JacksonUtil.nativeRead(body, new TypeReference<Map<String, Object>>() {})));
+        return Result.success(commonService.removeByPrimaryKey(className, JacksonUtil.nativeRead(body, new TypeReference<Map<String, Object>>() {
+        })));
     }
 
     @DeleteMapping("/{className}/{primaryKey}")
-    @Authentication(authenticated = true)
+    @Openapi
     @Operation(summary = "根据主键删除记录")
-    @Log
     public Result<Boolean> removeByPrimaryKey(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("className: {}, removeById: {}", className, primaryKey);
@@ -120,19 +118,19 @@ public class OpenapiCommonController {
     }
 
     @DeleteMapping("/{className}/batch")
-    @Authentication(authenticated = true)
+    @Openapi
     @Operation(summary = "批量删除")
-    @Log
     public Result<Boolean> batchDelete(@PathVariable("className") String className, @RequestBody String body) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("className: {}, batchRemove: {}", className, body);
         }
-        commonService.batchDelete(className, JacksonUtil.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {}));
+        commonService.batchDelete(className, JacksonUtil.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
+        }));
         return Result.success();
     }
 
     @GetMapping("/{className}/excel/template")
-    @Authentication(authenticated = true)
+    @Openapi
     @Operation(summary = "下载Excel导入模板")
     public void downloadImportTemplate(@PathVariable("className") String className, HttpServletResponse response) throws Exception {
         List<Column> columns = fieldDefineUtil.getColumns(className, false);
@@ -190,7 +188,7 @@ public class OpenapiCommonController {
     }
 
     @PostMapping("/{className}/excel/importPreview")
-    @Authentication(authenticated = true)
+    @Openapi
     @Operation(summary = "Excel导入预览")
     public Result<List<Map<String, Object>>> importPreview(@PathVariable("className") String className, @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
         ExcelReader excelReader = ExcelUtil.getReader(file.getInputStream(), 0);
@@ -316,14 +314,14 @@ public class OpenapiCommonController {
     }
 
     @PostMapping("/{className}/batch")
-    @Authentication(authenticated = true)
+    @Openapi
     @Operation(summary = "存在更新记录，否则插入记录（批量）")
-    @Log
     public Result<List<Map<String, Object>>> saveOrUpdateBatch(@PathVariable("className") String className, @RequestBody String body) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdateBatch: {}", body);
         }
-        List<Map<String, Object>> entities = JacksonUtil.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {});
+        List<Map<String, Object>> entities = JacksonUtil.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
+        });
         List<Column> columns = fieldDefineUtil.getColumns(className, false);
         for (Map<String, Object> entity : entities) {
             validEntity(entity, columns);
@@ -343,7 +341,7 @@ public class OpenapiCommonController {
     }
 
     @PostMapping("/{className}/excel/export")
-    @Authentication(authenticated = true)
+    @Openapi
     @Operation(summary = "Excel数据导出")
     public void exportExcel(@PathVariable("className") String className, @RequestBody List<String> fieldNames, HttpServletResponse response) throws Exception {
         List<Column> columns = fieldDefineUtil.getColumns(className, false);

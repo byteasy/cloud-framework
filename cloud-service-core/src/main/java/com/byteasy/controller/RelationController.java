@@ -4,8 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.byteasy.Constant;
 import com.byteasy.Result;
-import com.byteasy.annotations.Authentication;
-import com.byteasy.annotations.Log;
+import com.byteasy.annotations.Openapi;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.component.I18nUtil;
@@ -29,16 +28,15 @@ import java.util.List;
 public abstract class RelationController<SERVICE extends IService<ENTITY>, ENTITY extends Relation> extends AbstractController<SERVICE, ENTITY, Long> implements Constant {
 
     @GetMapping("")
-    @Authentication
+    @Openapi
     @Operation(summary = "分页查询")
     public Result<Page<? extends ENTITY>> page() throws Exception {
         return Result.success(baseService.page(RequestUtil.getPage(), RequestUtil.getQueryWrapper(baseService.getEntityClass())));
     }
 
     @PostMapping("/batch")
-    @Authentication
+    @Openapi
     @Operation(summary = "存在更新记录，否则插入记录（批量）")
-    @Log
     public Result<List<ENTITY>> saveOrUpdateBatch(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdateBatch: {}", JacksonUtil.toJson(entities));
@@ -50,9 +48,8 @@ public abstract class RelationController<SERVICE extends IService<ENTITY>, ENTIT
     }
 
     @DeleteMapping("/batch")
-    @Authentication
+    @Openapi
     @Operation(summary = "根据主键批量删除记录")
-    @Log
     public Result<Boolean> removeByIds(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeByIds: {}", JacksonUtil.toJson(entities));
@@ -61,9 +58,8 @@ public abstract class RelationController<SERVICE extends IService<ENTITY>, ENTIT
     }
 
     @DeleteMapping("")
-    @Authentication
+    @Openapi
     @Operation(summary = "根据条件批量删除记录（慎重）")
-    @Log
     public Result<Boolean> removeByWrapper(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeByWrapper: {}", JacksonUtil.toJson(entity));

@@ -1,7 +1,7 @@
 package com.byteasy.script.controller;
 
 import com.byteasy.Constant;
-import com.byteasy.annotations.Authentication;
+import com.byteasy.annotations.Openapi;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.platform.dto.ScriptFunctionDTO;
 import com.byteasy.script.JsFunctionFactory;
@@ -18,7 +18,7 @@ public class ScriptFunctionRunnerController {
     private JsFunctionFactory factory;
 
     @PostMapping("/run/{name}")
-    @Authentication(serviceOnly = true)
+    @Openapi
     public Object run(@PathVariable String name, @RequestBody String argsString) {
         Object[] args = JacksonUtil.parseObjArray(argsString);
         ScriptFunctionDTO scriptFunction = factory.getJsFunctionMap().get(name);

@@ -7,6 +7,8 @@ cd ../common
 mvn clean install
 cd ../cloud-service-core
 mvn clean install
+cd ../cloud-script-sdk
+mvn clean install
 cd ../cloud-service-starter
 mvn clean install
 cd ../cloud-redis-service

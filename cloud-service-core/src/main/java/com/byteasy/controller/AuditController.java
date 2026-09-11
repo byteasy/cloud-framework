@@ -3,6 +3,7 @@ package com.byteasy.controller;
 import cn.hutool.core.util.ReflectUtil;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.byteasy.Result;
+import com.byteasy.annotations.Openapi;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.entity.AuditEntity;
@@ -19,6 +20,7 @@ public abstract class AuditController<ID extends java.io.Serializable, SERVICE e
 
     @Override
     @Transactional
+    @Openapi
     public Result<Boolean> removeById(ID id) throws Exception {
         prepareLogicDelete(id);
         return super.removeById(id);
@@ -26,6 +28,7 @@ public abstract class AuditController<ID extends java.io.Serializable, SERVICE e
 
     @Override
     @Transactional
+    @Openapi
     public Result<Boolean> removeByIds(List<ENTITY> entities) throws Exception {
         for (ENTITY entity : entities) {
             prepareLogicDelete(entity.getId());
@@ -35,6 +38,7 @@ public abstract class AuditController<ID extends java.io.Serializable, SERVICE e
 
     @Override
     @Transactional
+    @Openapi
     public Result<Boolean> removeByWrapper(ENTITY entity) throws Exception {
         prepareLogicDelete(entity.getId());
         return super.removeByWrapper(entity);
