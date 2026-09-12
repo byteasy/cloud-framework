@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: platform-service
+  config:
+    import:
+      - classpath:application-${spring.profiles.active}.yml
+  messages:
+    basename: i18n/cloud-service-api/messages, i18n/platform-service/messages
+    encoding: UTF-8
+    cache-duration: 3600s
+    fallback-to-system-locale: false
+    use-code-as-default-message: true
+mybatis-plus:
+  configuration:
+    jdbc-type-for-null: 'null'
+server:
+  max-http-request-header-size: 128KB
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'

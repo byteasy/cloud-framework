@@ -1,0 +1,100 @@
+### 修改密码
+PUT http://localhost/platform/sapi/users/password
+Content-Type: application/json
+
+{
+  "oldPassword": "test1234",
+  "newPassword": "test1234"
+}
+
+### 获取属性信息-多语言测试
+GET http://localhost/platform/sapi/resourceGroups/schemas
+Content-Type: application/json
+Accept-Language: en-US,zh;q=0.9
+x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiJmYTFhMmNlYy05Njg2LTRiMDUtOTc4Zi01NGUzNzQ2NjYwYzYiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
+
+
+###
+GET http://172.16.114.144/platform/sapi/test
+Host: 172.16.114.144
+
+
+
+### 获取属性信息-多语言测试
+GET http://localhost/platform/sapi/i18ns/languages
+
+### 查询菜单
+GET http://localhost/platformSvr/sapi/resources/leftMenu?groupId=1
+x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiJmYTFhMmNlYy05Njg2LTRiMDUtOTc4Zi01NGUzNzQ2NjYwYzYiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
+
+### 查询服务
+GET http://localhost:18080/platformSvr/sapi/fieldDefines/services
+x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiIzMmE2ZDRiYy03ZjA0LTQzYTItOWZjOS0wY2I5OTc2NmE5OTMiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbmlzdHJhdG9yIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
+### 查询服务
+GET http://localhost:18080/platformSvr/sapi/fieldDefines/services/knowledge-base-service/context
+x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiIzMmE2ZDRiYy03ZjA0LTQzYTItOWZjOS0wY2I5OTc2NmE5OTMiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbmlzdHJhdG9yIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
+
+### 角色添加
+POST http://localhost:18080/platformSvr/sapi/roles
+Content-Type: application/json
+x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiIzMmE2ZDRiYy03ZjA0LTQzYTItOWZjOS0wY2I5OTc2NmE5OTMiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbmlzdHJhdG9yIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
+
+{
+  "id": 9223372036854775107,
+  "code": "teest1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111",
+  "name": "{\"zh_CN\": \"teest1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111\"}"
+}
+
+### OpenAPI 方法
+GET http://localhost:18080/platformSvr/sapi/classMethods?keyword=Dic
+Content-Type: application/json
+x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiIzMmE2ZDRiYy03ZjA0LTQzYTItOWZjOS0wY2I5OTc2NmE5OTMiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbmlzdHJhdG9yIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
+
+### OpenAPI 方法
+POST http://localhost:18080/platformSvr/sapi/common/com.byteasy.platform.entity.ServiceInstance
+Content-Type: application/json
+x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiIzMmE2ZDRiYy03ZjA0LTQzYTItOWZjOS0wY2I5OTc2NmE5OTMiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbmlzdHJhdG9yIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
+
+{
+  "creatorId": "32a6d4bc-7f04-43a2-9fc9-0cb99766a993",
+  "createdBy": "超级管理员",
+  "createdTime": "2026-05-23 17:05:32",
+  "updaterId": "32a6d4bc-7f04-43a2-9fc9-0cb99766a993",
+  "updatedBy": "超级管理员",
+  "updatedTime": "2026-06-01 15:11:46",
+  "code": "test12341",
+  "contextPath": "/test12",
+  "status": "ENABLE",
+  "name": "{\"zh_CN\":\"测试\"}",
+  "openApi": "{\"zh_CN\":\"函数定义\"}"
+}
+
+### OpenAPI 方法
+GET http://localhost:18080/platformSvr/sapi/common/com.byteasy.platform.entity.EntityDefine/56
+Content-Type: application/json
+x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiIzMmE2ZDRiYy03ZjA0LTQzYTItOWZjOS0wY2I5OTc2NmE5OTMiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbmlzdHJhdG9yIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
+
+### OpenAPI 方法
+GET http://localhost:18080/platformSvr/sapi/common/com.byteasy.platform.entity.ServiceInstance/23
+Content-Type: application/json
+x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiIzMmE2ZDRiYy03ZjA0LTQzYTItOWZjOS0wY2I5OTc2NmE5OTMiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbmlzdHJhdG9yIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
+
+### OpenAPI 方法
+DELETE http://localhost:18080/platformSvr/sapi/common/com.byteasy.platform.entity.ServiceInstance/23
+Content-Type: application/json
+x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiIzMmE2ZDRiYy03ZjA0LTQzYTItOWZjOS0wY2I5OTc2NmE5OTMiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbmlzdHJhdG9yIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
+
+### OpenAPI 方法
+GET http://localhost:18080/platformSvr/sapi/common/com.byteasy.platform.entity.ServiceInstance/excel/template
+Content-Type: application/json
+x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiIzMmE2ZDRiYy03ZjA0LTQzYTItOWZjOS0wY2I5OTc2NmE5OTMiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbmlzdHJhdG9yIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
+
+### 通过数据库的表直接生成字段定义
+GET http://localhost:18080/platformSvr/sapi/schemas/database/com.byteasy.platform.entity.EbApplication
+Content-Type: application/json
+x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiIzMmE2ZDRiYy03ZjA0LTQzYTItOWZjOS0wY2I5OTc2NmE5OTMiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbmlzdHJhdG9yIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
+
+### 通过数据库的表直接生成字段定义
+GET http://localhost:18080/platformSvr/sapi/schemas/database/currentSchema/platform_eb_application
+Content-Type: application/json
+x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiIzMmE2ZDRiYy03ZjA0LTQzYTItOWZjOS0wY2I5OTc2NmE5OTMiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbmlzdHJhdG9yIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=

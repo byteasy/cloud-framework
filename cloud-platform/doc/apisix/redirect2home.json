@@ -1,0 +1,29 @@
+{
+  "uri": "/",
+  "name": "redirect2home",
+  "methods": [
+    "GET",
+    "POST",
+    "PUT",
+    "DELETE",
+    "PATCH",
+    "HEAD",
+    "OPTIONS",
+    "CONNECT",
+    "TRACE",
+    "PURGE"
+  ],
+  "host": "www.byteasy.cn",
+  "plugins": {
+    "proxy-rewrite": {
+      "headers": {
+        "Host": "www.byteasy.cn"
+      }
+    },
+    "redirect": {
+      "ret_code": 302,
+      "uri": "/platformSvr/index.html"
+    }
+  },
+  "status": 1
+}

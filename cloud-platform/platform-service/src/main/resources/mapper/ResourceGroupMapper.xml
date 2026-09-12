@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byteasy.platform.mapper.ResourceGroupMapper">
+
+    <select id="selectByRoleIds" resultType="com.byteasy.platform.entity.ResourceGroup">
+        SELECT DISTINCT g.*
+        FROM platform_resource_group g
+        INNER JOIN platform_resource r ON g.id = r.group_id
+        INNER JOIN platform_role_resource rr ON r.id = rr.resource_id
+        WHERE rr.role_id IN
+        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+        order by g.show_order asc
+    </select>
+</mapper>

@@ -1,0 +1,55 @@
+<svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
+    <!-- 背景深色渐变 -->
+    <defs>
+        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0f172a"/>
+            <stop offset="100%" stop-color="#1e293b"/>
+        </linearGradient>
+        <radialGradient id="glow" cx="20%" cy="50%" r="70%">
+            <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
+        </radialGradient>
+    </defs>
+    <!-- 底色 -->
+    <rect width="1920" height="1080" fill="url(#bgGrad)"/>
+    <rect width="1920" height="1080" fill="url(#glow)"/>
+
+    <!-- 科技网格线 左侧区域 -->
+    <g stroke="#334155" stroke-width="0.5">
+        <!-- 竖线 -->
+        <line x1="0" y1="0" x2="0" y2="1080"/>
+        <line x1="120" y1="0" x2="120" y2="1080"/>
+        <line x1="240" y1="0" x2="240" y2="1080"/>
+        <line x1="360" y1="0" x2="360" y2="1080"/>
+        <line x1="480" y1="0" x2="480" y2="1080"/>
+        <line x1="600" y1="0" x2="600" y2="1080"/>
+        <line x1="720" y1="0" x2="720" y2="1080"/>
+        <line x1="840" y1="0" x2="840" y2="1080"/>
+        <!-- 横线 -->
+        <line x1="0" y1="0" x2="1200" y2="0"/>
+        <line x1="0" y1="120" x2="1200" y2="120"/>
+        <line x1="0" y1="240" x2="1200" y2="240"/>
+        <line x1="0" y1="360" x2="1200" y2="360"/>
+        <line x1="0" y1="480" x2="1200" y2="480"/>
+        <line x1="0" y1="600" x2="1200" y2="600"/>
+        <line x1="0" y1="720" x2="1200" y2="720"/>
+        <line x1="0" y1="840" x2="1200" y2="840"/>
+        <line x1="0" y1="960" x2="1200" y2="960"/>
+    </g>
+
+    <!-- 科技发光节点连线 -->
+    <g stroke="#38bdf8" stroke-width="1" fill="none" opacity="0.6">
+        <path d="M60,120 L240,360 L120,600 L360,720 L60,900"/>
+        <path d="M480,180 L720,420 L600,780"/>
+        <circle cx="60" cy="120" r="3" fill="#38bdf8"/>
+        <circle cx="240" cy="360" r="3" fill="#38bdf8"/>
+        <circle cx="120" cy="600" r="3" fill="#38bdf8"/>
+        <circle cx="360" cy="720" r="3" fill="#38bdf8"/>
+        <circle cx="60" cy="900" r="3" fill="#38bdf8"/>
+        <circle cx="480" cy="180" r="3" fill="#38bdf8"/>
+        <circle cx="720" cy="420" r="3" fill="#38bdf8"/>
+        <circle cx="600" cy="780" r="3" fill="#38bdf8"/>
+    </g>
+
+    <!-- 右侧留白区域：x从1200到1920，用来放置登录框 -->
+</svg>

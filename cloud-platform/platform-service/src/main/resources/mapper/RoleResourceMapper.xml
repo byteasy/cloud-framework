@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byteasy.platform.mapper.RoleResourceMapper">
+
+    <delete id="removeByRoleIdAndGroupId">
+        DELETE FROM platform_role_resource
+        WHERE role_id = #{roleId}
+          AND resource_id IN (
+            SELECT id FROM platform_resource WHERE group_id = #{groupId}
+        )
+    </delete>
+    <select id="selectByRoleIdAndGroupId" resultType="java.lang.Long">
+        select distinct rr.resource_id from platform_role_resource rr INNER JOIN platform_resource r on r.id = rr.resource_id where role_id = #{roleId} and r.group_id = #{groupId}
+    </select>
+</mapper>

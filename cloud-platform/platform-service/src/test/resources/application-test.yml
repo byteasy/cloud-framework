@@ -1,0 +1,5 @@
+feign:
+  client:
+    config:
+      system-service: # 对应 @FeignClient 的 name
+        url: http://localhost:8080 # 本地服务地址
