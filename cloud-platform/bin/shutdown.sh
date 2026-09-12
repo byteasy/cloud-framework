@@ -1,0 +1,1 @@
+ps -elf | grep platform-service | grep -v grep | awk '{print $4}' | xargs -r kill -9

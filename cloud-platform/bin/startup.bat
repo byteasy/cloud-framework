@@ -1,0 +1,1 @@
+java -Xms512m -Xmx1024m -DJM.LOG.PATH=%LOG_HOME%\\platform-service -DJM.SNAPSHOT.PATH=%LOG_HOME%\\platform-service -jar platform-service-1.0-SNAPSHOT.jar --spring.profiles.active=prod

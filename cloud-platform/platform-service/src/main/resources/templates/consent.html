@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Matrix Auth | Consent Required</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --neon-green: #00ff41; }
+        body { background-color: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+        #particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .glass-card {
+            background: rgba(0, 15, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--neon-green);
+            box-shadow: 0 0 40px rgba(0, 255, 65, 0.15);
+            z-index: 10;
+        }
+        .scope-item { border-left: 3px solid var(--neon-green); background: rgba(0, 255, 65, 0.05); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+<canvas id="particles"></canvas>
+
+<div class="glass-card p-8 rounded-none w-full max-w-lg border-t-8">
+    <div class="mb-8 border-b border-[#003b00] pb-4">
+        <h2 class="text-[#00ff41] text-2xl font-black tracking-tighter">PERMISSIONS REQUEST</h2>
+        <p class="text-[#00ff41]/60 text-xs mt-1">NODE: <span th:text="${clientId}">CLIENT_ID</span> IS REQUESTING ACCESS</p>
+    </div>
+
+    <!-- 授权表单 -->
+    <form th:action="@{/oauth2/authorize}" method="post" class="space-y-6">
+        <input type="hidden" name="client_id" th:value="${clientId}">
+        <input type="hidden" name="state" th:value="${state}">
+
+        <div class="space-y-4">
+            <p class="text-[#00ff41] text-sm mb-4 uppercase underline">Authorized Scopes:</p>
+
+            <div th:each="scope : ${scopes}" class="scope-item p-3 flex items-center justify-between">
+                <span class="text-[#00ff41] font-bold text-sm" th:text="${scope}">scope</span>
+                <input type="checkbox" name="scope" th:value="${scope}" checked
+                       class="w-5 h-5 accent-[#00ff41] bg-black border-[#00ff41]">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mt-10">
+            <!-- 同意按钮 -->
+            <button type="submit" name="consent" value="allow"
+                    class="bg-[#00ff41] hover:bg-white text-black font-black py-3 tracking-widest transition-all">
+                GRANT ACCESS
+            </button>
+            <!-- 拒绝按钮 -->
+            <button type="submit" name="consent" value="deny"
+                    class="border border-red-600 text-red-600 hover:bg-red-600 hover:text-white font-black py-3 tracking-widest transition-all">
+                TERMINATE
+            </button>
+        </div>
+    </form>
+
+    <p class="text-[#003b00] text-[10px] mt-8 text-center italic">
+        Signed by Identity: <span th:text="${principalName}">USER</span>
+    </p>
+</div>
+
+<script>
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    let dots = [];
+    function init() {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        for(let i=0; i<50; i++) dots.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, v: Math.random()*0.5});
+    }
+    function draw() {
+        ctx.clearRect(0,0,canvas.width, canvas.height); ctx.fillStyle='#00ff41';
+        dots.forEach(d => { ctx.fillRect(d.x, d.y, 2, 2); d.y -= d.v; if(d.y<0) d.y=canvas.height; });
+        requestAnimationFrame(draw);
+    }
+    init(); draw();
+</script>
+</body>
+</html>

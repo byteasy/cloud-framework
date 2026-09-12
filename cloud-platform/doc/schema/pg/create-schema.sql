@@ -1,0 +1,1 @@
+CREATE SCHEMA "byteasy_cloud_platform" AUTHORIZATION "devops";

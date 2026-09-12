@@ -1,0 +1,107 @@
+server:
+  port: 18080
+  tomcat:
+    accesslog:
+      enabled: true
+      directory: ${LOG_HOME}/${spring.application.name}
+      max-days: 30
+      rotate: true      
+  servlet:
+    context-path: /platformSvr
+spring:
+  mvc:
+    format:
+      date-time: yyyy-MM-dd HH:mm:ss
+      date: yyyy-MM-dd
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 200MB
+  cloud:
+    discovery:
+      enabled: true
+  web:
+    resources:
+      static-locations: classpath:/static/,file:/opt/platform-data
+  data:
+    redis:
+      # 单机配置
+      host: 192.168.56.101
+      port: 6379
+      username: platform
+      password: platform
+      database: 0
+      timeout: 2000ms
+  datasource:
+    druid:
+      stat-view-servlet:
+        enabled: true
+        login-username: devops  # 注意：这里是连字符，不是驼峰
+        login-password: devops
+      web-stat-filter:
+        enabled: true
+        exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
+        # 动态数据源配置
+    dynamic:
+      primary: platform
+      strict: false
+      # Druid 连接池通用配置
+      druid:
+        initial-size: 5
+        min-idle: 5
+        max-active: 20  # 注意：这里是连字符
+        max-wait: 60000
+        time-between-eviction-runs-millis: 60000
+        min-evictable-idle-time-millis: 300000
+        validation-query: SELECT 1
+        test-while-idle: true
+        test-on-borrow: false
+        test-on-return: false
+        pool-prepared-statements: true
+        max-pool-prepared-statement-per-connection-size: 20
+        filters: stat,slf4j
+        connection-properties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+      # 数据源定义
+      datasource:
+        platform:
+          driver-class-name: org.postgresql.Driver
+          url: jdbc:postgresql://192.168.56.101:5432/postgres?currentSchema=byteasy_cloud_platform
+          username: postgres
+          password: devops
+# seata配置
+seata:
+  # 默认关闭，如需启用spring.datasource.dynami.seata需要同时开启
+  enabled: false
+  # Seata 应用编号，默认为 ${spring.application.name}
+  application-id: ${spring.application.name}
+  # Seata 事务组编号，用于 TC 集群名
+  tx-service-group: default_tx_group
+  # 关闭自动代理
+  enable-auto-data-source-proxy: false
+  # 服务配置项
+  service:
+    # 虚拟组和分组的映射
+    vgroup-mapping:
+      default_tx_group: default
+    grouplist:
+      default: 127.0.0.1:8091
+  config:
+    type: nacos
+    nacos:
+      serverAddr: 192.168.56.101:8848
+      group: SEATA_GROUP
+      namespace:
+  registry:
+    type: nacos
+    nacos:
+      application: seata-server
+      serverAddr: 192.168.56.101:8848
+      namespace:
+mybatis-plus:
+  global-config:
+    db-config:
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+platform:
+  dataRootDir: /opt/platform-data
