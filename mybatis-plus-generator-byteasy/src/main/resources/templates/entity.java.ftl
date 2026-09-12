@@ -1,53 +1,53 @@
 package ${package.Entity};
 
 <#list table.importPackages as pkg>
-    import ${pkg};
+import ${pkg};
 </#list>
 <#if springdoc>
-    import com.byteasy.annotations.FieldMeta;
+import com.byteasy.annotations.FieldMeta;
 <#elseif swagger>
-    import io.swagger.annotations.ApiModel;
-    import io.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 </#if>
 <#if entityLombokModel>
-    import lombok.Getter;
-    import lombok.Setter;
+import lombok.Getter;
+import lombok.Setter;
     <#if chainModel>
-        import lombok.experimental.Accessors;
+import lombok.experimental.Accessors;
     </#if>
 </#if>
 import java.io.Serializable;
 /**
 * <p>
-    * ${table.comment!}
-    * </p>
+* ${table.comment!}
+* </p>
 *
 * @author ${author}
 * @since ${date}
 */
 <#if entityLombokModel>
-    @Getter
-    @Setter
+@Getter
+@Setter
     <#if chainModel>
-        @Accessors(chain = true)
+@Accessors(chain = true)
     </#if>
 </#if>
 <#if table.convert>
-    @TableName("${schemaName}${table.name}")
+@TableName("${schemaName}${table.name}")
 </#if>
 <#if springdoc>
-    @FieldMeta(name = "${entity}", description = "${table.comment!}")
+@FieldMeta(name = "${entity}", description = "${table.comment!}")
 <#elseif swagger>
-    @ApiModel(value = "${entity}对象", description = "${table.comment!}")
+@ApiModel(value = "${entity}对象", description = "${table.comment!}")
 </#if>
 <#if superEntityClass??>
-    public class ${entity} extends ${superEntityClass}<#if activeRecord><${entity}></#if> {
+public class ${entity} extends ${superEntityClass}<#if activeRecord><${entity}></#if> {
 <#elseif activeRecord>
-    public class ${entity} extends Model<${entity}> {
+public class ${entity} extends Model<${entity}> {
 <#elseif entitySerialVersionUID>
-    public class ${entity} implements Serializable {
+public class ${entity} implements Serializable {
 <#else>
-    public class ${entity} {
+public class ${entity} {
 </#if>
 <#-- ----------  BEGIN 字段循环遍历  ---------->
 <#list table.fields as field>
@@ -69,22 +69,22 @@ import java.io.Serializable;
     <#if field.keyFlag>
     <#-- 主键 -->
         <#if field.keyIdentityFlag>
-            @TableId(value = "${field.annotationColumnName}", type = IdType.AUTO)
+    @TableId(value = "${field.annotationColumnName}", type = IdType.AUTO)
         <#elseif idType??>
-            @TableId(value = "${field.annotationColumnName}", type = IdType.${idType})
+    @TableId(value = "${field.annotationColumnName}", type = IdType.${idType})
         <#elseif field.convert>
-            @TableId("${field.annotationColumnName}")
+    @TableId("${field.annotationColumnName}")
         </#if>
     <#-- 普通字段 -->
     <#elseif field.fill??>
     <#-- -----   存在字段填充设置   ----->
         <#if field.convert>
-            @TableField(value = "${field.annotationColumnName}", fill = FieldFill.${field.fill})
+    @TableField(value = "${field.annotationColumnName}", fill = FieldFill.${field.fill})
         <#else>
-            @TableField(fill = FieldFill.${field.fill})
+    @TableField(fill = FieldFill.${field.fill})
         </#if>
     <#elseif field.convert>
-        @TableField("${field.annotationColumnName}")
+    @TableField("${field.annotationColumnName}")
     </#if>
 <#-- 乐观锁注解 -->
     <#if field.versionField>

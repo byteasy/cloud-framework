@@ -10,13 +10,13 @@ import java.io.File;
 public class CodeOracleGenerate {
 
     public static void main(String[] args) {
-        FastAutoGenerator.create("jdbc:postgresql://192.168.56.102:5432/postgres?currentSchema=byteasy_cloud_platform",
+        FastAutoGenerator.create("jdbc:postgresql://192.168.56.102:5432/byteasy?currentSchema=byteasy_cloud_platform",
                         "postgres", "Xsy870712@@@")
                 .globalConfig(builder -> builder
                         .author("devops")
                         .vueApiDir("D:\\vue")
                         .vuePageDir("D:\\vue")
-                        .outputDir(SystemUtils.getUserDir().getAbsolutePath() + File.separator + "platform-service" + File.separator + "src" + File.separator + "main" + File.separator + "java")
+                        .outputDir(SystemUtils.getUserDir().getAbsolutePath() + File.separator + "cloud-platform" + File.separator + "platform-service" + File.separator + "src" + File.separator + "main" + File.separator + "java")
                         .commentDate("yyyy-MM-dd")
                         .enableSwagger()
                         .enableSpringdoc()
@@ -31,7 +31,7 @@ public class CodeOracleGenerate {
                         .xml("mapper.xml")
                 )
                 .strategyConfig(builder -> builder
-                        .addInclude("platform_openapi")
+                        .addInclude("platform_js_script")
                         .addTablePrefix("platform_")
                         .entityBuilder()
                         .addSuperEntityColumns("id", "version", "deleted_time", "deleted_by", "deleter_id", "is_deleted", "updated_time", "updated_by", "updater_id", "created_time", "created_by", "creator_id")
