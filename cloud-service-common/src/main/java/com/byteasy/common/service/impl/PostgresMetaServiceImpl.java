@@ -1,4 +1,4 @@
-package com.byteasy.service.impl;
+package com.byteasy.common.service.impl;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -7,7 +7,7 @@ import com.byteasy.dto.Column;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;
-import com.byteasy.service.IDatabaseMetaService;
+import com.byteasy.common.service.IDatabaseMetaService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;

@@ -1,9 +1,10 @@
-package com.byteasy.common.service;
+package com.byteasy.common.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.byteasy.common.component.EventPublishUtil;
+import com.byteasy.common.service.ICommonService;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.CastUtil;
@@ -21,7 +22,7 @@ import com.byteasy.enums.YesNo;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
 import com.byteasy.exception.BizException;
-import com.byteasy.service.IDatabaseMetaService;
+import com.byteasy.common.service.IDatabaseMetaService;
 import com.byteasy.util.ColumnUtil;
 import com.byteasy.util.SqlUtil;
 import com.google.common.collect.Lists;
