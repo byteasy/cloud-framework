@@ -24,6 +24,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.byteasy</groupId>
+            <artifactId>cloud-permission-sdk</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- spring cloud -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
