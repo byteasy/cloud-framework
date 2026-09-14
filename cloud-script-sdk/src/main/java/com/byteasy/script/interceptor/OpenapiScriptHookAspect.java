@@ -4,7 +4,7 @@ import com.byteasy.Result;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.RequestUtil;
-import com.byteasy.common.component.OpenApiFactory;
+import com.byteasy.common.component.OpenApiLoadingCache;
 import com.byteasy.platform.entity.JsScript;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.script.component.JsScriptFactory;
@@ -36,7 +36,7 @@ import java.util.concurrent.ExecutionException;
 public class OpenapiScriptHookAspect {
 
     @Autowired
-    private OpenApiFactory openApiFactory;
+    private OpenApiLoadingCache openApiLoadingCache;
 
     @Autowired
     private JsScriptFactory jsScriptFactory;
@@ -129,9 +129,9 @@ public class OpenapiScriptHookAspect {
      * 智能定位 Openapi 模型定义
      */
     private Openapi findOpenApi(String actualUri, String path, String httpMethod) {
-        if (openApiFactory == null || StringUtils.isEmpty(path)) return null;
+        if (openApiLoadingCache == null || StringUtils.isEmpty(path)) return null;
         try {
-            return openApiFactory.getOpenApi(openApiFactory.buildCompositeKey(actualUri, path, Openapi.HttpMethod.fromValue(httpMethod)));
+            return openApiLoadingCache.load(openApiLoadingCache.buildCompositeKey(actualUri, path, Openapi.HttpMethod.fromValue(httpMethod)));
         } catch (Exception e) {
             log.debug("未找到对应 openapi: path={}, httpMethod={}", path, httpMethod);
             return null;

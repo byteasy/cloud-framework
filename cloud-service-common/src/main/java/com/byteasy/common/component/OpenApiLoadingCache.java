@@ -25,7 +25,7 @@ import java.util.concurrent.ExecutionException;
 
 @Component
 @Log4j2
-public class OpenApiFactory implements IPlatformEntityChangeHandler, ICacheLoader<String, Openapi> {
+public class OpenApiLoadingCache implements IPlatformEntityChangeHandler, ICacheLoader<String, Openapi> {
 
     @Autowired
     private IOpenapiService openapiService;
@@ -54,17 +54,13 @@ public class OpenApiFactory implements IPlatformEntityChangeHandler, ICacheLoade
         }
     });
 
-    public Openapi getOpenApi(String apiCode) throws ExecutionException {
-        return cache.get(apiCode);
-    }
-
     public void register(Openapi openapi) {
         openapiService.saveOrUpdate(openapi);
     }
 
     @Override
     public Openapi load(String key) throws ExecutionException {
-        return getOpenApi(key);
+        return cache.get(key);
     }
 
     @Override

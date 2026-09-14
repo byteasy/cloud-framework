@@ -8,7 +8,7 @@ import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.component.I18nUtil;
-import com.byteasy.common.component.OpenApiFactory;
+import com.byteasy.common.component.OpenApiLoadingCache;
 import com.byteasy.common.controller.AbstractController;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.util.EntityCodeUtil;
@@ -35,7 +35,7 @@ import java.lang.reflect.Method;
 public class OpenapiAuthAspect {
 
     @Autowired
-    private OpenApiFactory openApiFactory;
+    private OpenApiLoadingCache openApiLoadingCache;
 
     @Pointcut("@annotation(com.byteasy.annotations.Openapi) || @within(com.byteasy.annotations.Openapi)")
     public void openapiPointcut() {
@@ -81,11 +81,11 @@ public class OpenapiAuthAspect {
                 Method getEntityClassMethod = ReflectUtil.getMethod(targetClass, "getEntityClass");
                 Class<?> entityClass = ReflectUtil.invoke(joinPoint.getTarget(), getEntityClassMethod);
                 openapi.setClassName(entityClass.getName());
-                openApiFactory.register(openapi);
+                openApiLoadingCache.register(openapi);
                 log.info("Openapi not found, auto registe: {}", openapi);
             } else if (OpenapiCommonController.class.isAssignableFrom(targetClass)) {
                 openapi.setClassName(extractClassName(signature, args));
-                openApiFactory.register(openapi);
+                openApiLoadingCache.register(openapi);
                 log.info("Openapi not found, auto registe: {}", openapi);
             } else {
                 log.error("Openapi not found, src: {}, uri: {}, method: {}, class: {} ", fullUri, actualUri, methodName, targetClass.getName());
@@ -101,9 +101,9 @@ public class OpenapiAuthAspect {
      * 智能定位 Openapi 模型定义
      */
     private Openapi findOpenApi(String actualUri, String path, String httpMethod) {
-        if (openApiFactory == null || StringUtils.isEmpty(path)) return null;
+        if (openApiLoadingCache == null || StringUtils.isEmpty(path)) return null;
         try {
-            return openApiFactory.getOpenApi(openApiFactory.buildCompositeKey(actualUri, path, Openapi.HttpMethod.fromValue(httpMethod)));
+            return openApiLoadingCache.load(openApiLoadingCache.buildCompositeKey(actualUri, path, Openapi.HttpMethod.fromValue(httpMethod)));
         } catch (Exception e) {
             log.debug("未找到对应 openapi: path={}, httpMethod={}", path, httpMethod);
             return null;

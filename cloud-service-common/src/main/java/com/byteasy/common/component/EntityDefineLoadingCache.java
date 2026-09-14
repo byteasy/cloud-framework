@@ -24,12 +24,12 @@ import java.util.concurrent.ExecutionException;
 
 @Component
 @Log4j2
-public class EntityDefineFactory implements IPlatformEntityChangeHandler, ICacheLoader<String, EntityDefine> {
+public class EntityDefineLoadingCache implements IPlatformEntityChangeHandler, ICacheLoader<String, EntityDefine> {
 
     @Autowired
     private IEntityDefineService entityDefineService;
 
-    private LoadingCache<String, EntityDefine> entityDefineCacheLoader = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
+    private LoadingCache<String, EntityDefine> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
         @Override
         public @Nullable EntityDefine load(String key) {
             Map<String, Object> params = Maps.newHashMapWithExpectedSize(2);
@@ -58,13 +58,14 @@ public class EntityDefineFactory implements IPlatformEntityChangeHandler, ICache
         if (event.getSource().getAfter() != null) {
             code = FieldValueUtil.getFieldValue(event.getSource().getAfter(), "code", String.class);
         }
-        entityDefineCacheLoader.invalidate(code);
+        log.info("EntityDefineLoadingCache invalidate code: {}", code);
+        cache.invalidate(code);
     }
 
     public String getEntityName(String className) {
         EntityDefine entityDefine = null;
         try {
-            entityDefine = entityDefineCacheLoader.get(className);
+            entityDefine = cache.get(className);
         } catch (ExecutionException e) {
             log.error(e);
         }
@@ -77,7 +78,7 @@ public class EntityDefineFactory implements IPlatformEntityChangeHandler, ICache
     public EntityDefine getEntityDefine(String className) {
         EntityDefine entityDefine = null;
         try {
-            entityDefine = entityDefineCacheLoader.get(className);
+            entityDefine = cache.get(className);
         } catch (ExecutionException e) {
             log.error(e);
         }
