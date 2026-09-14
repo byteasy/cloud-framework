@@ -17,7 +17,7 @@ mvn clean install
 cd ../cloud-platform/platform-api
 mvn clean install
 
-cd ../cloud-script-sdk
+cd ../../cloud-script-sdk
 mvn clean install
 
 cd ../cloud-redis-service

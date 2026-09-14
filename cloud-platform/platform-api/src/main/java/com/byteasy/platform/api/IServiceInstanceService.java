@@ -7,7 +7,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "platform-service",
+@FeignClient(name = Constant.SERVICE_NAME,
         contextId = "IServiceInstanceService",
         path = Constant.SAPI + "/serviceInstances",
         fallback = IServiceInstanceServiceFallback.class)

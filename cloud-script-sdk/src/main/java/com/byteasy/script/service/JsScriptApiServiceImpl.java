@@ -3,11 +3,12 @@ package com.byteasy.script.service;
 import cn.hutool.core.map.MapUtil;
 import com.byteasy.Result;
 import com.byteasy.component.OpenApiFactory;
+import com.byteasy.platform.entity.JsScript;
+import com.byteasy.platform.entity.Openapi;
 import com.byteasy.script.component.JsScriptFactory;
 import com.byteasy.script.util.JsScriptExecutor;
 import com.google.common.collect.Maps;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,21 +30,20 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
     public Result runScript(String apiCode, Map<String, Object> params, Map<String, String> headers, String body) throws ExecutionException {
         log.info("runApiScript, api: {}, params: {}, headers: {}, body: {}", apiCode, params, headers, body);
 
-        Map<String, Object> openApi = openApiFactory.getOpenApi(apiCode);
+        Openapi openApi = openApiFactory.getOpenApi(apiCode);
         if (openApi == null) {
             log.error("openApi is null, apiCode: {}", apiCode);
             return Result.error("openApi is null, apiCode: " + apiCode);
         }
 
-        Long scriptId = MapUtil.getLong(openApi, "scriptId");
+        Long scriptId = openApi.getScriptId();
         if (scriptId == null) {
             log.error("scriptId is null, apiCode: {}, scriptId: {}", apiCode, scriptId);
             return Result.error("scriptId is null, apiCode: {}" + apiCode);
         }
 
-        Map<String, Object> jsScriptObj = jsScriptFactory.getScript(scriptId);
-        String script = MapUtil.getStr(jsScriptObj, "script");
-        if (StringUtils.isEmpty(script)) {
+        JsScript jsScriptObj = jsScriptFactory.getScript(scriptId);
+        if (StringUtils.isEmpty(jsScriptObj.getScript())) {
             log.error("script is null, apiCode: {}, scriptId: {}", apiCode, scriptId);
             return Result.error("script is null, apiCode: " + apiCode);
         }
@@ -56,7 +56,7 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
         exePreScript(openApi, input);
 
         try {
-            return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, MapUtil.getStr(jsScriptObj, "id"), 30000));
+            return Result.success(JsScriptExecutor.runScriptWithTimeout(input, jsScriptObj.getScript(), String.valueOf(jsScriptObj.getId()), 30000));
         } finally {
             exePostScript(openApi, input);
         }
@@ -81,27 +81,25 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
         return Result.success(JsScriptExecutor.runScriptWithTimeout(input, script, scriptId, 30000));
     }
 
-    private void exePreScript(Map<String, Object> openapi, Map<String, Object> input) throws ExecutionException {
-        if (openapi.containsKey("preScriptId") && ObjectUtils.isNotEmpty(openapi.get("preScriptId"))) {
-            Long scriptId = MapUtil.getLong(openapi, "preScriptId");
-            Map<String, Object> jsScriptObj = jsScriptFactory.getScript(scriptId);
-            String script = MapUtil.getStr(jsScriptObj, "script");
-            if (StringUtils.isEmpty(script)) {
+    private void exePreScript(Openapi openapi, Map<String, Object> input) throws ExecutionException {
+        if (openapi.getPreScriptId() != null) {
+            Long scriptId = openapi.getPreScriptId();
+            JsScript jsScriptObj = jsScriptFactory.getScript(scriptId);
+            if (StringUtils.isEmpty(jsScriptObj.getScript())) {
                 return;
             }
-            JsScriptExecutor.runScriptWithTimeout(input, script, "PreScript-" + scriptId, 30000);
+            JsScriptExecutor.runScriptWithTimeout(input, jsScriptObj.getScript(), "PreScript-" + scriptId, 30000);
         }
     }
 
-    private void exePostScript(Map<String, Object> openapi, Map<String, Object> input) throws ExecutionException {
-        if (openapi.containsKey("postScriptId") && ObjectUtils.isNotEmpty(openapi.get("postScriptId"))) {
-            Long scriptId = MapUtil.getLong(openapi, "postScriptId");
-            Map<String, Object> jsScriptObj = jsScriptFactory.getScript(scriptId);
-            String script = MapUtil.getStr(jsScriptObj, "script");
-            if (StringUtils.isEmpty(script)) {
+    private void exePostScript(Openapi openapi, Map<String, Object> input) throws ExecutionException {
+        if (openapi.getPostScriptId() != null) {
+            Long scriptId = openapi.getPostScriptId();
+            JsScript jsScriptObj = jsScriptFactory.getScript(scriptId);
+            if (StringUtils.isEmpty(jsScriptObj.getScript())) {
                 return;
             }
-            JsScriptExecutor.runScriptWithTimeout(input, script, "PostScriptId-" + scriptId, 30000);
+            JsScriptExecutor.runScriptWithTimeout(input, jsScriptObj.getScript(), "PostScriptId-" + scriptId, 30000);
         }
     }
 }

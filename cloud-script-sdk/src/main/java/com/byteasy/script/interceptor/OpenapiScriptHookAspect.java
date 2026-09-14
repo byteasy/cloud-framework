@@ -1,10 +1,12 @@
 package com.byteasy.script.interceptor;
 
-import cn.hutool.core.map.MapUtil;
 import com.byteasy.Result;
 import com.byteasy.component.OpenApiFactory;
+import com.byteasy.platform.entity.JsScript;
+import com.byteasy.platform.entity.Openapi;
 import com.byteasy.script.component.JsScriptFactory;
 import com.byteasy.script.util.JsScriptExecutor;
+import com.byteasy.util.RequestMappingResolver;
 import com.google.common.collect.Maps;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
@@ -12,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
@@ -38,39 +41,49 @@ public class OpenapiScriptHookAspect {
     @Autowired
     private org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
-    /**
-     * 环绕拦截 OpenapiCommonController 下的所有公开方法
-     */
-    @Around("execution(public * com.byteasy.common.controller.OpenapiCommonController.*(..))")
+    @Pointcut("@annotation(com.byteasy.annotations.Openapi) || @within(com.byteasy.annotations.Openapi)")
+    public void openapiPointcut() {
+        // 切点签名，保持空方法体即可
+    }
+
+    @Around("openapiPointcut()")
     public Object aroundOpenapiCall(ProceedingJoinPoint joinPoint) throws Throwable {
         // 使用编程式事务包裹整个调用链
         return transactionTemplate.execute(status -> {
             try {
+                HttpServletRequest request = getHttpServletRequest();
+
                 MethodSignature signature = (MethodSignature) joinPoint.getSignature();
                 Method method = signature.getMethod();
                 String methodName = method.getName();
+                Class<?> targetClass = joinPoint.getTarget().getClass();
+                String fullUri = RequestMappingResolver.getFullMethodUri(targetClass, method);
+
+                String actualUri = request.getRequestURI();
+
                 Object[] args = joinPoint.getArgs();
+                Openapi openApi = findOpenApi(fullUri, methodName);
+                if (openApi == null) {
+                    return Result.error("Openapi:" + methodName + " " + fullUri + " not found");
+                } else {
+                    Map<String, Object> scriptContext = buildScriptContext(openApi.getClassName(), signature, args, request);
 
-                HttpServletRequest request = getHttpServletRequest();
-                String className = extractClassName(signature, args);
-                Map<String, Object> openApi = findOpenApi(className, methodName);
-                Map<String, Object> scriptContext = buildScriptContext(className, signature, args, request);
+                    // 1. 前置脚本
+                    if (openApi != null) {
+                        executePreScript(openApi, scriptContext);
+                    }
 
-                // 1. 前置脚本
-                if (openApi != null) {
-                    executePreScript(openApi, scriptContext);
+                    // 2. Controller & Service
+                    Object result = joinPoint.proceed();
+
+                    // 3. 后置脚本
+                    if (openApi != null) {
+                        scriptContext.put("result", result instanceof Result ? ((Result<?>) result).getData() : result);
+                        executePostScript(openApi, scriptContext);
+                    }
+
+                    return result;
                 }
-
-                // 2. Controller & Service
-                Object result = joinPoint.proceed();
-
-                // 3. 后置脚本
-                if (openApi != null) {
-                    scriptContext.put("result", result instanceof Result ? ((Result<?>) result).getData() : result);
-                    executePostScript(openApi, scriptContext);
-                }
-
-                return result;
             } catch (Throwable ex) {
                 // 标记事务回滚
                 status.setRollbackOnly();
@@ -86,54 +99,41 @@ public class OpenapiScriptHookAspect {
     // 脚本执行器与内部辅助方法
     // =========================================================================
 
-    private void executePreScript(Map<String, Object> openapi, Map<String, Object> input) throws ExecutionException {
-        Long scriptId = MapUtil.getLong(openapi, "preScriptId");
+    private void executePreScript(Openapi openapi, Map<String, Object> input) throws ExecutionException {
+        Long scriptId = openapi.getPreScriptId();
         if (scriptId == null || scriptId <= 0) return;
 
-        Map<String, Object> jsScriptObj = jsScriptFactory.getScript(scriptId);
-        String script = MapUtil.getStr(jsScriptObj, "script");
+        JsScript jsScriptObj = jsScriptFactory.getScript(scriptId);
+        String script = jsScriptObj.getScript();
         if (StringUtils.isBlank(script)) return;
 
-        log.info("【AOP 触发前置脚本】apiCode={}, scriptId={}", openapi.get("code"), scriptId);
+        log.info("【AOP 触发前置脚本】apiCode={}, scriptId={}", openapi.getCode(), scriptId);
         JsScriptExecutor.runScriptWithTimeout(input, script, Long.toString(scriptId), 30000);
     }
 
-    private void executePostScript(Map<String, Object> openapi, Map<String, Object> input) throws ExecutionException {
-        Long scriptId = MapUtil.getLong(openapi, "postScriptId");
+    private void executePostScript(Openapi openapi, Map<String, Object> input) throws ExecutionException {
+        Long scriptId = openapi.getPostScriptId();
         if (scriptId == null || scriptId <= 0) return;
 
-        Map<String, Object> jsScriptObj = jsScriptFactory.getScript(scriptId);
-        String script = MapUtil.getStr(jsScriptObj, "script");
+        JsScript jsScriptObj = jsScriptFactory.getScript(scriptId);
+        String script = jsScriptObj.getScript();
         if (StringUtils.isBlank(script)) return;
 
-        log.info("【AOP 触发后置脚本】apiCode={}, scriptId={}", openapi.get("code"), scriptId);
+        log.info("【AOP 触发后置脚本】apiCode={}, scriptId={}", openapi.getCode(), scriptId);
         JsScriptExecutor.runScriptWithTimeout(input, script, Long.toString(scriptId), 30000);
     }
 
     /**
      * 智能定位 Openapi 模型定义
      */
-    private Map<String, Object> findOpenApi(String className, String type) {
-        if (openApiFactory == null || StringUtils.isEmpty(className)) return null;
+    private Openapi findOpenApi(String path, String httpMethod) {
+        if (openApiFactory == null || StringUtils.isEmpty(path)) return null;
         try {
-            return openApiFactory.getOpenApi(openApiFactory.buildCompositeKey(className, type));
+            return openApiFactory.getOpenApi(openApiFactory.buildCompositeKey(path, Openapi.HttpMethod.fromValue(httpMethod)));
         } catch (Exception e) {
-            log.debug("未找到对应 openapi: className={}, type={}", className, type);
+            log.debug("未找到对应 openapi: path={}, httpMethod={}", path, httpMethod);
             return null;
         }
-    }
-
-    /**
-     * 自动从方法形参中提取 className
-     */
-    private String extractClassName(MethodSignature signature, Object[] args) {
-        String[] paramNames = signature.getParameterNames();
-        for (int i = 0; i < paramNames.length; i++) {
-            if ("className".equals(paramNames[i]) && args[i] instanceof String) {
-                return (String) args[i];
-            }
-        }
-        return null;
     }
 
     /**
