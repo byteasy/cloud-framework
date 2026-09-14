@@ -1,8 +1,7 @@
-package com.byteasy.util;
+package com.byteasy.common.component;
 
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.RandomUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.Constant;
 import com.byteasy.common.token.TokenUtil;
@@ -10,7 +9,6 @@ import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.OkHttpUtil;
-import com.byteasy.component.ServiceInstanceUtil;
 import com.byteasy.event.*;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cloud.client.ServiceInstance;

@@ -6,7 +6,7 @@ import com.byteasy.dto.Column;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.platform.mapper.FieldDefineMapper;
 import com.byteasy.platform.service.IFieldDefineService;
-import com.byteasy.service.EntityChangeService;
+import com.byteasy.common.service.EntityChangeService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

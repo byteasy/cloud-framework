@@ -7,7 +7,7 @@ import com.byteasy.platform.entity.ServiceInstance;
 import com.byteasy.platform.mapper.EntityDefineMapper;
 import com.byteasy.platform.service.IEntityDefineService;
 import com.byteasy.platform.service.IServiceInstanceService;
-import com.byteasy.service.EntityChangeService;
+import com.byteasy.common.service.EntityChangeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

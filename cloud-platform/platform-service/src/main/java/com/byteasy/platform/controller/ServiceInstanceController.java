@@ -1,7 +1,7 @@
 package com.byteasy.platform.controller;
 
 import com.byteasy.Constant;
-import com.byteasy.controller.AuditController;
+import com.byteasy.common.controller.AuditController;
 import com.byteasy.platform.entity.ServiceInstance;
 import com.byteasy.platform.service.IServiceInstanceService;
 import org.springframework.web.bind.annotation.RequestMapping;

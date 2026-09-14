@@ -1,4 +1,4 @@
-package com.byteasy.service;
+package com.byteasy.common.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.byteasy.dto.Column;

@@ -4,7 +4,7 @@ import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.Status;
 import com.byteasy.annotations.Authentication;
-import com.byteasy.controller.AuditController;
+import com.byteasy.common.controller.AuditController;
 import com.byteasy.dto.Column;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.platform.service.IFieldDefineService;

@@ -1,4 +1,4 @@
-package com.byteasy.service;
+package com.byteasy.common.service;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.byteasy.util.EventPublishUtil;
+import com.byteasy.common.component.EventPublishUtil;
 import com.byteasy.entity.Entity;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
@@ -20,15 +20,12 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Log4j2
 public abstract class EntityChangeService<ID, M extends BaseMapper<T>, T extends Entity<ID>> extends ServiceImpl<M, T> {
 
     @Autowired
     private EventPublishUtil eventPublishUtil;
-
-    private AtomicBoolean init = new AtomicBoolean(false);
 
     protected void publishEvent(EntityChangeEvent event) {
         eventPublishUtil.publishEvent(event);

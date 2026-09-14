@@ -2,7 +2,7 @@ package com.byteasy.platform.controller;
 
 import com.byteasy.Constant;
 import com.byteasy.Result;
-import com.byteasy.controller.AuditController;
+import com.byteasy.common.controller.AuditController;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.platform.service.IOpenapiService;
 import org.springframework.web.bind.annotation.GetMapping;

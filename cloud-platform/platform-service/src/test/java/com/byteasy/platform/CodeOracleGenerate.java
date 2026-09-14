@@ -2,7 +2,7 @@ package com.byteasy.platform;
 
 import com.baomidou.mybatisplus.generator.FastAutoGenerator;
 import com.baomidou.mybatisplus.generator.engine.FreemarkerTemplateEngine;
-import com.byteasy.controller.AuditController;
+import com.byteasy.common.controller.AuditController;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.File;

@@ -1,19 +1,25 @@
 package com.byteasy.common.controller;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.Status;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.RequestUtil;
 import com.byteasy.component.EntityDefineUtil;
+import com.byteasy.component.EntityServiceFactory;
 import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.component.I18nUtil;
 import com.byteasy.dto.Column;
@@ -21,12 +27,12 @@ import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.RelationType;
 import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;
-import com.byteasy.service.ICommonService;
+import com.byteasy.util.ColumnUtil;
 import com.byteasy.util.XlsxUtil;
-import com.fasterxml.jackson.core.type.TypeReference;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.compress.utils.Lists;
@@ -37,103 +43,201 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
-/**
- * 对外公开的api入口
- */
-@RestController
-@RequestMapping(Constant.SAPI + "/common")
+
 @Log4j2
-public class OpenapiCommonController {
+public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, ID extends Serializable> extends AbstractController<SERVICE, ENTITY, ID> {
+
     @Autowired
-    private ICommonService commonService;
-    @Autowired
-    private FieldDefineUtil fieldDefineUtil;
+    protected FieldDefineUtil fieldDefineUtil;
     @Autowired
     private EntityDefineUtil entityDefineUtil;
+    @Autowired
+    private EntityServiceFactory entityServiceFactory;
 
-    @GetMapping("/{className}")
-    @Openapi
+    @GetMapping("")
     @Operation(summary = "分页查询")
-    public Result<Page<Map<String, Object>>> page(@PathVariable("className") String className) throws Exception {
-        return Result.success(commonService.page(className));
-    }
-
-    @GetMapping("/{className}/all")
     @Openapi
-    @Operation(summary = "查询所有")
-    public Result<List<Map<String, Object>>> list(@PathVariable("className") String className) throws Exception {
-        return Result.success(commonService.list(className));
-    }
+    public Result<Page<ENTITY>> page() throws Exception {
+        Page<ENTITY> page = baseService.page(RequestUtil.getPage(), RequestUtil.getQueryWrapper(baseService.getEntityClass()));
 
-    @PostMapping("/{className}")
-    @Openapi
-    @Operation(summary = "存在更新记录，否则插入一条记录")
-    public Result<Map<String, Object>> saveOrUpdate(@PathVariable("className") String className, @RequestBody String body) throws Exception {
-        if (log.isInfoEnabled()) {
-            log.info("className: {}, saveOrUpdate: {}", className, body);
+        /**
+         * 将外键关联的对象塞入拓展字段中
+         */
+        List<Column> columns = fieldDefineUtil.getColumns(getEntityClass().getName(), false);
+        Set<Column> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
+        if (!externalKeys.isEmpty()) {
+            entityServiceFactory.updateExternalEntity(externalKeys, page.getRecords());
         }
-        return Result.success(commonService.saveOrUpdate(className, JacksonUtil.nativeRead(body, new TypeReference<Map<String, Object>>() {
-        })));
+        return Result.success(page);
     }
 
-    @GetMapping("/{className}/{primaryKey}")
+    @GetMapping("/list/match")
+    @Operation(summary = "匹配查询")
+    @Openapi
+    public Result<List<ENTITY>> list() throws Exception {
+        List<ENTITY> list = baseService.list(RequestUtil.getQueryWrapper(baseService.getEntityClass()));
+
+        /**
+         * 将外键关联的对象塞入拓展字段中
+         */
+        List<Column> columns = fieldDefineUtil.getColumns(getEntityClass().getName(), false);
+        Set<Column> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
+        if (!externalKeys.isEmpty()) {
+            entityServiceFactory.updateExternalEntity(externalKeys, list);
+        }
+        return Result.success(list);
+    }
+
+    @GetMapping("/{id}")
     @Openapi
     @Operation(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
-    public Result<Map<String, Object>> getByPrimaryKey(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
-        return Result.success(commonService.getByPrimaryKey(className, primaryKey));
+    public Result<ENTITY> getById(@PathVariable("id") ID id) throws Exception {
+        ENTITY entity = baseService.getById(id);
+        List<Column> columns = fieldDefineUtil.getColumns(getEntityClass().getName(), false);
+        Set<Column> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
+        if (!externalKeys.isEmpty()) {
+            entityServiceFactory.updateExternalEntity(externalKeys, List.of(entity));
+        }
+        return Result.success(entity);
     }
 
-    @DeleteMapping("/{className}")
+    @PostMapping("")
+    @Openapi
+    @Operation(summary = "存在更新记录，否则插入一条记录")
+    public Result<ENTITY> saveOrUpdate(@RequestBody ENTITY entity) throws Exception {
+        if (log.isInfoEnabled()) {
+            log.info("saveOrUpdate: {}", JacksonUtil.toJson(entity));
+        }
+        validEntity(entity);
+        if (!baseService.saveOrUpdate(entity)) {
+            throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
+        }
+        return Result.success(entity);
+    }
+
+    @PostMapping("/extra")
+    @Operation(summary = "存在更新记录，否则插入一条记录")
+    @Openapi
+    public Result<ENTITY> saveOrUpdate(@RequestBody String body) throws Exception {
+        ENTITY entity = JacksonUtil.nativeRead(body, baseService.getEntityClass());
+        if (log.isInfoEnabled()) {
+            log.info("saveOrUpdate: {}", body);
+        }
+        validEntity(entity);
+        if (!baseService.saveOrUpdate(entity)) {
+            throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
+        }
+        return Result.success(entity);
+    }
+
+    @PostMapping("/batch")
+    @Operation(summary = "存在更新记录，否则插入记录（批量）")
+    @Openapi
+    public Result<List<ENTITY>> saveOrUpdateBatch(@RequestBody List<ENTITY> entities) throws Exception {
+        if (log.isInfoEnabled()) {
+            log.info("saveOrUpdateBatch: {}", JacksonUtil.toJson(entities));
+        }
+        List<Column> columns = fieldDefineUtil.getColumns(baseService.getEntityClass().getName(), false);
+        for (ENTITY entity : entities) {
+            validEntity(entity, columns);
+        }
+        if (!baseService.saveOrUpdateBatch(entities)) {
+            throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
+        }
+        return Result.success(entities);
+    }
+
+    @PutMapping("")
+    @Openapi
+    @Operation(summary = "根据主键更新记录")
+    public Result<ENTITY> updateById(@RequestBody ENTITY entity) throws Exception {
+        if (log.isInfoEnabled()) {
+            log.info("updateById: {}", JacksonUtil.toJson(entity));
+        }
+        validEntity(entity);
+        if (!baseService.updateById(entity)) {
+            throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
+        }
+        return Result.success(entity);
+    }
+
+    @PutMapping("/batch")
+    @Openapi
+    @Operation(summary = "根据主键批量更新记录")
+    public Result<List<ENTITY>> updateBatchById(@RequestBody List<ENTITY> entities) throws Exception {
+        if (log.isInfoEnabled()) {
+            log.info("updateBatchById: {}", JacksonUtil.toJson(entities));
+        }
+        List<Column> columns = fieldDefineUtil.getColumns(baseService.getEntityClass().getName(), false);
+        for (ENTITY entity : entities) {
+            validEntity(entity, columns);
+        }
+        if (!baseService.updateBatchById(entities)) {
+            throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
+        }
+        return Result.success(entities);
+    }
+
+    @DeleteMapping("/{id}")
     @Openapi
     @Operation(summary = "根据主键删除记录")
-    public Result<Boolean> removeByEntity(@PathVariable("className") String className, @RequestBody String body) throws Exception {
+    public Result<Boolean> removeById(@PathVariable("id") ID id) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("className: {}, removeByEntity: {}", className, body);
+            log.info("removeById: {}", id);
         }
-        return Result.success(commonService.removeByPrimaryKey(className, JacksonUtil.nativeRead(body, new TypeReference<Map<String, Object>>() {
-        })));
+        return Result.success(baseService.removeById(id));
     }
 
-    @DeleteMapping("/{className}/{primaryKey}")
+    @DeleteMapping("/batch")
     @Openapi
-    @Operation(summary = "根据主键删除记录")
-    public Result<Boolean> removeByPrimaryKey(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
+    @Operation(summary = "根据主键批量删除记录")
+    public Result<Boolean> removeByIds(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("className: {}, removeById: {}", className, primaryKey);
+            log.info("removeByIds: {}", JacksonUtil.toJson(entities));
         }
-        return Result.success(commonService.removeByPrimaryKey(className, primaryKey));
+        return Result.success(baseService.removeByIds(entities));
     }
 
-    @DeleteMapping("/{className}/batch")
+    @DeleteMapping("")
     @Openapi
-    @Operation(summary = "批量删除")
-    public Result<Boolean> batchDelete(@PathVariable("className") String className, @RequestBody String body) throws Exception {
+    @Operation(summary = "根据条件批量删除记录（慎重）")
+    public Result<Boolean> removeByWrapper(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("className: {}, batchRemove: {}", className, body);
+            log.info("removeByWrapper: {}", JacksonUtil.toJson(entity));
         }
-        commonService.batchDelete(className, JacksonUtil.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
-        }));
-        return Result.success();
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        String contentType = request.getHeader("content-type");
+        if (StringUtils.isEmpty(contentType)) {
+            return Result.success(baseService.remove(RequestUtil.getQueryWrapper(baseService.getEntityClass())));
+        } else {
+            if (contentType.contains("x-www-form-urlencoded")) {
+                return Result.success(baseService.remove(RequestUtil.getQueryWrapper(baseService.getEntityClass())));
+            } else {
+                // application/json
+                return Result.success(baseService.remove(RequestUtil.getQueryWrapper(baseService.getEntityClass())));
+            }
+        }
     }
 
-    @GetMapping("/{className}/excel/template")
+    @GetMapping("/excel/template")
     @Openapi
     @Operation(summary = "下载Excel导入模板")
-    public void downloadImportTemplate(@PathVariable("className") String className, HttpServletResponse response) throws Exception {
-        List<Column> columns = fieldDefineUtil.getColumns(className, false);
+    public void downloadExcelTemplate(HttpServletResponse response) throws Exception {
+        List<Column> columns = fieldDefineUtil.getColumns(baseService.getEntityClass().getName(), false);
 
         columns = columns.stream().filter(s -> YesNo.YES.equals(s.getIsForm())).toList();
 
@@ -179,7 +283,7 @@ public class OpenapiCommonController {
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding(CharsetUtil.UTF_8);
-        String encodeFileName = I18nUtil.getLanguageValue(entityDefineUtil.getEntityName(className)) + I18nUtil.getMessage("excel.import.template") + ".xlsx";
+        String encodeFileName = I18nUtil.getLanguageValue(entityDefineUtil.getEntityName(baseService.getEntityClass().getName())) + I18nUtil.getMessage("excel.import.template") + ".xlsx";
         response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(encodeFileName, StandardCharsets.UTF_8));
 
         writer.flush(response.getOutputStream());
@@ -187,34 +291,34 @@ public class OpenapiCommonController {
         response.getOutputStream().flush();
     }
 
-    @PostMapping("/{className}/excel/importPreview")
+    @PostMapping("/excel/importPreview")
     @Openapi
     @Operation(summary = "Excel导入预览")
-    public Result<List<Map<String, Object>>> importPreview(@PathVariable("className") String className, @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+    public Result<List<Map<String, Object>>> uploadExcelPreview(@RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
         ExcelReader excelReader = ExcelUtil.getReader(file.getInputStream(), 0);
         int rowCount = excelReader.getRowCount();
         if (rowCount < 3) {
             return Result.success(Collections.emptyList());
         }
 
-        List<Column> columns = fieldDefineUtil.getColumns(className, false);
+        List<Column> columns = fieldDefineUtil.getColumns(baseService.getEntityClass().getName(), false);
         columns = columns.stream().filter(s -> YesNo.YES.equals(s.getIsForm())).toList();
 
         boolean success = true;
-
-        List<Map<String, Object>> list = excelReader.read(1, 2, excelReader.getRowCount() - 1);
+        List<ENTITY> list = excelReader.read(1, 2, baseService.getEntityClass());
         I18nUtil.encodeToI18nFormat(list, columns);
         List<Map<String, Object>> excelRowPreviews = new ArrayList<>();
 
         StringBuilder errMessage = new StringBuilder();
-        for (Map<String, Object> entity : list) {
+        for (ENTITY entity : list) {
             String message = valid(entity, columns);
+            Map<String, Object> row = BeanUtil.beanToMap(entity);
             if (StringUtils.isNotEmpty(message)) {
-                entity.put("validateResult", message);
+                row.put("validateResult", message);
                 errMessage.append(message);
                 success = false;
             }
-            excelRowPreviews.add(entity);
+            excelRowPreviews.add(row);
         }
 
         String err = validBatch(list, excelRowPreviews);
@@ -232,20 +336,48 @@ public class OpenapiCommonController {
         }
     }
 
+    protected void appendErrorMessage(Map<String, Object> row, String msg) {
+        Object error = row.get(Constant.VALID_MSG_KEY);
+        if (error != null) {
+            row.put(Constant.VALID_MSG_KEY, error + msg + ";");
+        } else {
+            row.put(Constant.VALID_MSG_KEY, msg + ";");
+        }
+    }
+
+    protected void validEntity(ENTITY entity) throws Exception {
+        List<Column> columns = fieldDefineUtil.getColumns(baseService.getEntityClass().getName(), false);
+        String msg = valid(entity, columns);
+        if (StringUtils.isNotEmpty(msg)) {
+            throw new BizException(msg);
+        }
+    }
+
+    protected void validEntity(ENTITY entity, List<Column> columns) throws Exception {
+        String msg = valid(entity, columns);
+        if (StringUtils.isNotEmpty(msg)) {
+            throw new BizException(msg);
+        }
+    }
+
     /**
      * 对上传的记录做一些唯一性、重复性校验
      *
      * @param entities
      * @param excelRowPreviews
      */
-    protected String validBatch(List<Map<String, Object>> entities, List<Map<String, Object>> excelRowPreviews) {
+    protected String validBatch(List<ENTITY> entities, List<Map<String, Object>> excelRowPreviews) {
         return null;
     }
 
-    protected String valid(Map<String, Object> entity, List<Column> columns) {
+    protected String valid(ENTITY entity, List<Column> columns) {
+        Set<String> auditFields = ColumnUtil.getAuditFields();
         StringBuilder builder = new StringBuilder();
         for (Column column : columns) {
-            Object value = entity.get(column.getName());
+            if(auditFields.contains(column.getName())) {
+                continue;
+            }
+            Object value = ReflectUtil.getFieldValue(entity, column.getName());
             if (YesNo.YES.equals(column.getIsRequire())) {
                 if (ObjectUtil.isEmpty(value)) {
                     builder.append(I18nUtil.getLanguageValue(column.getDisplayName())).append(":").append(I18nUtil.getMessage("excel.import.fieldMustNotNull")).append(";");
@@ -300,11 +432,11 @@ public class OpenapiCommonController {
                         builder.append(I18nUtil.getLanguageValue(column.getDisplayName())).append(":").append(I18nUtil.getMessage("validator.error.field.min")).append(column.getMin()).append(";");
                     }
                 } else {
-                    long no = Long.parseLong(String.valueOf(value));
-                    if (no > column.getMax()) {
+                    Number no = (Number) value;
+                    if (no.longValue() > column.getMax()) {
                         builder.append(I18nUtil.getLanguageValue(column.getDisplayName())).append(":").append(I18nUtil.getMessage("validator.error.field.max")).append(column.getMax()).append(";");
                     }
-                    if (no < column.getMin()) {
+                    if (no.longValue() < column.getMin()) {
                         builder.append(I18nUtil.getLanguageValue(column.getDisplayName())).append(":").append(I18nUtil.getMessage("validator.error.field.min")).append(column.getMin()).append(";");
                     }
                 }
@@ -313,38 +445,12 @@ public class OpenapiCommonController {
         return builder.toString();
     }
 
-    @PostMapping("/{className}/batch")
-    @Openapi
-    @Operation(summary = "存在更新记录，否则插入记录（批量）")
-    public Result<List<Map<String, Object>>> saveOrUpdateBatch(@PathVariable("className") String className, @RequestBody String body) throws Exception {
-        if (log.isInfoEnabled()) {
-            log.info("saveOrUpdateBatch: {}", body);
-        }
-        List<Map<String, Object>> entities = JacksonUtil.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
-        });
-        List<Column> columns = fieldDefineUtil.getColumns(className, false);
-        for (Map<String, Object> entity : entities) {
-            validEntity(entity, columns);
-        }
-        if (!commonService.saveOrUpdateBatch(className, entities)) {
-            throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
-        }
-        return Result.success(entities);
-    }
 
-
-    protected void validEntity(Map<String, Object> entity, List<Column> columns) throws Exception {
-        String msg = valid(entity, columns);
-        if (StringUtils.isNotEmpty(msg)) {
-            throw new BizException(msg);
-        }
-    }
-
-    @PostMapping("/{className}/excel/export")
+    @PostMapping("/excel/export")
     @Openapi
     @Operation(summary = "Excel数据导出")
-    public void exportExcel(@PathVariable("className") String className, @RequestBody List<String> fieldNames, HttpServletResponse response) throws Exception {
-        List<Column> columns = fieldDefineUtil.getColumns(className, false);
+    public void exportExcel(@RequestBody List<String> fieldNames, HttpServletResponse response) throws Exception {
+        List<Column> columns = fieldDefineUtil.getColumns(baseService.getEntityClass().getName(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columns, Column::getName);
 
         List<String> displayNameRow = Lists.newArrayList();
@@ -362,13 +468,14 @@ public class OpenapiCommonController {
         CellStyle dateStyle = createDateFormatStyle(writer, "yyyy-mm-dd");
         CellStyle dateTimeStyle = createDateFormatStyle(writer, "yyyy-mm-dd HH:mm:ss");
 
-        List<Map<String, Object>> list = commonService.list(className);
+        QueryWrapper<ENTITY> wrapper = RequestUtil.getQueryWrapper(baseService.getEntityClass());
+        List<ENTITY> list = baseService.list(wrapper);
         int curRow = 2;
-        for (Map<String, Object> entity : list) {
+        for (ENTITY entity : list) {
             int col = 0;
             for (String fieldName : fieldNames) {
                 Column column = columnMap.get(fieldName);
-                Object value = entity.get(fieldName);
+                Object value = ReflectUtil.getFieldValue(entity, fieldName);
 
                 if (ColumnType.LOCAL_DATE.equals(column.getType())) {
                     writer.setStyle(dateStyle, col, curRow);
@@ -394,7 +501,7 @@ public class OpenapiCommonController {
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding(CharsetUtil.UTF_8);
-        String encodeFileName = I18nUtil.getLanguageValue(I18nUtil.getLanguageValue(entityDefineUtil.getEntityName(className))) + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".xlsx";
+        String encodeFileName = I18nUtil.getLanguageValue(I18nUtil.getLanguageValue(entityDefineUtil.getEntityName(baseService.getEntityClass().getName()))) + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".xlsx";
         response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(encodeFileName, StandardCharsets.UTF_8));
 
         writer.flush(response.getOutputStream());

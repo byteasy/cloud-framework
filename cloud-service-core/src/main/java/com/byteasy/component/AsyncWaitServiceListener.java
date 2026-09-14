@@ -4,14 +4,10 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.byteasy.Result;
 import com.byteasy.api.IEntityDefineService;
-import com.byteasy.api.IServiceInstanceService;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.dto.EntityDefineDTO;
-import com.byteasy.dto.ServiceInstanceDTO;
-import com.byteasy.enums.Enable;
 import com.byteasy.event.IPlatformReady;
 import com.byteasy.util.ColumnUtil;
-import com.byteasy.util.SpringContextUtil;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +18,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -32,8 +29,6 @@ public class AsyncWaitServiceListener {
 
     @Autowired
     private DiscoveryClient discoveryClient;
-    @Autowired
-    private IServiceInstanceService serviceInstanceService;
     @Autowired
     private IEntityDefineService entityDefineService;
     @Autowired
@@ -68,29 +63,14 @@ public class AsyncWaitServiceListener {
     }
 
     private void callRemoteApi() {
-        registerSelfToPlatform();
-        registerEntityDefine();
-
         Map<String, IPlatformReady> beans = SpringUtil.getBeansOfType(IPlatformReady.class);
-        for (IPlatformReady value : beans.values()) {
-            value.platformReady();
+        List<IPlatformReady> list = beans.values().stream().sorted(Comparator.comparingInt(IPlatformReady::order)).toList();
+        for (IPlatformReady iPlatformReady : list) {
+            iPlatformReady.platformReady();
         }
+        registerEntityDefine();
     }
 
-
-    private void registerSelfToPlatform() {
-        try {
-            ServiceInstanceDTO serviceInstanceDTO = new ServiceInstanceDTO();
-            serviceInstanceDTO.setCode(SpringUtil.getApplicationName());
-            serviceInstanceDTO.setContextPath(SpringContextUtil.getContextPath());
-            serviceInstanceDTO.setStatus(Enable.ENABLE);
-            serviceInstanceDTO.setName(I18nUtil.convertI18nFieldZhValue(SpringUtil.getApplicationName()));
-            Result<ServiceInstanceDTO> result = serviceInstanceService.saveOrUpdate(serviceInstanceDTO);
-            log.info("ServiceInstanceAutoRegister registerSelfToPlatform result: {}", JacksonUtil.toJson(result));
-        } catch (Exception e) {
-            log.error("ServiceInstanceAutoRegister err", e);
-        }
-    }
 
     private void registerEntityDefine() {
         try {

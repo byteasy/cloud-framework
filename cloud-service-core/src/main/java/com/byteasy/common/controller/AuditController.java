@@ -1,4 +1,4 @@
-package com.byteasy.controller;
+package com.byteasy.common.controller;
 
 import cn.hutool.core.util.ReflectUtil;
 import com.baomidou.mybatisplus.extension.service.IService;

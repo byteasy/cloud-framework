@@ -5,7 +5,7 @@ import com.byteasy.Constant;
 import com.byteasy.platform.entity.DictionaryItem;
 import com.byteasy.platform.service.IDictionaryItemService;
 import org.springframework.web.bind.annotation.RestController;
-import com.byteasy.controller.AuditController;
+import com.byteasy.common.controller.AuditController;
 
 /**
  * <p>
