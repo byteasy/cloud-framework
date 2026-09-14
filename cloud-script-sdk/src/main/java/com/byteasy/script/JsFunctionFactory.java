@@ -8,7 +8,7 @@ import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.OkHttpUtil;
-import com.byteasy.common.component.ServiceInstanceUtil;
+import com.byteasy.common.component.ServiceInstanceLoadingCache;
 import com.byteasy.event.IPlatformReady;
 import com.byteasy.exception.BizException;
 import com.byteasy.platform.api.IScriptFunctionService;
@@ -99,7 +99,7 @@ public class JsFunctionFactory implements IPlatformReady {
             scriptFunction.setFunction((args) -> {
                 try {
                     DiscoveryClient discoveryClient = SpringUtil.getBean(DiscoveryClient.class);
-                    ServiceInstanceUtil serviceInstanceUtil = SpringUtil.getBean(ServiceInstanceUtil.class);
+                    ServiceInstanceLoadingCache serviceInstanceLoadingCache = SpringUtil.getBean(ServiceInstanceLoadingCache.class);
 
                     List<ServiceInstance> instances = discoveryClient.getInstances(scriptFunction.getServiceCode());
                     Map<String, String> header = new HashMap<>();
@@ -111,7 +111,7 @@ public class JsFunctionFactory implements IPlatformReady {
                     }
                     ServiceInstance randomService = random(instances);
                     try {
-                        String result = OkHttpUtil.postJson(randomService.getUri().toString() + serviceInstanceUtil.getServiceInstance(scriptFunction.getServiceCode()).getContextPath() + Constant.SAPI + "/scriptFunctionRunner/run/" + scriptFunction.getName(), JacksonUtil.toJson(args, true), header, null);
+                        String result = OkHttpUtil.postJson(randomService.getUri().toString() + serviceInstanceLoadingCache.getServiceInstance(scriptFunction.getServiceCode()).getContextPath() + Constant.SAPI + "/scriptFunctionRunner/run/" + scriptFunction.getName(), JacksonUtil.toJson(args, true), header, null);
                         return JacksonUtil.parseObj(result);
                     } catch (Exception e) {
                         log.error(scriptFunction.getName() + " remote call err", e);

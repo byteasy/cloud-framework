@@ -3,7 +3,7 @@ package com.byteasy.permission.interceptor;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.RequestUtil;
-import com.byteasy.common.component.OpenApiFactory;
+import com.byteasy.common.component.OpenApiLoadingCache;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.util.RequestMappingResolver;
 import com.byteasy.util.SpringContextUtil;
@@ -28,7 +28,7 @@ import java.lang.reflect.Method;
 public class OpenapiLogAspect {
 
     @Autowired
-    private OpenApiFactory openApiFactory;
+    private OpenApiLoadingCache openApiLoadingCache;
 
     @Pointcut("@annotation(com.byteasy.annotations.Openapi) || @within(com.byteasy.annotations.Openapi)")
     public void openapiPointcut() {
@@ -69,9 +69,9 @@ public class OpenapiLogAspect {
      * 智能定位 Openapi 模型定义
      */
     private Openapi findOpenApi(String actualUri, String path, String httpMethod) {
-        if (openApiFactory == null || StringUtils.isEmpty(path)) return null;
+        if (openApiLoadingCache == null || StringUtils.isEmpty(path)) return null;
         try {
-            return openApiFactory.getOpenApi(openApiFactory.buildCompositeKey(actualUri, path, Openapi.HttpMethod.fromValue(httpMethod)));
+            return openApiLoadingCache.load(openApiLoadingCache.buildCompositeKey(actualUri, path, Openapi.HttpMethod.fromValue(httpMethod)));
         } catch (Exception e) {
             log.debug("未找到对应 openapi: path={}, httpMethod={}", path, httpMethod);
             return null;

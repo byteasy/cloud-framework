@@ -36,7 +36,7 @@ public class EventPublishUtil {
 
         if (!SourceType.SINGLETON.equals(event.getSourceType())) {
             DiscoveryClient discoveryClient = SpringUtil.getBean(DiscoveryClient.class);
-            ServiceInstanceUtil serviceInstanceUtil = SpringUtil.getBean(ServiceInstanceUtil.class);
+            ServiceInstanceLoadingCache serviceInstanceLoadingCache = SpringUtil.getBean(ServiceInstanceLoadingCache.class);
 
             EventSource eventSource = event.getSource();
 
@@ -64,14 +64,14 @@ public class EventPublishUtil {
                     if (SourceType.ONE_INSTANCE_PER_SERVICE_GROUP.equals(event.getSourceType())) {
                         ServiceInstance randomService = random(instances);
                         try {
-                            OkHttpUtil.postJson(randomService.getUri().toString() + serviceInstanceUtil.getServiceInstance(serviceId).getContextPath() + Constant.SAPI + "/platformEvents", JacksonUtil.toJson(event, true), header, null);
+                            OkHttpUtil.postJson(randomService.getUri().toString() + serviceInstanceLoadingCache.load(serviceId).getContextPath() + Constant.SAPI + "/platformEvents", JacksonUtil.toJson(event, true), header, null);
                         } catch (Exception e) {
                             log.error("publish event err", e);
                         }
                     } else if (SourceType.ALL.equals(event.getSourceType())) {
                         for (ServiceInstance instance : instances) {
                             try {
-                                OkHttpUtil.postJson(instance.getUri().toString() + serviceInstanceUtil.getServiceInstance(serviceId).getContextPath() + Constant.SAPI + "/platformEvents", JacksonUtil.toJson(event, true), header, null);
+                                OkHttpUtil.postJson(instance.getUri().toString() + serviceInstanceLoadingCache.load(serviceId).getContextPath() + Constant.SAPI + "/platformEvents", JacksonUtil.toJson(event, true), header, null);
                             } catch (Exception e) {
                                 log.error("publish event err", e);
                             }

@@ -2,7 +2,7 @@ package com.byteasy.script.service;
 
 import cn.hutool.core.map.MapUtil;
 import com.byteasy.Result;
-import com.byteasy.common.component.OpenApiFactory;
+import com.byteasy.common.component.OpenApiLoadingCache;
 import com.byteasy.platform.entity.JsScript;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.script.component.JsScriptFactory;
@@ -23,14 +23,14 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
     @Autowired
     private JsScriptFactory jsScriptFactory;
     @Autowired
-    private OpenApiFactory openApiFactory;
+    private OpenApiLoadingCache openApiLoadingCache;
 
     @Override
     @Transactional
     public Result runScript(String apiCode, Map<String, Object> params, Map<String, String> headers, String body) throws ExecutionException {
         log.info("runApiScript, api: {}, params: {}, headers: {}, body: {}", apiCode, params, headers, body);
 
-        Openapi openApi = openApiFactory.getOpenApi(apiCode);
+        Openapi openApi = openApiLoadingCache.load(apiCode);
         if (openApi == null) {
             log.error("openApi is null, apiCode: {}", apiCode);
             return Result.error("openApi is null, apiCode: " + apiCode);

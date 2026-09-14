@@ -5,7 +5,6 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.common.token.TokenUtil;
@@ -20,6 +19,7 @@ import com.byteasy.dto.Column;
 import com.byteasy.dto.FormatMap;
 import com.byteasy.entity.Entity;
 import com.byteasy.enums.RelationType;
+import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.util.ColumnUtil;
 import com.byteasy.util.FieldValueUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -28,40 +28,23 @@ import jakarta.annotation.Resource;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Component
 @Log4j2
-public class EntityServiceFactory implements ApplicationContextAware {
-    private static Map<Class<?>, ServiceImpl> entityServiceMap = new HashMap<Class<?>, ServiceImpl>();
+public class EntityServiceFactory {
 
     @Autowired
     private CacheFactory cacheFactory;
     @Autowired
-    private EntityDefineFactory entityDefineFactory;
+    private EntityDefineLoadingCache entityDefineLoadingCache;
     @Resource
     private DiscoveryClient discoveryClient;
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        Map<String, ServiceImpl> map = applicationContext.getBeansOfType(ServiceImpl.class);
-        for (ServiceImpl value : map.values()) {
-            entityServiceMap.put(value.getEntityClass(), value);
-            log.info("entity class: {}, service: {}", value.getEntityClass().getName(), value.getClass().getName());
-        }
-    }
-
-    public Collection<ServiceImpl> getEntityService() {
-        return entityServiceMap.values();
-    }
 
     public void updateExternalEntity(Set<Column> externalKeys, List entities) {
         if (entities.isEmpty()) {
@@ -70,7 +53,7 @@ public class EntityServiceFactory implements ApplicationContextAware {
         for (Column externalKey : externalKeys) {
             try {
                 String className = externalKey.getExternalClass();
-                EntityDefineDTO entityDefineDTO = entityDefineFactory.getEntityDefine(className);
+                EntityDefine entityDefineDTO = entityDefineLoadingCache.getEntityDefine(className);
                 if (entityDefineDTO == null) {
                     log.error("entityDefineDTO is null, className: {}", className);
                     continue;
