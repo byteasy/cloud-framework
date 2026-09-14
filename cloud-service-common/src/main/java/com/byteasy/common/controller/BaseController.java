@@ -18,8 +18,8 @@ import com.byteasy.annotations.Openapi;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.RequestUtil;
-import com.byteasy.component.EntityDefineUtil;
-import com.byteasy.component.EntityServiceFactory;
+import com.byteasy.common.component.EntityDefineFactory;
+import com.byteasy.common.component.EntityServiceFactory;
 import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.component.I18nUtil;
 import com.byteasy.dto.Column;
@@ -63,7 +63,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Autowired
     protected FieldDefineUtil fieldDefineUtil;
     @Autowired
-    private EntityDefineUtil entityDefineUtil;
+    private EntityDefineFactory entityDefineFactory;
     @Autowired
     private EntityServiceFactory entityServiceFactory;
 
@@ -283,7 +283,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding(CharsetUtil.UTF_8);
-        String encodeFileName = I18nUtil.getLanguageValue(entityDefineUtil.getEntityName(baseService.getEntityClass().getName())) + I18nUtil.getMessage("excel.import.template") + ".xlsx";
+        String encodeFileName = I18nUtil.getLanguageValue(entityDefineFactory.getEntityName(baseService.getEntityClass().getName())) + I18nUtil.getMessage("excel.import.template") + ".xlsx";
         response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(encodeFileName, StandardCharsets.UTF_8));
 
         writer.flush(response.getOutputStream());
@@ -501,7 +501,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding(CharsetUtil.UTF_8);
-        String encodeFileName = I18nUtil.getLanguageValue(I18nUtil.getLanguageValue(entityDefineUtil.getEntityName(baseService.getEntityClass().getName()))) + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".xlsx";
+        String encodeFileName = I18nUtil.getLanguageValue(I18nUtil.getLanguageValue(entityDefineFactory.getEntityName(baseService.getEntityClass().getName()))) + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".xlsx";
         response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(encodeFileName, StandardCharsets.UTF_8));
 
         writer.flush(response.getOutputStream());

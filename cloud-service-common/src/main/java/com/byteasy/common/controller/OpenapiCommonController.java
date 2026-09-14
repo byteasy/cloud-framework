@@ -13,7 +13,7 @@ import com.byteasy.Status;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.JacksonUtil;
-import com.byteasy.component.EntityDefineUtil;
+import com.byteasy.common.component.EntityDefineFactory;
 import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.component.I18nUtil;
 import com.byteasy.dto.Column;
@@ -61,7 +61,7 @@ public class OpenapiCommonController {
     @Autowired
     private FieldDefineUtil fieldDefineUtil;
     @Autowired
-    private EntityDefineUtil entityDefineUtil;
+    private EntityDefineFactory entityDefineFactory;
 
     @GetMapping("/{className}")
     @Openapi
@@ -179,7 +179,7 @@ public class OpenapiCommonController {
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding(CharsetUtil.UTF_8);
-        String encodeFileName = I18nUtil.getLanguageValue(entityDefineUtil.getEntityName(className)) + I18nUtil.getMessage("excel.import.template") + ".xlsx";
+        String encodeFileName = I18nUtil.getLanguageValue(entityDefineFactory.getEntityName(className)) + I18nUtil.getMessage("excel.import.template") + ".xlsx";
         response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(encodeFileName, StandardCharsets.UTF_8));
 
         writer.flush(response.getOutputStream());
@@ -394,7 +394,7 @@ public class OpenapiCommonController {
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding(CharsetUtil.UTF_8);
-        String encodeFileName = I18nUtil.getLanguageValue(I18nUtil.getLanguageValue(entityDefineUtil.getEntityName(className))) + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".xlsx";
+        String encodeFileName = I18nUtil.getLanguageValue(I18nUtil.getLanguageValue(entityDefineFactory.getEntityName(className))) + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".xlsx";
         response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(encodeFileName, StandardCharsets.UTF_8));
 
         writer.flush(response.getOutputStream());
