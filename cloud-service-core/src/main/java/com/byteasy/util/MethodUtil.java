@@ -1,7 +1,7 @@
 package com.byteasy.util;
 
 import cn.hutool.core.util.ReflectUtil;
-import com.byteasy.controller.AbstractController;
+import com.byteasy.common.controller.AbstractController;
 import io.swagger.v3.oas.annotations.Operation;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;

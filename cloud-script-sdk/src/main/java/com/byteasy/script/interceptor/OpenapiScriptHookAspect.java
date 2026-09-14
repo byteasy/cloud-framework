@@ -4,7 +4,7 @@ import com.byteasy.Result;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.RequestUtil;
-import com.byteasy.component.OpenApiFactory;
+import com.byteasy.common.component.OpenApiFactory;
 import com.byteasy.platform.entity.JsScript;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.script.component.JsScriptFactory;

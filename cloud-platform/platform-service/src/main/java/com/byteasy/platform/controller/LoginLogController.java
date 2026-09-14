@@ -1,7 +1,7 @@
 package com.byteasy.platform.controller;
 
 import com.byteasy.Constant;
-import com.byteasy.controller.ImmutablyController;
+import com.byteasy.common.controller.ImmutablyController;
 import com.byteasy.platform.entity.LoginLog;
 import com.byteasy.platform.service.ILoginLogService;
 import org.springframework.web.bind.annotation.RequestMapping;

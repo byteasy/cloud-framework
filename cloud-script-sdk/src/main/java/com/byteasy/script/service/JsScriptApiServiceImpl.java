@@ -2,7 +2,7 @@ package com.byteasy.script.service;
 
 import cn.hutool.core.map.MapUtil;
 import com.byteasy.Result;
-import com.byteasy.component.OpenApiFactory;
+import com.byteasy.common.component.OpenApiFactory;
 import com.byteasy.platform.entity.JsScript;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.script.component.JsScriptFactory;

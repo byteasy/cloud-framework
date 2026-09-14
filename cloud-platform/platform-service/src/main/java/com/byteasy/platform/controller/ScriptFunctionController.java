@@ -3,7 +3,7 @@ package com.byteasy.platform.controller;
 import cn.hutool.core.map.MapUtil;
 import com.byteasy.Constant;
 import com.byteasy.common.util.CastUtil;
-import com.byteasy.service.ICommonService;
+import com.byteasy.common.service.ICommonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

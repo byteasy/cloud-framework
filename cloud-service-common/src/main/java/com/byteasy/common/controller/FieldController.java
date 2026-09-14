@@ -5,7 +5,7 @@ import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.dto.Column;
-import com.byteasy.service.ICommonService;
+import com.byteasy.common.service.ICommonService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;

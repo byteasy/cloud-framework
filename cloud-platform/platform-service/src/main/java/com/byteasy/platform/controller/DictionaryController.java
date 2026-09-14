@@ -3,7 +3,7 @@ package com.byteasy.platform.controller;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
-import com.byteasy.controller.AuditController;
+import com.byteasy.common.controller.AuditController;
 import com.byteasy.platform.entity.Dictionary;
 import com.byteasy.platform.entity.DictionaryItem;
 import com.byteasy.platform.service.IDictionaryService;

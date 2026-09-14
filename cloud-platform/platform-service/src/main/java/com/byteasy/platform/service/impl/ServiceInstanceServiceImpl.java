@@ -1,10 +1,12 @@
 package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.byteasy.common.service.EntityChangeService;
+import com.byteasy.common.token.TokenUtil;
+import com.byteasy.common.token.UserInfo;
 import com.byteasy.platform.entity.ServiceInstance;
 import com.byteasy.platform.mapper.ServiceInstanceMapper;
 import com.byteasy.platform.service.IServiceInstanceService;
-import com.byteasy.service.EntityChangeService;
 import org.springframework.stereotype.Service;
 
 /**
@@ -23,5 +25,23 @@ public class ServiceInstanceServiceImpl extends EntityChangeService<Long, Servic
         LambdaQueryWrapper<ServiceInstance> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ServiceInstance::getCode, code);
         return getOne(queryWrapper, false);
+    }
+
+    @Override
+    public boolean saveOrUpdate(ServiceInstance entity) {
+        UserInfo userInfo = TokenUtil.getUserinfo();
+        if (userInfo.isForwardBy()) {
+            LambdaQueryWrapper<ServiceInstance> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(ServiceInstance::getCode, entity.getCode());
+            ServiceInstance serviceInstance = getOne(queryWrapper, false);
+            if (serviceInstance == null) {
+                return super.saveOrUpdate(entity);
+            } else {
+                entity.setId(serviceInstance.getId());
+                return super.saveOrUpdate(entity);
+            }
+        } else {
+            return super.saveOrUpdate(entity);
+        }
     }
 }

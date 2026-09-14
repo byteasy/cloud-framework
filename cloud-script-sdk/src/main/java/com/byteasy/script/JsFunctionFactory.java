@@ -8,7 +8,7 @@ import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.OkHttpUtil;
-import com.byteasy.component.ServiceInstanceUtil;
+import com.byteasy.common.component.ServiceInstanceUtil;
 import com.byteasy.event.IPlatformReady;
 import com.byteasy.exception.BizException;
 import com.byteasy.platform.api.IScriptFunctionService;
@@ -38,6 +38,7 @@ public class JsFunctionFactory implements IPlatformReady {
 
     @PostConstruct
     public void init() {
+
         Map<String, JsFunction> map = SpringUtil.getBeansOfType(JsFunction.class);
         for (Map.Entry<String, JsFunction> entry : map.entrySet()) {
             log.info("JsFunction name: {}, description: {}", entry.getValue().name(), entry.getValue().description());
@@ -127,6 +128,8 @@ public class JsFunctionFactory implements IPlatformReady {
 
     @Override
     public void platformReady() {
+        log.info("JsFunctionFactory platformReady");
+
         try {
             Collection<ScriptFunctionDTO> scriptFunctions = getLocalFunctions();
             Collection<ScriptFunctionDTO> allFunctions = scriptFunctionService.register(scriptFunctions);

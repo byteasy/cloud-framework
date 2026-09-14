@@ -1,7 +1,7 @@
 package com.byteasy.platform.oauth2.controller;
 
 import com.byteasy.Constant;
-import com.byteasy.controller.AuditController;
+import com.byteasy.common.controller.AuditController;
 import com.byteasy.platform.oauth2.entity.Oauth2RegisteredClient;
 import com.byteasy.platform.oauth2.service.IOauth2RegisteredClientService;
 import org.springframework.web.bind.annotation.RequestMapping;

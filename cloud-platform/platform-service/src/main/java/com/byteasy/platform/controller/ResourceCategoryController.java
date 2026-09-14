@@ -3,7 +3,7 @@ package com.byteasy.platform.controller;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Authentication;
-import com.byteasy.controller.AuditController;
+import com.byteasy.common.controller.AuditController;
 import com.byteasy.enums.YesNo;
 import com.byteasy.platform.entity.ResourceCategory;
 import com.byteasy.platform.entity.ResourceGroup;

@@ -1,4 +1,4 @@
-package com.byteasy.controller;
+package com.byteasy.common.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
