@@ -23,10 +23,12 @@ import com.byteasy.component.EntityServiceFactory;
 import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.component.I18nUtil;
 import com.byteasy.dto.Column;
+import com.byteasy.entity.LogicDeleteEntity;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.RelationType;
 import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;
+import com.byteasy.util.ColumnUtil;
 import com.byteasy.util.XlsxUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -48,6 +50,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -370,8 +373,12 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     protected String valid(ENTITY entity, List<Column> columns) {
+        Set<String> auditFields = ColumnUtil.getAuditFields();
         StringBuilder builder = new StringBuilder();
         for (Column column : columns) {
+            if(auditFields.contains(column.getName())) {
+                continue;
+            }
             Object value = ReflectUtil.getFieldValue(entity, column.getName());
             if (YesNo.YES.equals(column.getIsRequire())) {
                 if (ObjectUtil.isEmpty(value)) {

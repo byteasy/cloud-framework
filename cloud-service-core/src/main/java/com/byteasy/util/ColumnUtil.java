@@ -3,6 +3,7 @@ package com.byteasy.util;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.EnumUtil;
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -13,6 +14,7 @@ import com.byteasy.common.util.GenericTypeUtil;
 import com.byteasy.common.util.NameConvertUtil;
 import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.dto.Column;
+import com.byteasy.entity.LogicDeleteEntity;
 import com.byteasy.enums.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.google.common.collect.Maps;
@@ -392,5 +394,15 @@ public class ColumnUtil {
             }
         }
         return value;
+    }
+
+    public static Set<String> getAuditFields() {
+        Field[] fields = ReflectUtil.getFields(LogicDeleteEntity.class);
+        Set<String> result = Sets.newHashSet();
+        for (Field field : fields) {
+            result.add(field.getName());
+        }
+
+        return result;
     }
 }
