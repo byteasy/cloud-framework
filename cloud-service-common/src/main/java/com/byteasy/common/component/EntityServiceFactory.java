@@ -1,4 +1,4 @@
-package com.byteasy.component;
+package com.byteasy.common.component;
 
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.RandomUtil;
@@ -14,8 +14,9 @@ import com.byteasy.common.token.UserInfoBuilder;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.OkHttpUtil;
+import com.byteasy.component.CacheFactory;
+import com.byteasy.component.ICacheLoader;
 import com.byteasy.dto.Column;
-import com.byteasy.dto.EntityDefineDTO;
 import com.byteasy.dto.FormatMap;
 import com.byteasy.entity.Entity;
 import com.byteasy.enums.RelationType;
@@ -45,7 +46,7 @@ public class EntityServiceFactory implements ApplicationContextAware {
     @Autowired
     private CacheFactory cacheFactory;
     @Autowired
-    private EntityDefineUtil entityDefineUtil;
+    private EntityDefineFactory entityDefineFactory;
     @Resource
     private DiscoveryClient discoveryClient;
 
@@ -69,7 +70,7 @@ public class EntityServiceFactory implements ApplicationContextAware {
         for (Column externalKey : externalKeys) {
             try {
                 String className = externalKey.getExternalClass();
-                EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+                EntityDefineDTO entityDefineDTO = entityDefineFactory.getEntityDefine(className);
                 if (entityDefineDTO == null) {
                     log.error("entityDefineDTO is null, className: {}", className);
                     continue;

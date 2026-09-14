@@ -9,8 +9,8 @@ import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.RequestUtil;
-import com.byteasy.component.EntityDefineUtil;
-import com.byteasy.component.EntityServiceFactory;
+import com.byteasy.common.component.EntityDefineFactory;
+import com.byteasy.common.component.EntityServiceFactory;
 import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.component.I18nUtil;
 import com.byteasy.dto.Column;
@@ -67,7 +67,7 @@ public class CommonServiceImpl implements ICommonService {
     @Autowired
     private FieldDefineUtil fieldDefineUtil;
     @Autowired
-    private EntityDefineUtil entityDefineUtil;
+    private EntityDefineFactory entityDefineFactory;
     @Autowired
     private EntityServiceFactory entityServiceFactory;
     @Autowired
@@ -103,7 +103,7 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> saveOrUpdate(String className, Map<String, Object> entity) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineFactory.getEntityDefine(className);
         List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         Column primaryColumn = getPrimaryColumn(columnDefList);
@@ -128,7 +128,7 @@ public class CommonServiceImpl implements ICommonService {
             return false;
         }
 
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineFactory.getEntityDefine(className);
         List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         Column primaryColumn = getPrimaryColumn(columnDefList);
@@ -182,7 +182,7 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public Map<String, Object> getByPrimaryKey(String className, Object primaryKeyValue) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineFactory.getEntityDefine(className);
         List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         return getByPrimaryKey(entityDefineDTO, primaryKeyValue, columnMap, getPrimaryColumn(columnDefList));
@@ -190,7 +190,7 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public Page<Map<String, Object>> page(String className) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineFactory.getEntityDefine(className);
         List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
 
@@ -227,7 +227,7 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     private List<FormatMap> listInternal(String className, Object queryArgs, boolean limitSqlEnable) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineFactory.getEntityDefine(className);
         List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
 
@@ -277,7 +277,7 @@ public class CommonServiceImpl implements ICommonService {
         if (MapUtils.isEmpty(entity)) {
             return false;
         }
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineFactory.getEntityDefine(className);
         List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Column primaryColumn = getPrimaryColumn(columnDefList);
         return removeByPrimaryKey(className, entity.get(primaryColumn.getName()));
@@ -289,7 +289,7 @@ public class CommonServiceImpl implements ICommonService {
         if (ObjectUtils.isEmpty(primaryKey)) {
             throw new BizException("primary key is null");
         }
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineFactory.getEntityDefine(className);
         List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         Column primaryColumn = getPrimaryColumn(columnDefList);
@@ -347,7 +347,7 @@ public class CommonServiceImpl implements ICommonService {
         if (CollectionUtil.isEmpty(entities)) {
             return false;
         }
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineFactory.getEntityDefine(className);
         List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         Column primaryColumn = getPrimaryColumn(columnDefList);
@@ -402,14 +402,14 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public Collection<Column> getColumns(String className) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineFactory.getEntityDefine(className);
         String schema = databaseMetaService.getCurrentSchema();
         return databaseMetaService.getColumns(className, schema, entityDefineDTO.getTableName());
     }
 
     @Override
     public void syncColumnsToDb(String className) {
-        EntityDefineDTO entityDefineDTO = entityDefineUtil.getEntityDefine(className);
+        EntityDefineDTO entityDefineDTO = entityDefineFactory.getEntityDefine(className);
         List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
         String schema = databaseMetaService.getCurrentSchema();
         databaseMetaService.syncColumnsToDb(columnDefList, schema, entityDefineDTO.getTableName());

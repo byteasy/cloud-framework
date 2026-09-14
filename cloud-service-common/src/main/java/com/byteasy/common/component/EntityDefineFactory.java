@@ -1,31 +1,46 @@
-package com.byteasy.component;
+package com.byteasy.common.component;
 
 import com.byteasy.Constant;
-import com.byteasy.api.IEntityDefineService;
-import com.byteasy.dto.EntityDefineDTO;
+import com.byteasy.Result;
+import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IPlatformEntityChangeHandler;
+import com.byteasy.platform.api.IEntityDefineService;
+import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.util.FieldValueUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Maps;
 import lombok.extern.log4j.Log4j2;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @Component
 @Log4j2
-public class EntityDefineUtil implements IPlatformEntityChangeHandler, ICacheLoader<String, EntityDefineDTO> {
+public class EntityDefineFactory implements IPlatformEntityChangeHandler, ICacheLoader<String, EntityDefine> {
+
     @Autowired
     private IEntityDefineService entityDefineService;
 
-    private LoadingCache<String, EntityDefineDTO> entityDefineCacheLoader = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
+    private LoadingCache<String, EntityDefine> entityDefineCacheLoader = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
         @Override
-        public EntityDefineDTO load(String key) {
-            return entityDefineService.getEntityDefine(key);
+        public @Nullable EntityDefine load(String key) {
+            Map<String, Object> params = Maps.newHashMapWithExpectedSize(2);
+            params.put("code", key);
+            params.put("codeQueryType", "eq");
+            Result<List<EntityDefine>> list = entityDefineService.list(params);
+            List<EntityDefine> entityDefines = list.getIfPresent();
+            if (entityDefines != null && !entityDefines.isEmpty()) {
+                return entityDefines.getFirst();
+            }
+            return null;
         }
     });
 
@@ -47,7 +62,7 @@ public class EntityDefineUtil implements IPlatformEntityChangeHandler, ICacheLoa
     }
 
     public String getEntityName(String className) {
-        EntityDefineDTO entityDefine = null;
+        EntityDefine entityDefine = null;
         try {
             entityDefine = entityDefineCacheLoader.get(className);
         } catch (ExecutionException e) {
@@ -59,8 +74,8 @@ public class EntityDefineUtil implements IPlatformEntityChangeHandler, ICacheLoa
         return null;
     }
 
-    public EntityDefineDTO getEntityDefine(String className) {
-        EntityDefineDTO entityDefine = null;
+    public EntityDefine getEntityDefine(String className) {
+        EntityDefine entityDefine = null;
         try {
             entityDefine = entityDefineCacheLoader.get(className);
         } catch (ExecutionException e) {
@@ -70,7 +85,7 @@ public class EntityDefineUtil implements IPlatformEntityChangeHandler, ICacheLoa
     }
 
     @Override
-    public EntityDefineDTO load(String key) {
+    public EntityDefine load(String key) {
         return getEntityDefine(this.type());
     }
 }
