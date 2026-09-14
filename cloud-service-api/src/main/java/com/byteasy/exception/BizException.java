@@ -11,11 +11,12 @@ public class BizException extends RuntimeException {
     }
 
     public BizException(String i18nKey) {
+        super(i18nKey);
         this.i18nKey = i18nKey;
     }
 
     public BizException(String i18nKey, Throwable cause) {
-        super(cause);
+        super(i18nKey, cause);
         this.i18nKey = i18nKey;
     }
 
