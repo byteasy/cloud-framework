@@ -22,7 +22,7 @@ cd ../cloud-platform/platform-api
 call mvn clean install
 rem call mvn source:jar install
 
-cd ../../cloud-locode-sdk
+cd ../../cloud-service-common
 call mvn clean install
 rem call mvn source:jar install
 

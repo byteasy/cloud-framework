@@ -50,10 +50,6 @@ public class Openapi extends AuditEntity<Long> {
     @TableField("remark")
     private String remark;
 
-    @FieldMeta(name = "资源编号", showOrder = 107)
-    @TableField("resource_id")
-    private Long resourceId;
-
     @FieldMeta(name = "接口类型", showOrder = 108)
     @TableField("type")
     private Type type;
@@ -79,7 +75,7 @@ public class Openapi extends AuditEntity<Long> {
     private Long postScriptId;
 
     public enum PermissionType implements IBaseEnum<Integer> {
-        PUBLIC(0, "开放访问"), LOGIN(1, "登录用户即可访问"), AUTH(2, "授权后才可访问");
+        PUBLIC(0, "开放访问"), LOGIN(1, "登录用户访问"), AUTH(2, "授权后访问");
 
         public final int value;
         public final String desc;

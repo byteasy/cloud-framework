@@ -48,6 +48,6 @@ public class UserInfo {
     private String realm;
 
     @Schema(description = "true: 用户发起的请求 false: 微服务通过上下文传递")
-    private boolean isStartedByUser = true;
+    private boolean forwardBy = false;
 
 }

@@ -224,6 +224,11 @@ public class RequestUtil {
         return request.getHeader(name);
     }
 
+    public static HttpServletRequest getHttpServletRequest() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attributes != null ? attributes.getRequest() : null;
+    }
+
     @Setter
     @Getter
     private static class FieldType {
