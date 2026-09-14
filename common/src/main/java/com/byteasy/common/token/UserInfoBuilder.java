@@ -12,7 +12,7 @@ public final class UserInfoBuilder {
         userInfo.setGivenName(name.substring(1));
         userInfo.setUsername(account);
         userInfo.setUserId(account);
-        userInfo.setStartedByUser(false);
+        userInfo.setForwardBy(true);
         return Base64.encode(JacksonUtil.toJson(userInfo));
     }
 }

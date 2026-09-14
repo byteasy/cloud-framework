@@ -1,12 +1,22 @@
 package com.byteasy.script.interceptor;
 
+import cn.hutool.core.util.ReflectUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.Result;
+import com.byteasy.common.controller.OpenapiCommonController;
+import com.byteasy.common.token.TokenUtil;
+import com.byteasy.common.token.UserInfo;
+import com.byteasy.common.util.RequestUtil;
+import com.byteasy.component.I18nUtil;
 import com.byteasy.component.OpenApiFactory;
+import com.byteasy.controller.AbstractController;
 import com.byteasy.platform.entity.JsScript;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.script.component.JsScriptFactory;
 import com.byteasy.script.util.JsScriptExecutor;
+import com.byteasy.util.EntityCodeUtil;
 import com.byteasy.util.RequestMappingResolver;
+import com.byteasy.util.SpringContextUtil;
 import com.google.common.collect.Maps;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
@@ -19,8 +29,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.lang.reflect.Method;
 import java.util.Enumeration;
@@ -51,38 +59,64 @@ public class OpenapiScriptHookAspect {
         // 使用编程式事务包裹整个调用链
         return transactionTemplate.execute(status -> {
             try {
-                HttpServletRequest request = getHttpServletRequest();
-
                 MethodSignature signature = (MethodSignature) joinPoint.getSignature();
                 Method method = signature.getMethod();
-                String methodName = method.getName();
+                com.byteasy.annotations.Openapi annotation = method.getAnnotation(com.byteasy.annotations.Openapi.class);
+                HttpServletRequest request = RequestUtil.getHttpServletRequest();
+                UserInfo userInfo = TokenUtil.getUserinfo();
+
+                if (userInfo == null) {
+                    return Result.error("缺少认证信息");
+                }
+                // 仅拦截用户发起的请求，避免递归调用
+                if (userInfo.isForwardBy()) {
+                    return joinPoint.proceed();
+                }
+
+                String methodName = request.getMethod().toUpperCase();
                 Class<?> targetClass = joinPoint.getTarget().getClass();
-                String fullUri = RequestMappingResolver.getFullMethodUri(targetClass, method);
+                String fullUri = SpringContextUtil.getContextPath() + RequestMappingResolver.getFullMethodUri(targetClass, method);
 
                 String actualUri = request.getRequestURI();
 
                 Object[] args = joinPoint.getArgs();
-                Openapi openApi = findOpenApi(fullUri, methodName);
+                Openapi openApi = findOpenApi(actualUri, fullUri, methodName);
                 if (openApi == null) {
-                    return Result.error("Openapi:" + methodName + " " + fullUri + " not found");
-                } else {
-                    Map<String, Object> scriptContext = buildScriptContext(openApi.getClassName(), signature, args, request);
-
-                    // 1. 前置脚本
-                    if (openApi != null) {
-                        executePreScript(openApi, scriptContext);
+                    Openapi openapi = new Openapi();
+                    openapi.setCode(EntityCodeUtil.generateCode());
+                    openapi.setServiceCode(SpringUtil.getApplicationName());
+                    openapi.setName(I18nUtil.convertI18nFieldZhValue(annotation.title()));
+                    openapi.setHttpMethod(Openapi.HttpMethod.fromValue(methodName));
+                    openapi.setUri(fullUri);
+                    openapi.setType(Openapi.Type.DEVELOP);
+                    openapi.setPermissionType(Openapi.PermissionType.PUBLIC);
+                    openapi.setLoggable(false);
+                    if (AbstractController.class.isAssignableFrom(targetClass)) {
+                        Method getEntityClassMethod = ReflectUtil.getMethod(targetClass, "getEntityClass");
+                        Class<?> entityClass = ReflectUtil.invoke(joinPoint.getTarget(), getEntityClassMethod);
+                        openapi.setClassName(entityClass.getName());
+                        openApiFactory.register(openapi);
+                    } else if (OpenapiCommonController.class.isAssignableFrom(targetClass)) {
+                        openapi.setClassName(extractClassName(signature, args));
+                        openApiFactory.register(openapi);
+                    } else {
+                        log.error("Openapi not found, src: {}, uri: {}, method: {}, class: {} ", fullUri, actualUri, methodName, targetClass.getName());
                     }
-
-                    // 2. Controller & Service
-                    Object result = joinPoint.proceed();
-
-                    // 3. 后置脚本
+                    return joinPoint.proceed();
+                } else {
                     if (openApi != null) {
+                        Map<String, Object> scriptContext = buildScriptContext(openApi.getClassName(), signature, args, request);
+                        executePreScript(openApi, scriptContext);
+                        // 2. Controller & Service
+                        Object result = joinPoint.proceed();
                         scriptContext.put("result", result instanceof Result ? ((Result<?>) result).getData() : result);
                         executePostScript(openApi, scriptContext);
+                        return result;
+                    } else {
+                        return joinPoint.proceed();
                     }
 
-                    return result;
+
                 }
             } catch (Throwable ex) {
                 // 标记事务回滚
@@ -126,10 +160,10 @@ public class OpenapiScriptHookAspect {
     /**
      * 智能定位 Openapi 模型定义
      */
-    private Openapi findOpenApi(String path, String httpMethod) {
+    private Openapi findOpenApi(String actualUri, String path, String httpMethod) {
         if (openApiFactory == null || StringUtils.isEmpty(path)) return null;
         try {
-            return openApiFactory.getOpenApi(openApiFactory.buildCompositeKey(path, Openapi.HttpMethod.fromValue(httpMethod)));
+            return openApiFactory.getOpenApi(openApiFactory.buildCompositeKey(actualUri, path, Openapi.HttpMethod.fromValue(httpMethod)));
         } catch (Exception e) {
             log.debug("未找到对应 openapi: path={}, httpMethod={}", path, httpMethod);
             return null;
@@ -167,8 +201,16 @@ public class OpenapiScriptHookAspect {
         return headers;
     }
 
-    private HttpServletRequest getHttpServletRequest() {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        return attributes != null ? attributes.getRequest() : null;
+    /**
+     * 自动从方法形参中提取 className
+     */
+    private String extractClassName(MethodSignature signature, Object[] args) {
+        String[] paramNames = signature.getParameterNames();
+        for (int i = 0; i < paramNames.length; i++) {
+            if ("className".equals(paramNames[i]) && args[i] instanceof String) {
+                return (String) args[i];
+            }
+        }
+        return null;
     }
 }

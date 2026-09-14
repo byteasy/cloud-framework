@@ -18,6 +18,7 @@ public class FeignHeaderInterceptor implements RequestInterceptor {
     public void apply(RequestTemplate template) {
         UserInfo token = TokenUtil.getUserinfo();
         if (token != null) {
+            token.setForwardBy(true);
             template.header(Constant.USER_INFO, Base64.encode(JacksonUtil.toJson(token)));
         } else {
             template.header(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
