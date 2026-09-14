@@ -12,7 +12,7 @@ import java.util.List;
 public abstract class ImmutablyController<ID extends java.io.Serializable, SERVICE extends IService<ENTITY>, ENTITY extends ImmutablyEntity<ID>> extends BaseController<SERVICE, ENTITY, ID> {
 
     @Override
-    public Result<? extends ENTITY> saveOrUpdate(ENTITY entity) throws Exception {
+    public Result<ENTITY> saveOrUpdate(ENTITY entity) throws Exception {
         throw new BizException(i18nForbiddenOp);
     }
 
@@ -22,7 +22,7 @@ public abstract class ImmutablyController<ID extends java.io.Serializable, SERVI
     }
 
     @Override
-    public Result<? extends ENTITY> updateById(ENTITY entity) throws Exception {
+    public Result<ENTITY> updateById(ENTITY entity) throws Exception {
         throw new BizException(i18nForbiddenOp);
     }
 

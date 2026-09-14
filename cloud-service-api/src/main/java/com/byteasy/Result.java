@@ -1,5 +1,6 @@
 package com.byteasy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -67,5 +68,13 @@ public class Result<T> {
 
     public boolean isFailed() {
         return Status.SUCCESS.getStatus() != status;
+    }
+
+    @JsonIgnore
+    public <T> T getIfPresent() {
+        if (isSuccess()) {
+            return (T) data;
+        }
+        return null;
     }
 }

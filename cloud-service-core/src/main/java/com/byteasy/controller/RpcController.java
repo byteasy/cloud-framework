@@ -28,7 +28,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     @GetMapping("")
     @Openapi
     @Operation(summary = "分页查询")
-    public Page<? extends ENTITY> page() throws Exception {
+    public Page<ENTITY> page() throws Exception {
         return baseService.page(RequestUtil.getPage(), RequestUtil.getQueryWrapper(baseService.getEntityClass()));
     }
 
@@ -36,16 +36,16 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     @Openapi
     @Operation(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
-    public <T extends ENTITY> T getById(@PathVariable("id") ID id) throws Exception {
-        return (T) baseService.getById(id);
+    public ENTITY getById(@PathVariable("id") ID id) throws Exception {
+        return baseService.getById(id);
     }
 
     @PostMapping("/ids")
     @Openapi
     @Operation(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
-    public <T extends ENTITY> List<T> listByIds(@RequestBody List<ID> ids) throws Exception {
-        return (List<T>) baseService.listByIds(ids);
+    public List<ENTITY> listByIds(@RequestBody List<ID> ids) throws Exception {
+        return baseService.listByIds(ids);
     }
 
     @DeleteMapping("/ids")
@@ -62,7 +62,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     @PostMapping("")
     @Openapi
     @Operation(summary = "存在更新记录，否则插入一条记录")
-    public <T extends ENTITY> T saveOrUpdate(@RequestBody T entity) throws Exception {
+    public ENTITY saveOrUpdate(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdate: {}", JacksonUtil.toJson(entity));
         }
@@ -88,7 +88,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     @PutMapping("")
     @Openapi
     @Operation(summary = "根据主键更新记录")
-    public <T extends ENTITY> T updateById(@RequestBody T entity) throws Exception {
+    public ENTITY updateById(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("updateById: {}", JacksonUtil.toJson(entity));
         }

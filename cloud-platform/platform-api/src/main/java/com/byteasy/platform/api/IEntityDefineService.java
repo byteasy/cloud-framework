@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "platform-service",
+@FeignClient(name = Constant.SERVICE_NAME,
         contextId = "IEntityDefineService",
         path = Constant.SAPI + "/entityDefines",
         fallback = IEntityDefineServiceFallback.class)

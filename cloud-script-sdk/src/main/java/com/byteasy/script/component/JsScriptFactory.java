@@ -1,12 +1,12 @@
 package com.byteasy.script.component;
 
 import com.byteasy.Constant;
-import com.byteasy.Result;
-import com.byteasy.api.IPlatformCommonService;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
 import com.byteasy.event.IPlatformEntityChangeHandler;
+import com.byteasy.platform.api.IJsScriptService;
+import com.byteasy.platform.entity.JsScript;
 import com.byteasy.util.FieldValueUtil;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -18,37 +18,31 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 @Component
 @Log4j2
-public class JsScriptFactory implements IPlatformEntityChangeHandler, ICacheLoader<Long, Map<String, Object>> {
+public class JsScriptFactory implements IPlatformEntityChangeHandler, ICacheLoader<Long, JsScript> {
 
     @Autowired
-    private IPlatformCommonService platformCommonService;
+    private IJsScriptService jsScriptService;
 
     private static Cache<String, Source> SCRIPT_CACHE = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(12, TimeUnit.HOURS).build();
 
-    private LoadingCache<Long, Map<String, Object>> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(24)).maximumSize(10000).build(new CacheLoader<>() {
+    private LoadingCache<Long, JsScript> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(24)).maximumSize(10000).build(new CacheLoader<>() {
         @Override
-        public Map<String, Object> load(Long scriptId) {
-            Result<Map<String, Object>> result = platformCommonService.getByPrimaryKey(Constant.CLS_JS_SCRIPT, scriptId);
-            if (result.isSuccess()) {
-                return result.getData();
-            } else {
-                return null;
-            }
+        public JsScript load(Long scriptId) {
+            return jsScriptService.getById(scriptId).getIfPresent();
         }
     });
 
-    public Map<String, Object> getScript(Long scriptId) throws ExecutionException {
+    public JsScript getScript(Long scriptId) throws ExecutionException {
         return cache.get(scriptId);
     }
 
     @Override
-    public Map<String, Object> load(Long key) throws ExecutionException {
+    public JsScript load(Long key) throws ExecutionException {
         return getScript(key);
     }
 

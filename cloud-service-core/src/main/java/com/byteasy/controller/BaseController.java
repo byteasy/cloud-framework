@@ -69,8 +69,8 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @GetMapping("")
     @Operation(summary = "分页查询")
     @Openapi
-    public Result<Page<? extends ENTITY>> page() throws Exception {
-        Page<? extends ENTITY> page = baseService.page(RequestUtil.getPage(), RequestUtil.getQueryWrapper(baseService.getEntityClass()));
+    public Result<Page<ENTITY>> page() throws Exception {
+        Page<ENTITY> page = baseService.page(RequestUtil.getPage(), RequestUtil.getQueryWrapper(baseService.getEntityClass()));
 
         /**
          * 将外键关联的对象塞入拓展字段中
@@ -86,8 +86,8 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @GetMapping("/list/match")
     @Operation(summary = "匹配查询")
     @Openapi
-    public Result<List<? extends ENTITY>> list() throws Exception {
-        List<? extends ENTITY> list = baseService.list(RequestUtil.getQueryWrapper(baseService.getEntityClass()));
+    public Result<List<ENTITY>> list() throws Exception {
+        List<ENTITY> list = baseService.list(RequestUtil.getQueryWrapper(baseService.getEntityClass()));
 
         /**
          * 将外键关联的对象塞入拓展字段中
@@ -104,7 +104,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Openapi
     @Operation(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
-    public Result<? extends ENTITY> getById(@PathVariable("id") ID id) throws Exception {
+    public Result<ENTITY> getById(@PathVariable("id") ID id) throws Exception {
         ENTITY entity = baseService.getById(id);
         List<Column> columns = fieldDefineUtil.getColumns(getEntityClass().getName(), false);
         Set<Column> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
@@ -117,7 +117,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @PostMapping("")
     @Openapi
     @Operation(summary = "存在更新记录，否则插入一条记录")
-    public Result<? extends ENTITY> saveOrUpdate(@RequestBody ENTITY entity) throws Exception {
+    public Result<ENTITY> saveOrUpdate(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdate: {}", JacksonUtil.toJson(entity));
         }
@@ -131,7 +131,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @PostMapping("/extra")
     @Operation(summary = "存在更新记录，否则插入一条记录")
     @Openapi
-    public Result<? extends ENTITY> saveOrUpdate(@RequestBody String body) throws Exception {
+    public Result<ENTITY> saveOrUpdate(@RequestBody String body) throws Exception {
         ENTITY entity = JacksonUtil.nativeRead(body, baseService.getEntityClass());
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdate: {}", body);
@@ -163,7 +163,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @PutMapping("")
     @Openapi
     @Operation(summary = "根据主键更新记录")
-    public Result<? extends ENTITY> updateById(@RequestBody ENTITY entity) throws Exception {
+    public Result<ENTITY> updateById(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("updateById: {}", JacksonUtil.toJson(entity));
         }

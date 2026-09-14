@@ -4,14 +4,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.byteasy.Constant;
 import com.byteasy.Result;
-import com.byteasy.annotations.Authentication;
+import com.byteasy.annotations.Openapi;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.controller.AuditController;
 import com.byteasy.platform.entity.Resource;
 import com.byteasy.platform.service.IResourceService;
 import com.byteasy.platform.service.IUserRoleService;
 import com.byteasy.platform.vo.LeftMenuVO;
-import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,7 +36,7 @@ public class ResourceController extends AuditController<Long, IResourceService, 
     private IUserRoleService userRoleService;
 
     @Override
-    public Result<Page<? extends Resource>> page() throws Exception {
+    public Result page() throws Exception {
         Long groupId = RequestUtil.getParameter("groupId", Long.class);
         List<LeftMenuVO> leftMenuVOS = baseService.selectByGroupId(groupId);
         Page<LeftMenuVO> page = new PageDTO<>();
@@ -45,10 +44,8 @@ public class ResourceController extends AuditController<Long, IResourceService, 
         return Result.success(page);
     }
 
-    // TODO 优化至脚本接口中
     @GetMapping("/leftMenu")
-    @Operation(summary = "查询登录用户领域内的菜单")
-    @Authentication
+    @Openapi(title = "查询登录用户领域内的菜单")
     public Result<Collection<LeftMenuVO>> selectByRouterPath(@RequestParam("fullPath") String fullPath) {
         return Result.success(userRoleService.selectByRouterPathAndLoginUser(fullPath));
     }

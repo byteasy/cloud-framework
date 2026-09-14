@@ -13,15 +13,10 @@
     <version>1.0.0</version>
 
     <dependencies>
-        <dependency>
-            <groupId>com.byteasy</groupId>
-            <artifactId>platform-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>com.byteasy</groupId>
-            <artifactId>cloud-service-core</artifactId>
+            <artifactId>cloud-service-common</artifactId>
             <version>${project.version}</version>
         </dependency>
 

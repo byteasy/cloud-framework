@@ -2,7 +2,7 @@ package com.byteasy.platform.controller;
 
 import com.byteasy.Constant;
 import com.byteasy.Result;
-import com.byteasy.annotations.Authentication;
+import com.byteasy.annotations.Openapi;
 import com.byteasy.controller.AuditController;
 import com.byteasy.platform.entity.Dictionary;
 import com.byteasy.platform.entity.DictionaryItem;
@@ -28,21 +28,21 @@ public class DictionaryController extends AuditController<Long, IDictionaryServi
 
     @GetMapping("/codes/{code}")
     @Operation(summary = "查询字典定义")
-    @Authentication
+    @Openapi
     public Result<DictionaryVO> selectByCode(@PathVariable("code") String code) {
         return Result.success(baseService.selectByCode(code));
     }
 
     @GetMapping("/rpc/codes/{code}")
     @Operation(summary = "查询字典定义")
-    @Authentication
+    @Openapi
     public DictionaryVO selectByCodeForRpc(@PathVariable("code") String code) {
         return baseService.selectByCode(code);
     }
 
     @GetMapping("/rpc/codes/{code}/items/{itemCode}")
     @Operation(summary = "查询字典项定义")
-    @Authentication
+    @Openapi
     public DictionaryItem selectByCodeForRpc(@PathVariable("code") String code, @PathVariable("itemCode") String itemCode) {
         return baseService.selectByCodeAndItemCode(code, itemCode);
     }

@@ -163,8 +163,14 @@ public class RequestUtil {
             } else if (queryType.equalsIgnoreCase("null")) { // 空
                 wrapper.isNull(columnName);
             } else if (queryType.equalsIgnoreCase("like")) { // like查找
-                if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.like(columnName, FieldValueUtil.valueOf(value[0], fieldType.getType()));
+                if (value != null && value.length > 1) {
+                    for (String val : value) {
+                        wrapper.and(s -> s.like(columnName, FieldValueUtil.valueOf(val, fieldType.getType())));
+                    }
+                } else {
+                    if (StringUtils.isNotEmpty(value[0])) {
+                        wrapper.like(columnName, FieldValueUtil.valueOf(value[0], fieldType.getType()));
+                    }
                 }
             } else if (queryType.equalsIgnoreCase("notLike")) { // like反向查找
                 if (StringUtils.isNotEmpty(value[0])) {

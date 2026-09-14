@@ -18,7 +18,7 @@ public abstract class AbstractController<SERVICE extends IService<ENTITY>, ENTIT
         return baseService;
     }
 
-    public Class<?> getEntityClass() {
+    public Class<ENTITY> getEntityClass() {
         return baseService.getEntityClass();
     }
 }
