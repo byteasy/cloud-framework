@@ -14,4 +14,6 @@ import com.byteasy.platform.entity.Openapi;
 public interface IOpenapiService extends IService<Openapi> {
 
     Openapi getByUriAndMethod(String actualUri, String uri, Openapi.HttpMethod method);
+
+    Openapi getByCode(String code);
 }
