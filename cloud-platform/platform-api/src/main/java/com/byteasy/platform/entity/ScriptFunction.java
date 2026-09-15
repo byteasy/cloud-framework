@@ -3,10 +3,9 @@ package com.byteasy.platform.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.byteasy.annotations.FieldMeta;
+import com.byteasy.entity.AuditEntity;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.io.Serializable;
 
 /**
  * <p>
@@ -20,7 +19,7 @@ import java.io.Serializable;
 @Setter
 @TableName("platform_script_function")
 @FieldMeta(name = "ScriptFunction", description = "脚本函数定义")
-public class ScriptFunction implements Serializable {
+public class ScriptFunction extends AuditEntity<Long> {
 
     @FieldMeta(name = "服务编码", showOrder = 100)
     @TableField("service_code")

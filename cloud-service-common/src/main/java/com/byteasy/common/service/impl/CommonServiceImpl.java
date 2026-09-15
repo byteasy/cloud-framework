@@ -11,7 +11,7 @@ import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.common.component.EntityDefineLoadingCache;
 import com.byteasy.common.component.EntityServiceFactory;
-import com.byteasy.component.FieldDefineUtil;
+import com.byteasy.common.component.FieldDefineLoadingCache;
 import com.byteasy.component.I18nUtil;
 import com.byteasy.dto.Column;
 import com.byteasy.dto.FormatMap;
@@ -23,8 +23,8 @@ import com.byteasy.event.EntityChangeSource;
 import com.byteasy.exception.BizException;
 import com.byteasy.common.service.IDatabaseMetaService;
 import com.byteasy.platform.entity.EntityDefine;
-import com.byteasy.util.ColumnUtil;
-import com.byteasy.util.SqlUtil;
+import com.byteasy.common.util.ColumnUtil;
+import com.byteasy.common.util.SqlUtil;
 import com.google.common.collect.Lists;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
@@ -53,8 +53,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.byteasy.util.ColumnUtil.convertToDbValue;
-import static com.byteasy.util.ColumnUtil.convertToEntityValue;
+import static com.byteasy.common.util.ColumnUtil.convertToDbValue;
+import static com.byteasy.common.util.ColumnUtil.convertToEntityValue;
 
 @Service
 @Log4j2
@@ -65,7 +65,7 @@ public class CommonServiceImpl implements ICommonService {
     @Autowired
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     @Autowired
-    private FieldDefineUtil fieldDefineUtil;
+    private FieldDefineLoadingCache fieldDefineLoadingCache;
     @Autowired
     private EntityDefineLoadingCache entityDefineLoadingCache;
     @Autowired
@@ -104,7 +104,7 @@ public class CommonServiceImpl implements ICommonService {
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> saveOrUpdate(String className, Map<String, Object> entity) {
         EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
+        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         Column primaryColumn = getPrimaryColumn(columnDefList);
 
@@ -129,7 +129,7 @@ public class CommonServiceImpl implements ICommonService {
         }
 
         EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
+        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         Column primaryColumn = getPrimaryColumn(columnDefList);
 
@@ -183,7 +183,7 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     public Map<String, Object> getByPrimaryKey(String className, Object primaryKeyValue) {
         EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
+        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         return getByPrimaryKey(entityDefine, primaryKeyValue, columnMap, getPrimaryColumn(columnDefList));
     }
@@ -191,7 +191,7 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     public Page<Map<String, Object>> page(String className) {
         EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
+        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
 
         HttpServletRequest request = getHttpServletRequest();
@@ -228,7 +228,7 @@ public class CommonServiceImpl implements ICommonService {
 
     private List<FormatMap> listInternal(String className, Object queryArgs, boolean limitSqlEnable) {
         EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
+        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
 
         Pair<String, List<Object>> whereSql;
@@ -278,7 +278,7 @@ public class CommonServiceImpl implements ICommonService {
             return false;
         }
         EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
+        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
         Column primaryColumn = getPrimaryColumn(columnDefList);
         return removeByPrimaryKey(className, entity.get(primaryColumn.getName()));
     }
@@ -290,7 +290,7 @@ public class CommonServiceImpl implements ICommonService {
             throw new BizException("primary key is null");
         }
         EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
+        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         Column primaryColumn = getPrimaryColumn(columnDefList);
 
@@ -348,7 +348,7 @@ public class CommonServiceImpl implements ICommonService {
             return false;
         }
         EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
+        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         Column primaryColumn = getPrimaryColumn(columnDefList);
 
@@ -410,7 +410,7 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     public void syncColumnsToDb(String className) {
         EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
+        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
         String schema = databaseMetaService.getCurrentSchema();
         databaseMetaService.syncColumnsToDb(columnDefList, schema, entityDefine.getTableName());
     }

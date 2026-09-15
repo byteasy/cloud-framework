@@ -3,7 +3,7 @@ package com.byteasy.common.controller;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
-import com.byteasy.component.FieldDefineUtil;
+import com.byteasy.common.component.FieldDefineLoadingCache;
 import com.byteasy.dto.Column;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -23,14 +23,14 @@ import java.util.Map;
 @Log4j2
 public class EnumController {
     @Autowired
-    private FieldDefineUtil fieldDefineUtil;
+    private FieldDefineLoadingCache fieldDefineLoadingCache;
 
     @GetMapping("/{enumClassName}")
     @Operation(summary = "查询枚举对象的定义")
     @Openapi
     public Result<List<Map<String, String>>> getEnumByClassName(@PathVariable("enumClassName") String enumClassName) {
         try {
-            List<Column> columns = fieldDefineUtil.getColumns(enumClassName, false);
+            List<Column> columns = fieldDefineLoadingCache.getColumns(enumClassName, false);
             List<Map<String, String>> result = Lists.newArrayListWithCapacity(columns.size());
 
             for (Column column : columns) {

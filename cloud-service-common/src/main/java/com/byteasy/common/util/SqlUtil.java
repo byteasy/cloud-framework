@@ -1,7 +1,6 @@
-package com.byteasy.util;
+package com.byteasy.common.util;
 
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
-import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.dto.Column;
 import com.byteasy.entity.LogicDeleteEntity;
 import com.byteasy.enums.ColumnType;
@@ -14,7 +13,7 @@ import org.apache.commons.math3.util.Pair;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.byteasy.util.ColumnUtil.convertToDbValue;
+import static com.byteasy.common.util.ColumnUtil.convertToDbValue;
 
 public class SqlUtil {
     private static final Set<String> auditEntityPropSet = ColumnUtil.getFieldNames(LogicDeleteEntity.class);

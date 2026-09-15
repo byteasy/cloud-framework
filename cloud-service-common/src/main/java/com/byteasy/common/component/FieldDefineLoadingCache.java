@@ -1,12 +1,13 @@
-package com.byteasy.component;
+package com.byteasy.common.component;
 
 import cn.hutool.core.util.ArrayUtil;
 import com.byteasy.Constant;
 import com.byteasy.api.IFieldDefineService;
+import com.byteasy.component.ICacheLoader;
 import com.byteasy.dto.Column;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IPlatformEntityChangeHandler;
-import com.byteasy.util.ColumnUtil;
+import com.byteasy.common.util.ColumnUtil;
 import com.byteasy.util.FieldValueUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -21,7 +22,7 @@ import java.util.List;
 
 @Component
 @Log4j2
-public class FieldDefineUtil implements IPlatformEntityChangeHandler, ICacheLoader<String, List<Column>> {
+public class FieldDefineLoadingCache implements IPlatformEntityChangeHandler, ICacheLoader<String, List<Column>> {
 
     @Autowired
     private IFieldDefineService fieldDefineService;

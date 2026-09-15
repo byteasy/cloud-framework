@@ -3,7 +3,7 @@ package com.byteasy.common.controller;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
-import com.byteasy.component.FieldDefineUtil;
+import com.byteasy.common.component.FieldDefineLoadingCache;
 import com.byteasy.dto.Column;
 import com.byteasy.common.service.ICommonService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,7 +19,7 @@ import java.util.Collection;
 public class FieldController {
 
     @Autowired
-    private FieldDefineUtil fieldDefineUtil;
+    private FieldDefineLoadingCache fieldDefineLoadingCache;
     @Autowired
     private ICommonService commonService;
 
@@ -27,14 +27,14 @@ public class FieldController {
     @Operation(summary = "查询平台模型字段定义")
     @Openapi
     public Result<Collection<Column>> getSchemaMetaInfo(@PathVariable("className") String className) {
-        return Result.success(fieldDefineUtil.getColumns(className, false));
+        return Result.success(fieldDefineLoadingCache.getColumns(className, false));
     }
 
     @GetMapping("/src/{className}")
     @Operation(summary = "查询模型代码字段定义")
     @Openapi
     public Result<Collection<Column>> getSrcSchemaMetaInfo(@PathVariable("className") String className) {
-        return Result.success(fieldDefineUtil.getColumns(className, true));
+        return Result.success(fieldDefineLoadingCache.getColumns(className, true));
     }
 
     @GetMapping("/database/{className}")
