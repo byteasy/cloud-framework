@@ -46,18 +46,4 @@ public interface Constant {
 
     String i18nForbiddenOp = "ForbiddenOp";
 
-    /**
-     * 平台基础类
-     */
-    String CLS_ENTITY_DEFINE = "com.byteasy.platform.entity.EntityDefine";
-
-    String CLS_FIELD_DEFINE = "com.byteasy.platform.entity.FieldDefine";
-
-    String CLS_FIELD_GROUP = "com.byteasy.platform.entity.FieldGroup";
-
-    String CLS_JS_SCRIPT = "com.byteasy.platform.entity.JsScript";
-
-    String CLS_OPEN_API = "com.byteasy.platform.entity.Openapi";
-
-    String CLS_SERVICE_INSTANCE = "com.byteasy.platform.entity.ServiceInstance";
 }

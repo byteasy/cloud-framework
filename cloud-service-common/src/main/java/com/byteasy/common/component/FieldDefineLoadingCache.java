@@ -7,6 +7,7 @@ import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IPlatformEntityChangeHandler;
 import com.byteasy.platform.api.IFieldDefineService;
 import com.byteasy.platform.entity.FieldDefine;
+import com.byteasy.platform.entity.FieldGroup;
 import com.byteasy.util.FieldValueUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -44,12 +45,12 @@ public class FieldDefineLoadingCache implements IPlatformEntityChangeHandler, IC
 
     @Override
     public String type() {
-        return ArrayUtil.join(new String[]{FieldDefine.class.getName(), Constant.CLS_FIELD_GROUP}, ",");
+        return ArrayUtil.join(new String[]{FieldDefine.class.getName(), FieldGroup.class.getName()}, ",");
     }
 
     @Override
     public void handle(EntityChangeEvent event) {
-        if (event.getSource().getClassName().equals(Constant.CLS_FIELD_GROUP)) {
+        if (event.getSource().getClassName().equals(FieldGroup.class.getName())) {
             columnsCacheLoader.invalidateAll();
         } else {
             switch (event.getSource().getChangeType()) {

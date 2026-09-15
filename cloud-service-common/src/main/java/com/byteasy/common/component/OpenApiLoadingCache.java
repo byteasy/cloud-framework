@@ -65,7 +65,7 @@ public class OpenApiLoadingCache implements IPlatformEntityChangeHandler, ICache
 
     @Override
     public String type() {
-        return Constant.CLS_OPEN_API;
+        return Openapi.class.getName();
     }
 
     @Override
