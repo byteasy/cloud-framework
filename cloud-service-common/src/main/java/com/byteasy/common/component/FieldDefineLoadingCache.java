@@ -2,12 +2,12 @@ package com.byteasy.common.component;
 
 import cn.hutool.core.util.ArrayUtil;
 import com.byteasy.Constant;
-import com.byteasy.api.IFieldDefineService;
+import com.byteasy.common.util.ColumnUtil;
 import com.byteasy.component.ICacheLoader;
-import com.byteasy.dto.Column;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IPlatformEntityChangeHandler;
-import com.byteasy.common.util.ColumnUtil;
+import com.byteasy.platform.api.IFieldDefineService;
+import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.util.FieldValueUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -22,17 +22,17 @@ import java.util.List;
 
 @Component
 @Log4j2
-public class FieldDefineLoadingCache implements IPlatformEntityChangeHandler, ICacheLoader<String, List<Column>> {
+public class FieldDefineLoadingCache implements IPlatformEntityChangeHandler, ICacheLoader<String, List<FieldDefine>> {
 
     @Autowired
     private IFieldDefineService fieldDefineService;
 
-    private LoadingCache<String, List<Column>> columnsCacheLoader = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
+    private LoadingCache<String, List<FieldDefine>> columnsCacheLoader = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
         @Override
-        public List<Column> load(String key) {
+        public List<FieldDefine> load(String key) {
             try {
-                List<Column> list = fieldDefineService.getSchemaMetaInfo(key);
-                if (!list.isEmpty()) {
+                List<FieldDefine> list = fieldDefineService.listEntityFieldDefines(key).getIfPresent();
+                if (list != null && !list.isEmpty()) {
                     return list;
                 }
             } catch (Exception e1) {
@@ -43,7 +43,7 @@ public class FieldDefineLoadingCache implements IPlatformEntityChangeHandler, IC
              */
             try {
                 Class<?> cls = Class.forName(key);
-                return ColumnUtil.getColumns(cls).values().stream().sorted(Comparator.comparingInt(Column::getShowOrder)).toList();
+                return ColumnUtil.getColumns(cls).values().stream().sorted(Comparator.comparingInt(FieldDefine::getShowOrder)).toList();
             } catch (Exception e) {
                 log.error("getSchemaMetaInfo: " + key, e);
             }
@@ -52,13 +52,13 @@ public class FieldDefineLoadingCache implements IPlatformEntityChangeHandler, IC
     });
 
 
-    public List<Column> getColumns(String className, boolean skipRpc) {
+    public List<FieldDefine> getColumns(String className, boolean skipRpc) {
         if (!skipRpc) {
             /**
              * 1. 优先从系统中的手工配置加载
              */
             try {
-                List<Column> list = columnsCacheLoader.get(className);
+                List<FieldDefine> list = columnsCacheLoader.get(className);
                 if (!list.isEmpty()) {
                     return list;
                 }
@@ -72,7 +72,7 @@ public class FieldDefineLoadingCache implements IPlatformEntityChangeHandler, IC
          */
         try {
             Class<?> cls = Class.forName(className);
-            return ColumnUtil.getColumns(cls).values().stream().sorted(Comparator.comparingInt(Column::getShowOrder)).toList();
+            return ColumnUtil.getColumns(cls).values().stream().sorted(Comparator.comparingInt(FieldDefine::getShowOrder)).toList();
         } catch (Exception e) {
             log.error("getSchemaMetaInfo: " + className, e);
         }
@@ -81,7 +81,7 @@ public class FieldDefineLoadingCache implements IPlatformEntityChangeHandler, IC
 
 
     @Override
-    public List<Column> load(String key) {
+    public List<FieldDefine> load(String key) {
         return getColumns(key, false);
     }
 

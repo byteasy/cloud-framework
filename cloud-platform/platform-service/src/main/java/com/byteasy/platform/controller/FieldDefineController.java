@@ -5,7 +5,6 @@ import com.byteasy.Result;
 import com.byteasy.Status;
 import com.byteasy.annotations.Authentication;
 import com.byteasy.common.controller.AuditController;
-import com.byteasy.dto.Column;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.platform.service.IFieldDefineService;
 import com.byteasy.platform.service.INacosConfigService;
@@ -32,8 +31,8 @@ public class FieldDefineController extends AuditController<Long, IFieldDefineSer
 
     @GetMapping("/entity/{className}")
     @Operation(summary = "查询业务对象的字段信息")
-    public List<Column> getSchemaMetaInfo(@PathVariable("className") String className) throws Exception {
-        return baseService.queryByClassName(className);
+    public Result<List<FieldDefine>> listEntityFieldDefines(@PathVariable("className") String className) throws Exception {
+        return Result.success(baseService.queryByClassName(className));
     }
 
     @PutMapping("/{serviceName}/{className}")
@@ -43,7 +42,6 @@ public class FieldDefineController extends AuditController<Long, IFieldDefineSer
         baseService.syncSchemaMetaInfo(serviceName, className, fieldDefines);
         return Result.success();
     }
-
 
     @GetMapping("/services")
     @Operation(summary = "查询所有的注册服务")

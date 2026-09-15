@@ -3,17 +3,18 @@ package com.byteasy.common.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.byteasy.common.component.EntityDefineLoadingCache;
+import com.byteasy.common.component.EntityServiceFactory;
 import com.byteasy.common.component.EventPublishUtil;
+import com.byteasy.common.component.FieldDefineLoadingCache;
 import com.byteasy.common.service.ICommonService;
+import com.byteasy.common.service.IDatabaseMetaService;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.CastUtil;
+import com.byteasy.common.util.ColumnUtil;
 import com.byteasy.common.util.RequestUtil;
-import com.byteasy.common.component.EntityDefineLoadingCache;
-import com.byteasy.common.component.EntityServiceFactory;
-import com.byteasy.common.component.FieldDefineLoadingCache;
-import com.byteasy.component.I18nUtil;
-import com.byteasy.dto.Column;
+import com.byteasy.common.util.SqlUtil;
 import com.byteasy.dto.FormatMap;
 import com.byteasy.enums.Delete;
 import com.byteasy.enums.RelationType;
@@ -21,10 +22,9 @@ import com.byteasy.enums.YesNo;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
 import com.byteasy.exception.BizException;
-import com.byteasy.common.service.IDatabaseMetaService;
 import com.byteasy.platform.entity.EntityDefine;
-import com.byteasy.common.util.ColumnUtil;
-import com.byteasy.common.util.SqlUtil;
+import com.byteasy.platform.entity.FieldDefine;
+import com.byteasy.util.I18nUtil;
 import com.google.common.collect.Lists;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
@@ -79,7 +79,7 @@ public class CommonServiceImpl implements ICommonService {
         eventPublishUtil.publishEvent(event);
     }
 
-    private Column getPrimaryColumn(Collection<Column> columnDefList) {
+    private FieldDefine getPrimaryColumn(Collection<FieldDefine> columnDefList) {
         if (CollectionUtil.isEmpty(columnDefList)) {
             throw new BizException("实体字段定义列表为空，无法获取主键");
         }
@@ -104,9 +104,9 @@ public class CommonServiceImpl implements ICommonService {
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> saveOrUpdate(String className, Map<String, Object> entity) {
         EntityDefine entityDefine = entityDefineLoadingCache.load(className);
-        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
-        Column primaryColumn = getPrimaryColumn(columnDefList);
+        List<FieldDefine> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
+        Map<String, FieldDefine> columnMap = CastUtil.listToMap(columnDefList, FieldDefine::getName);
+        FieldDefine primaryColumn = getPrimaryColumn(columnDefList);
 
         Object primaryKeyValue = entity.get(primaryColumn.getName());
         if (ObjectUtils.isEmpty(primaryKeyValue)) {
@@ -129,9 +129,9 @@ public class CommonServiceImpl implements ICommonService {
         }
 
         EntityDefine entityDefine = entityDefineLoadingCache.load(className);
-        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
-        Column primaryColumn = getPrimaryColumn(columnDefList);
+        List<FieldDefine> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
+        Map<String, FieldDefine> columnMap = CastUtil.listToMap(columnDefList, FieldDefine::getName);
+        FieldDefine primaryColumn = getPrimaryColumn(columnDefList);
 
         // 拆分为新增和更新列表
         List<Map<String, Object>> insertList = new ArrayList<>();
@@ -183,16 +183,16 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     public Map<String, Object> getByPrimaryKey(String className, Object primaryKeyValue) {
         EntityDefine entityDefine = entityDefineLoadingCache.load(className);
-        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
+        List<FieldDefine> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
+        Map<String, FieldDefine> columnMap = CastUtil.listToMap(columnDefList, FieldDefine::getName);
         return getByPrimaryKey(entityDefine, primaryKeyValue, columnMap, getPrimaryColumn(columnDefList));
     }
 
     @Override
     public Page<Map<String, Object>> page(String className) {
         EntityDefine entityDefine = entityDefineLoadingCache.load(className);
-        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
+        List<FieldDefine> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
+        Map<String, FieldDefine> columnMap = CastUtil.listToMap(columnDefList, FieldDefine::getName);
 
         HttpServletRequest request = getHttpServletRequest();
         Map<String, String[]> multiMap = request != null ? request.getParameterMap() : Collections.emptyMap();
@@ -228,8 +228,8 @@ public class CommonServiceImpl implements ICommonService {
 
     private List<FormatMap> listInternal(String className, Object queryArgs, boolean limitSqlEnable) {
         EntityDefine entityDefine = entityDefineLoadingCache.load(className);
-        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
+        List<FieldDefine> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
+        Map<String, FieldDefine> columnMap = CastUtil.listToMap(columnDefList, FieldDefine::getName);
 
         Pair<String, List<Object>> whereSql;
         String orderBySql;
@@ -278,8 +278,8 @@ public class CommonServiceImpl implements ICommonService {
             return false;
         }
         EntityDefine entityDefine = entityDefineLoadingCache.load(className);
-        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
-        Column primaryColumn = getPrimaryColumn(columnDefList);
+        List<FieldDefine> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
+        FieldDefine primaryColumn = getPrimaryColumn(columnDefList);
         return removeByPrimaryKey(className, entity.get(primaryColumn.getName()));
     }
 
@@ -290,9 +290,9 @@ public class CommonServiceImpl implements ICommonService {
             throw new BizException("primary key is null");
         }
         EntityDefine entityDefine = entityDefineLoadingCache.load(className);
-        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
-        Column primaryColumn = getPrimaryColumn(columnDefList);
+        List<FieldDefine> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
+        Map<String, FieldDefine> columnMap = CastUtil.listToMap(columnDefList, FieldDefine::getName);
+        FieldDefine primaryColumn = getPrimaryColumn(columnDefList);
 
         Map<String, Object> oldEntity = getByPrimaryKey(className, primaryKey);
         publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, oldEntity, null, className)));
@@ -302,7 +302,7 @@ public class CommonServiceImpl implements ICommonService {
             List<Object> params = new ArrayList<>();
 
             // 动态逻辑删除字段与物理列名
-            Column isDeletedCol = columnMap.get("isDeleted");
+            FieldDefine isDeletedCol = columnMap.get("isDeleted");
             setJoiner.add(String.format("%s=1", isDeletedCol != null ? isDeletedCol.getFieldName() : "is_deleted"));
 
             // 审计字段
@@ -348,9 +348,9 @@ public class CommonServiceImpl implements ICommonService {
             return false;
         }
         EntityDefine entityDefine = entityDefineLoadingCache.load(className);
-        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
-        Column primaryColumn = getPrimaryColumn(columnDefList);
+        List<FieldDefine> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
+        Map<String, FieldDefine> columnMap = CastUtil.listToMap(columnDefList, FieldDefine::getName);
+        FieldDefine primaryColumn = getPrimaryColumn(columnDefList);
 
         publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.BATCH_DELETE, entities, null, className)));
 
@@ -361,7 +361,7 @@ public class CommonServiceImpl implements ICommonService {
         if (SqlUtil.isLogicDeleteEntity(columnMap)) {
             StringJoiner setJoiner = new StringJoiner(",");
 
-            Column isDeletedCol = columnMap.get("isDeleted");
+            FieldDefine isDeletedCol = columnMap.get("isDeleted");
             setJoiner.add(String.format("%s=1", isDeletedCol != null ? isDeletedCol.getFieldName() : "is_deleted"));
 
             UserInfo userInfo = TokenUtil.getUserinfo();
@@ -401,7 +401,7 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     @Override
-    public Collection<Column> getColumns(String className) {
+    public Collection<FieldDefine> getColumns(String className) {
         EntityDefine entityDefine = entityDefineLoadingCache.load(className);
         String schema = databaseMetaService.getCurrentSchema();
         return databaseMetaService.getColumns(className, schema, entityDefine.getTableName());
@@ -410,21 +410,21 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     public void syncColumnsToDb(String className) {
         EntityDefine entityDefine = entityDefineLoadingCache.load(className);
-        List<Column> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
+        List<FieldDefine> columnDefList = fieldDefineLoadingCache.getColumns(entityDefine.getCode(), false);
         String schema = databaseMetaService.getCurrentSchema();
         databaseMetaService.syncColumnsToDb(columnDefList, schema, entityDefine.getTableName());
     }
 
     @Override
-    public Collection<Column> getColumnsByTableName(String tableName) {
+    public Collection<FieldDefine> getColumnsByTableName(String tableName) {
         String schema = databaseMetaService.getCurrentSchema();
         return databaseMetaService.getColumns(null, schema, tableName);
     }
 
     // ======================== 私有通用查询与数据映射 ========================
 
-    private List<FormatMap> queryListInternal(String selectSql, Object[] params, Map<String, Column> columnMap) {
-        Set<Column> externalKeys = columnMap.values().stream()
+    private List<FormatMap> queryListInternal(String selectSql, Object[] params, Map<String, FieldDefine> columnMap) {
+        Set<FieldDefine> externalKeys = columnMap.values().stream()
                 .filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill()))
                 .collect(Collectors.toSet());
 
@@ -436,14 +436,14 @@ public class CommonServiceImpl implements ICommonService {
         return list;
     }
 
-    private FormatMap mapRowToFormatMap(ResultSet rs, Map<String, Column> columnMap) throws SQLException {
+    private FormatMap mapRowToFormatMap(ResultSet rs, Map<String, FieldDefine> columnMap) throws SQLException {
         FormatMap map = new FormatMap();
         ResultSetMetaData meta = rs.getMetaData();
         int count = meta.getColumnCount();
 
         for (int i = 1; i <= count; i++) {
             String key = meta.getColumnLabel(i);
-            Column colDef = columnMap.get(key);
+            FieldDefine colDef = columnMap.get(key);
             if (colDef != null) {
                 if (colDef.getSerialPattern() != null) {
                     map.rule(key, colDef.getSerialPattern());
@@ -457,7 +457,7 @@ public class CommonServiceImpl implements ICommonService {
         return map;
     }
 
-    private Map<Object, Map<String, Object>> getEntitiesByIds(EntityDefine entityDefine, List<Object> ids, Map<String, Column> columnMap, Column primaryColumn) {
+    private Map<Object, Map<String, Object>> getEntitiesByIds(EntityDefine entityDefine, List<Object> ids, Map<String, FieldDefine> columnMap, FieldDefine primaryColumn) {
         if (CollectionUtil.isEmpty(ids)) {
             return Collections.emptyMap();
         }
@@ -478,8 +478,8 @@ public class CommonServiceImpl implements ICommonService {
         return resultMap;
     }
 
-    private Map<String, Object> getByPrimaryKey(EntityDefine entityDefine, Object primaryKeyValue, Map<String, Column> columnMap, Column primaryKey) {
-        Set<Column> externalKeys = columnMap.values().stream()
+    private Map<String, Object> getByPrimaryKey(EntityDefine entityDefine, Object primaryKeyValue, Map<String, FieldDefine> columnMap, FieldDefine primaryKey) {
+        Set<FieldDefine> externalKeys = columnMap.values().stream()
                 .filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill()))
                 .collect(Collectors.toSet());
 
@@ -491,7 +491,7 @@ public class CommonServiceImpl implements ICommonService {
 
         // 修复：补齐前置空格
         if (SqlUtil.isLogicDeleteEntity(columnMap)) {
-            Column isDeletedCol = columnMap.get("isDeleted");
+            FieldDefine isDeletedCol = columnMap.get("isDeleted");
             String isDeletedFieldName = isDeletedCol != null ? isDeletedCol.getFieldName() : "IS_DELETED";
             sql.append(String.format(" AND %s=?", isDeletedFieldName));
             args.add(convertToDbValue(Delete.NORMAL, isDeletedCol));
@@ -510,7 +510,7 @@ public class CommonServiceImpl implements ICommonService {
 
     // ======================== 通用 Insert & Update ========================
 
-    private void insert(EntityDefine entityDefine, Map<String, Object> entity, Map<String, Column> columnMap, Column primaryColumn) {
+    private void insert(EntityDefine entityDefine, Map<String, Object> entity, Map<String, FieldDefine> columnMap, FieldDefine primaryColumn) {
         Set<String> columns = entity.keySet();
         if (columns.isEmpty()) return;
 
@@ -519,7 +519,7 @@ public class CommonServiceImpl implements ICommonService {
         List<Object> params = new ArrayList<>();
 
         for (String col : columns) {
-            Column column = columnMap.get(col);
+            FieldDefine column = columnMap.get(col);
             if (column == null || StringUtils.isEmpty(column.getFieldName())) continue;
             if (SqlUtil.isAuditEntityProps(col)) continue;
             if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) continue;
@@ -581,7 +581,7 @@ public class CommonServiceImpl implements ICommonService {
     /**
      * 从 KeyHolder 的 Map 中自适应提取主键值（兼容大小写与多种命名）
      */
-    private Object getPrimaryKeyValueFromKeyMap(Map<String, Object> keys, Column primaryColumn) {
+    private Object getPrimaryKeyValueFromKeyMap(Map<String, Object> keys, FieldDefine primaryColumn) {
         String dbField = primaryColumn.getFieldName();
         String propName = primaryColumn.getName();
 
@@ -605,7 +605,7 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    protected int batchInsert(EntityDefine entityDefine, List<Map<String, Object>> entityList, Map<String, Column> columnMap) {
+    protected int batchInsert(EntityDefine entityDefine, List<Map<String, Object>> entityList, Map<String, FieldDefine> columnMap) {
         if (CollectionUtil.isEmpty(entityList)) return 0;
 
         // 计算所有实体的属性 Key 并集，避免异构 Map 丢失字段
@@ -619,7 +619,7 @@ public class CommonServiceImpl implements ICommonService {
         List<String> fieldList = new ArrayList<>();
 
         for (String col : allKeys) {
-            Column column = columnMap.get(col);
+            FieldDefine column = columnMap.get(col);
             if (column == null || StringUtils.isEmpty(column.getFieldName())) continue;
             if (SqlUtil.isAuditEntityProps(col)) continue;
             if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) continue;
@@ -655,7 +655,7 @@ public class CommonServiceImpl implements ICommonService {
             allValues.add(valuesPlaceholder);
 
             for (String field : fieldList) {
-                Column column = columnMap.get(field);
+                FieldDefine column = columnMap.get(field);
                 Object value;
                 if ("creatorId".equals(field)) {
                     value = userInfo != null ? userInfo.getUserId() : null;
@@ -679,7 +679,7 @@ public class CommonServiceImpl implements ICommonService {
         return jdbcTemplate.update(sql, totalParams.toArray());
     }
 
-    private void update(EntityDefine entityDefine, Map<String, Object> entity, Map<String, Column> columnMap, Column primaryColumn) {
+    private void update(EntityDefine entityDefine, Map<String, Object> entity, Map<String, FieldDefine> columnMap, FieldDefine primaryColumn) {
         Set<String> columns = entity.keySet();
         if (columns.isEmpty()) return;
 
@@ -688,7 +688,7 @@ public class CommonServiceImpl implements ICommonService {
 
         for (String col : columns) {
             if (SqlUtil.isAuditEntityProps(col)) continue;
-            Column column = columnMap.get(col);
+            FieldDefine column = columnMap.get(col);
             if (column == null || StringUtils.isEmpty(column.getFieldName())) continue;
             if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) continue;
             if (column.getName().equals(primaryColumn.getName())) continue; // 主键不放入 SET 子句
@@ -746,7 +746,7 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    protected void batchUpdate(EntityDefine entityDefine, List<Map<String, Object>> entityList, Map<String, Column> columnMap, Column primaryColumn) {
+    protected void batchUpdate(EntityDefine entityDefine, List<Map<String, Object>> entityList, Map<String, FieldDefine> columnMap, FieldDefine primaryColumn) {
         if (CollectionUtil.isEmpty(entityList)) return;
 
         Map<String, Object> firstEntity = entityList.get(0);
@@ -758,7 +758,7 @@ public class CommonServiceImpl implements ICommonService {
 
         for (String col : columns) {
             if (SqlUtil.isAuditEntityProps(col)) continue;
-            Column column = columnMap.get(col);
+            FieldDefine column = columnMap.get(col);
             if (column == null || StringUtils.isEmpty(column.getFieldName())) continue;
             if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) continue;
             if (column.getName().equals(primaryColumn.getName())) continue;
@@ -809,7 +809,7 @@ public class CommonServiceImpl implements ICommonService {
             List<Object> params = new ArrayList<>();
 
             for (String col : validColumns) {
-                Column column = columnMap.get(col);
+                FieldDefine column = columnMap.get(col);
                 params.add(convertToDbValue(entity.get(col), column));
             }
 
@@ -855,7 +855,8 @@ public class CommonServiceImpl implements ICommonService {
         Page page = RequestUtil.getPage();
         return String.format("LIMIT %s OFFSET %s", page.getSize(), (page.getCurrent() - 1) * page.getSize());
     }
-    private String buildOrderBySqlByRequest(Map<String, Column> columnMap, Map<String, String[]> multiMap) {
+
+    private String buildOrderBySqlByRequest(Map<String, FieldDefine> columnMap, Map<String, String[]> multiMap) {
         if (MapUtils.isEmpty(multiMap)) {
             return "";
         }
@@ -889,7 +890,7 @@ public class CommonServiceImpl implements ICommonService {
         return sql.length() > 0 ? "ORDER BY " + sql : "";
     }
 
-    private String buildOrderBySql(Map<String, Column> columnMap, Map<String, Object> args) {
+    private String buildOrderBySql(Map<String, FieldDefine> columnMap, Map<String, Object> args) {
         StringJoiner sql = new StringJoiner(",");
 
         List descColumns = (List) args.get("descColumns");
@@ -923,10 +924,9 @@ public class CommonServiceImpl implements ICommonService {
     }
 
 
-
-    private String getSelectSql(Map<String, Column> columnMap) {
+    private String getSelectSql(Map<String, FieldDefine> columnMap) {
         StringJoiner selJoiner = new StringJoiner(",");
-        for (Column column : columnMap.values()) {
+        for (FieldDefine column : columnMap.values()) {
             if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) {
                 continue;
             }

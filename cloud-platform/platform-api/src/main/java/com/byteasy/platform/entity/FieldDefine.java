@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.byteasy.annotations.FieldMeta;
 import com.byteasy.entity.AuditEntity;
 import com.byteasy.enums.*;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -177,4 +178,12 @@ public class FieldDefine extends AuditEntity<Long> {
     @TableField("extras_params")
     @FieldMeta(name = "拓展参数", showOrder = 140, maxLength = 512)
     private String extrasParams;
+
+    @TableField("serial_pattern")
+    @Schema(description = "序列化格式")
+    private String serialPattern;
+
+    @TableField("timezone")
+    @Schema(description = "时区")
+    private String timezone;
 }

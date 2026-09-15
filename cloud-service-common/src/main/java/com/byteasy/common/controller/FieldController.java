@@ -4,8 +4,8 @@ import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.component.FieldDefineLoadingCache;
-import com.byteasy.dto.Column;
 import com.byteasy.common.service.ICommonService;
+import com.byteasy.platform.entity.FieldDefine;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,28 +26,28 @@ public class FieldController {
     @GetMapping("/{className}")
     @Operation(summary = "查询平台模型字段定义")
     @Openapi
-    public Result<Collection<Column>> getSchemaMetaInfo(@PathVariable("className") String className) {
+    public Result<Collection<FieldDefine>> getSchemaMetaInfo(@PathVariable("className") String className) {
         return Result.success(fieldDefineLoadingCache.getColumns(className, false));
     }
 
     @GetMapping("/src/{className}")
     @Operation(summary = "查询模型代码字段定义")
     @Openapi
-    public Result<Collection<Column>> getSrcSchemaMetaInfo(@PathVariable("className") String className) {
+    public Result<Collection<FieldDefine>> getSrcSchemaMetaInfo(@PathVariable("className") String className) {
         return Result.success(fieldDefineLoadingCache.getColumns(className, true));
     }
 
     @GetMapping("/database/{className}")
     @Operation(summary = "查询数据库实体模型字段定义")
     @Openapi
-    public Result<Collection<Column>> getDatabaseSchemaMetaInfo(@PathVariable("className") String className) {
+    public Result<Collection<FieldDefine>> getDatabaseSchemaMetaInfo(@PathVariable("className") String className) {
         return Result.success(commonService.getColumns(className));
     }
 
     @GetMapping("/database/currentSchema/{tableName}")
     @Operation(summary = "查询当前模式下数据库实体模型字段定义")
     @Openapi
-    public Result<Collection<Column>> getCurrentSchemaTableColumns(@PathVariable("tableName") String tableName) {
+    public Result<Collection<FieldDefine>> getCurrentSchemaTableColumns(@PathVariable("tableName") String tableName) {
         return Result.success(commonService.getColumnsByTableName(tableName));
     }
 

@@ -21,13 +21,14 @@ import com.byteasy.common.util.RequestUtil;
 import com.byteasy.common.component.EntityDefineLoadingCache;
 import com.byteasy.common.component.EntityServiceFactory;
 import com.byteasy.common.component.FieldDefineLoadingCache;
-import com.byteasy.component.I18nUtil;
-import com.byteasy.dto.Column;
+import com.byteasy.common.util.FieldDefineUtil;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.RelationType;
 import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;
 import com.byteasy.common.util.ColumnUtil;
+import com.byteasy.platform.entity.FieldDefine;
+import com.byteasy.util.I18nUtil;
 import com.byteasy.util.XlsxUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -76,8 +77,8 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
         /**
          * 将外键关联的对象塞入拓展字段中
          */
-        List<Column> columns = fieldDefineLoadingCache.getColumns(getEntityClass().getName(), false);
-        Set<Column> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
+        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(getEntityClass().getName(), false);
+        Set<FieldDefine> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
         if (!externalKeys.isEmpty()) {
             entityServiceFactory.updateExternalEntity(externalKeys, page.getRecords());
         }
@@ -93,8 +94,8 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
         /**
          * 将外键关联的对象塞入拓展字段中
          */
-        List<Column> columns = fieldDefineLoadingCache.getColumns(getEntityClass().getName(), false);
-        Set<Column> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
+        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(getEntityClass().getName(), false);
+        Set<FieldDefine> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
         if (!externalKeys.isEmpty()) {
             entityServiceFactory.updateExternalEntity(externalKeys, list);
         }
@@ -107,8 +108,8 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Parameters({@Parameter(name = "id", description = "主键")})
     public Result<ENTITY> getById(@PathVariable("id") ID id) throws Exception {
         ENTITY entity = baseService.getById(id);
-        List<Column> columns = fieldDefineLoadingCache.getColumns(getEntityClass().getName(), false);
-        Set<Column> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
+        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(getEntityClass().getName(), false);
+        Set<FieldDefine> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
         if (!externalKeys.isEmpty()) {
             entityServiceFactory.updateExternalEntity(externalKeys, List.of(entity));
         }
@@ -151,7 +152,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdateBatch: {}", JacksonUtil.toJson(entities));
         }
-        List<Column> columns = fieldDefineLoadingCache.getColumns(baseService.getEntityClass().getName(), false);
+        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(baseService.getEntityClass().getName(), false);
         for (ENTITY entity : entities) {
             validEntity(entity, columns);
         }
@@ -182,7 +183,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
         if (log.isInfoEnabled()) {
             log.info("updateBatchById: {}", JacksonUtil.toJson(entities));
         }
-        List<Column> columns = fieldDefineLoadingCache.getColumns(baseService.getEntityClass().getName(), false);
+        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(baseService.getEntityClass().getName(), false);
         for (ENTITY entity : entities) {
             validEntity(entity, columns);
         }
@@ -237,18 +238,18 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Openapi
     @Operation(summary = "下载Excel导入模板")
     public void downloadExcelTemplate(HttpServletResponse response) throws Exception {
-        List<Column> columns = fieldDefineLoadingCache.getColumns(baseService.getEntityClass().getName(), false);
+        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(baseService.getEntityClass().getName(), false);
 
         columns = columns.stream().filter(s -> YesNo.YES.equals(s.getIsForm())).toList();
 
-        List<String> fieldNameRow = new ArrayList<>(columns.stream().filter(s -> !RelationType.DETAIL_TABLE.equals(s.getRelationType())).map(Column::getName).toList());
+        List<String> fieldNameRow = new ArrayList<>(columns.stream().filter(s -> !RelationType.DETAIL_TABLE.equals(s.getRelationType())).map(FieldDefine::getName).toList());
         fieldNameRow.add(I18nUtil.getMessage("excel.import.template.fieldNameWarning"));
 
         // 通过工具类创建writer
         ExcelWriter writer = ExcelUtil.getWriter(true);
         // 一次性写出内容
         int colIdx = 0;
-        for (Column column : columns) {
+        for (FieldDefine column : columns) {
             if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) {
                 continue;
             }
@@ -301,12 +302,12 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
             return Result.success(Collections.emptyList());
         }
 
-        List<Column> columns = fieldDefineLoadingCache.getColumns(baseService.getEntityClass().getName(), false);
+        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(baseService.getEntityClass().getName(), false);
         columns = columns.stream().filter(s -> YesNo.YES.equals(s.getIsForm())).toList();
 
         boolean success = true;
         List<ENTITY> list = excelReader.read(1, 2, baseService.getEntityClass());
-        I18nUtil.encodeToI18nFormat(list, columns);
+        FieldDefineUtil.encodeToI18nFormat(list, columns);
         List<Map<String, Object>> excelRowPreviews = new ArrayList<>();
 
         StringBuilder errMessage = new StringBuilder();
@@ -346,14 +347,14 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     protected void validEntity(ENTITY entity) throws Exception {
-        List<Column> columns = fieldDefineLoadingCache.getColumns(baseService.getEntityClass().getName(), false);
+        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(baseService.getEntityClass().getName(), false);
         String msg = valid(entity, columns);
         if (StringUtils.isNotEmpty(msg)) {
             throw new BizException(msg);
         }
     }
 
-    protected void validEntity(ENTITY entity, List<Column> columns) throws Exception {
+    protected void validEntity(ENTITY entity, List<FieldDefine> columns) throws Exception {
         String msg = valid(entity, columns);
         if (StringUtils.isNotEmpty(msg)) {
             throw new BizException(msg);
@@ -370,10 +371,10 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
         return null;
     }
 
-    protected String valid(ENTITY entity, List<Column> columns) {
+    protected String valid(ENTITY entity, List<FieldDefine> columns) {
         Set<String> auditFields = ColumnUtil.getAuditFields();
         StringBuilder builder = new StringBuilder();
-        for (Column column : columns) {
+        for (FieldDefine column : columns) {
             if(auditFields.contains(column.getName())) {
                 continue;
             }
@@ -450,8 +451,8 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Openapi
     @Operation(summary = "Excel数据导出")
     public void exportExcel(@RequestBody List<String> fieldNames, HttpServletResponse response) throws Exception {
-        List<Column> columns = fieldDefineLoadingCache.getColumns(baseService.getEntityClass().getName(), false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columns, Column::getName);
+        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(baseService.getEntityClass().getName(), false);
+        Map<String, FieldDefine> columnMap = CastUtil.listToMap(columns, FieldDefine::getName);
 
         List<String> displayNameRow = Lists.newArrayList();
         for (String fieldName : fieldNames) {
@@ -474,7 +475,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
         for (ENTITY entity : list) {
             int col = 0;
             for (String fieldName : fieldNames) {
-                Column column = columnMap.get(fieldName);
+                FieldDefine column = columnMap.get(fieldName);
                 Object value = ReflectUtil.getFieldValue(entity, fieldName);
 
                 if (ColumnType.LOCAL_DATE.equals(column.getType())) {

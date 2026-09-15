@@ -1,6 +1,7 @@
 package com.byteasy.common.service;
 
-import com.byteasy.dto.Column;
+
+import com.byteasy.platform.entity.FieldDefine;
 
 import java.util.Collection;
 
@@ -8,7 +9,7 @@ public interface IDatabaseMetaService {
 
     String getCurrentSchema();
 
-    Collection<Column> getColumns(String className, String schema, String tableName);
+    Collection<FieldDefine> getColumns(String className, String schema, String tableName);
 
-    void syncColumnsToDb(Collection<Column> columns, String schema, String tableName);
+    void syncColumnsToDb(Collection<FieldDefine> columns, String schema, String tableName);
 }

@@ -1,12 +1,12 @@
 package com.byteasy.common.util;
 
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
-import com.byteasy.dto.Column;
 import com.byteasy.entity.LogicDeleteEntity;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.Delete;
 import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;
+import com.byteasy.platform.entity.FieldDefine;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 
@@ -32,7 +32,7 @@ public class SqlUtil {
     /**
      * 统一入口：自动路由单框快速搜索与多条件高级搜索
      */
-    public static Pair<String, List<Object>> buildWhereSql(Map<String, Column> columnMap, Map<String, ?> multiMap) {
+    public static Pair<String, List<Object>> buildWhereSql(Map<String, FieldDefine> columnMap, Map<String, ?> multiMap) {
         if (multiMap == null || multiMap.isEmpty()) {
             return buildLogicDeleteWhere(columnMap);
         }
@@ -64,7 +64,7 @@ public class SqlUtil {
     /**
      * 高级多条件复合查询
      */
-    public static Pair<String, List<Object>> buildWhereSqlAdvance(Map<String, Column> columnMap, Map<String, ?> multiMap) {
+    public static Pair<String, List<Object>> buildWhereSqlAdvance(Map<String, FieldDefine> columnMap, Map<String, ?> multiMap) {
         String matchLogic = getSingleStringValue(multiMap, "matchLogic", "AND").trim().toUpperCase();
         if (!"AND".equals(matchLogic) && !"OR".equals(matchLogic)) {
             matchLogic = "AND";
@@ -90,7 +90,7 @@ public class SqlUtil {
                 }
             }
 
-            Column column = columnMap.get(fieldName);
+            FieldDefine column = columnMap.get(fieldName);
             String dbFieldName = column.getFieldName();
             if (StringUtils.isBlank(dbFieldName)) {
                 continue;
@@ -148,7 +148,7 @@ public class SqlUtil {
     /**
      * 单框一键全文搜索（跨所有可搜索字段进行 OR 匹配）
      */
-    public static Pair<String, List<Object>> buildWhereSqlOneWord(Map<String, Column> columnMap, Map<String, ?> multiMap) {
+    public static Pair<String, List<Object>> buildWhereSqlOneWord(Map<String, FieldDefine> columnMap, Map<String, ?> multiMap) {
         String oneKeySearch = getSingleStringValue(multiMap, "oneKeySearch", "").trim();
         if (StringUtils.isBlank(oneKeySearch)) {
             return buildLogicDeleteWhere(columnMap);
@@ -161,7 +161,7 @@ public class SqlUtil {
         StringJoiner conditionJoiner = new StringJoiner(" OR ");
         List<Object> params = new ArrayList<>();
 
-        for (Column column : columnMap.values()) {
+        for (FieldDefine column : columnMap.values()) {
             if (!YesNo.YES.equals(column.getIsSearch())) {
                 continue;
             }
@@ -205,7 +205,7 @@ public class SqlUtil {
     /**
      * 内部单字段操作符 SQL 组装逻辑
      */
-    private static void buildSingleFieldSql(Column column, String dbFieldName, String queryType, String[] valueArr, StringJoiner conditionJoiner, List<Object> params) {
+    private static void buildSingleFieldSql(FieldDefine column, String dbFieldName, String queryType, String[] valueArr, StringJoiner conditionJoiner, List<Object> params) {
         String finalSql = null;
         List<Object> finalParams = new ArrayList<>();
 
@@ -278,7 +278,7 @@ public class SqlUtil {
     /**
      * 🔥 核心修复：安全包装业务条件，并强制使用 AND 拼接待逻辑删除
      */
-    private static Pair<String, List<Object>> formatFinalWhereSql(Map<String, Column> columnMap, StringJoiner conditionJoiner, List<Object> params) {
+    private static Pair<String, List<Object>> formatFinalWhereSql(Map<String, FieldDefine> columnMap, StringJoiner conditionJoiner, List<Object> params) {
         StringBuilder sqlBuilder = new StringBuilder();
         boolean hasLogicDelete = isLogicDeleteEntity(columnMap);
 
@@ -298,7 +298,7 @@ public class SqlUtil {
         return Pair.create(where, params);
     }
 
-    private static Pair<String, List<Object>> buildLogicDeleteWhere(Map<String, Column> columnMap) {
+    private static Pair<String, List<Object>> buildLogicDeleteWhere(Map<String, FieldDefine> columnMap) {
         return formatFinalWhereSql(columnMap, new StringJoiner(" AND "), new ArrayList<>());
     }
 
@@ -319,7 +319,7 @@ public class SqlUtil {
         }
     }
 
-    public static boolean isLogicDeleteEntity(Map<String, Column> columnMap) {
+    public static boolean isLogicDeleteEntity(Map<String, FieldDefine> columnMap) {
         if (columnMap == null) return false;
         for (String s : auditEntityPropSet) {
             if (!columnMap.containsKey(s)) {

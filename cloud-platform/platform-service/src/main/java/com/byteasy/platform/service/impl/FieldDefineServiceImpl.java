@@ -1,8 +1,6 @@
 package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.byteasy.common.util.CastUtil;
-import com.byteasy.dto.Column;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.platform.mapper.FieldDefineMapper;
 import com.byteasy.platform.service.IFieldDefineService;
@@ -23,12 +21,11 @@ import java.util.List;
 public class FieldDefineServiceImpl extends EntityChangeService<Long, FieldDefineMapper, FieldDefine> implements IFieldDefineService {
 
     @Override
-    public List<Column> queryByClassName(String className) {
+    public List<FieldDefine> queryByClassName(String className) {
         LambdaUpdateWrapper<FieldDefine> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         lambdaUpdateWrapper.eq(FieldDefine::getClassName, className);
         lambdaUpdateWrapper.orderByAsc(FieldDefine::getShowOrder);
-        List<FieldDefine> fieldDefines = list(lambdaUpdateWrapper);
-        return CastUtil.copyList(fieldDefines, Column.class);
+        return list(lambdaUpdateWrapper);
     }
 
     @Override

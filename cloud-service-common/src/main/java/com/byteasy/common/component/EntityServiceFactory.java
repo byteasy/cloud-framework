@@ -15,9 +15,8 @@ import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.component.CacheFactory;
-import com.byteasy.component.I18nUtil;
+import com.byteasy.common.util.FieldDefineUtil;
 import com.byteasy.component.ICacheLoader;
-import com.byteasy.dto.Column;
 import com.byteasy.dto.FormatMap;
 import com.byteasy.entity.Entity;
 import com.byteasy.enums.RelationType;
@@ -25,7 +24,9 @@ import com.byteasy.event.IPlatformReady;
 import com.byteasy.platform.api.IEntityDefineService;
 import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.common.util.ColumnUtil;
+import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.util.FieldValueUtil;
+import com.byteasy.util.I18nUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Maps;
 import jakarta.annotation.Resource;
@@ -67,11 +68,11 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
         }
     }
 
-    public void updateExternalEntity(Set<Column> externalKeys, List entities) {
+    public void updateExternalEntity(Set<FieldDefine> externalKeys, List entities) {
         if (entities.isEmpty()) {
             return;
         }
-        for (Column externalKey : externalKeys) {
+        for (FieldDefine externalKey : externalKeys) {
             try {
                 String className = externalKey.getExternalClass();
                 EntityDefine entityDefine = entityDefineLoadingCache.load(className);

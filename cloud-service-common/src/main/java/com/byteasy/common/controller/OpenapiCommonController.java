@@ -15,13 +15,14 @@ import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.component.EntityDefineLoadingCache;
 import com.byteasy.common.component.FieldDefineLoadingCache;
-import com.byteasy.component.I18nUtil;
-import com.byteasy.dto.Column;
+import com.byteasy.common.util.FieldDefineUtil;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.RelationType;
 import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;
 import com.byteasy.common.service.ICommonService;
+import com.byteasy.platform.entity.FieldDefine;
+import com.byteasy.util.I18nUtil;
 import com.byteasy.util.XlsxUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.swagger.v3.oas.annotations.Operation;
@@ -133,18 +134,18 @@ public class OpenapiCommonController {
     @Openapi
     @Operation(summary = "下载Excel导入模板")
     public void downloadImportTemplate(@PathVariable("className") String className, HttpServletResponse response) throws Exception {
-        List<Column> columns = fieldDefineLoadingCache.getColumns(className, false);
+        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(className, false);
 
         columns = columns.stream().filter(s -> YesNo.YES.equals(s.getIsForm())).toList();
 
-        List<String> fieldNameRow = new ArrayList<>(columns.stream().filter(s -> !RelationType.DETAIL_TABLE.equals(s.getRelationType())).map(Column::getName).toList());
+        List<String> fieldNameRow = new ArrayList<>(columns.stream().filter(s -> !RelationType.DETAIL_TABLE.equals(s.getRelationType())).map(FieldDefine::getName).toList());
         fieldNameRow.add(I18nUtil.getMessage("excel.import.template.fieldNameWarning"));
 
         // 通过工具类创建writer
         ExcelWriter writer = ExcelUtil.getWriter(true);
         // 一次性写出内容
         int colIdx = 0;
-        for (Column column : columns) {
+        for (FieldDefine column : columns) {
             if (RelationType.DETAIL_TABLE.equals(column.getRelationType())) {
                 continue;
             }
@@ -197,13 +198,13 @@ public class OpenapiCommonController {
             return Result.success(Collections.emptyList());
         }
 
-        List<Column> columns = fieldDefineLoadingCache.getColumns(className, false);
+        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(className, false);
         columns = columns.stream().filter(s -> YesNo.YES.equals(s.getIsForm())).toList();
 
         boolean success = true;
 
         List<Map<String, Object>> list = excelReader.read(1, 2, excelReader.getRowCount() - 1);
-        I18nUtil.encodeToI18nFormat(list, columns);
+        FieldDefineUtil.encodeToI18nFormat(list, columns);
         List<Map<String, Object>> excelRowPreviews = new ArrayList<>();
 
         StringBuilder errMessage = new StringBuilder();
@@ -242,9 +243,9 @@ public class OpenapiCommonController {
         return null;
     }
 
-    protected String valid(Map<String, Object> entity, List<Column> columns) {
+    protected String valid(Map<String, Object> entity, List<FieldDefine> columns) {
         StringBuilder builder = new StringBuilder();
-        for (Column column : columns) {
+        for (FieldDefine column : columns) {
             Object value = entity.get(column.getName());
             if (YesNo.YES.equals(column.getIsRequire())) {
                 if (ObjectUtil.isEmpty(value)) {
@@ -322,7 +323,7 @@ public class OpenapiCommonController {
         }
         List<Map<String, Object>> entities = JacksonUtil.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
         });
-        List<Column> columns = fieldDefineLoadingCache.getColumns(className, false);
+        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(className, false);
         for (Map<String, Object> entity : entities) {
             validEntity(entity, columns);
         }
@@ -333,7 +334,7 @@ public class OpenapiCommonController {
     }
 
 
-    protected void validEntity(Map<String, Object> entity, List<Column> columns) throws Exception {
+    protected void validEntity(Map<String, Object> entity, List<FieldDefine> columns) throws Exception {
         String msg = valid(entity, columns);
         if (StringUtils.isNotEmpty(msg)) {
             throw new BizException(msg);
@@ -344,8 +345,8 @@ public class OpenapiCommonController {
     @Openapi
     @Operation(summary = "Excel数据导出")
     public void exportExcel(@PathVariable("className") String className, @RequestBody List<String> fieldNames, HttpServletResponse response) throws Exception {
-        List<Column> columns = fieldDefineLoadingCache.getColumns(className, false);
-        Map<String, Column> columnMap = CastUtil.listToMap(columns, Column::getName);
+        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(className, false);
+        Map<String, FieldDefine> columnMap = CastUtil.listToMap(columns, FieldDefine::getName);
 
         List<String> displayNameRow = Lists.newArrayList();
         for (String fieldName : fieldNames) {
@@ -367,7 +368,7 @@ public class OpenapiCommonController {
         for (Map<String, Object> entity : list) {
             int col = 0;
             for (String fieldName : fieldNames) {
-                Column column = columnMap.get(fieldName);
+                FieldDefine column = columnMap.get(fieldName);
                 Object value = entity.get(fieldName);
 
                 if (ColumnType.LOCAL_DATE.equals(column.getType())) {
