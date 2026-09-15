@@ -72,7 +72,11 @@ public class OpenapiAuthAspect {
             Openapi openapi = new Openapi();
             openapi.setCode(EntityCodeUtil.generateCode());
             openapi.setServiceCode(SpringUtil.getApplicationName());
-            openapi.setName(I18nUtil.convertI18nFieldZhValue(annotation.title()));
+            String name = annotation.title();
+            if(StringUtils.isEmpty(name)){
+                name = method.getName();
+            }
+            openapi.setName(I18nUtil.convertI18nFieldZhValue(name));
             openapi.setHttpMethod(Openapi.HttpMethod.fromValue(methodName));
             openapi.setUri(fullUri);
             openapi.setType(Openapi.Type.DEVELOP);

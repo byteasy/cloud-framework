@@ -23,13 +23,6 @@ public class FieldController {
     @Autowired
     private ICommonService commonService;
 
-    @GetMapping("/{className}")
-    @Operation(summary = "查询平台模型字段定义")
-    @Openapi
-    public Result<Collection<FieldDefine>> getSchemaMetaInfo(@PathVariable("className") String className) {
-        return Result.success(fieldDefineLoadingCache.getColumns(className, false));
-    }
-
     @GetMapping("/src/{className}")
     @Operation(summary = "查询模型代码字段定义")
     @Openapi
