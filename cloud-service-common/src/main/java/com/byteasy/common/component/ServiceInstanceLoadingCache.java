@@ -51,7 +51,7 @@ public class ServiceInstanceLoadingCache implements IPlatformEntityChangeHandler
 
     @Override
     public String type() {
-        return Constant.CLS_SERVICE_INSTANCE;
+        return ServiceInstance.class.getName();
     }
 
     @Override

@@ -48,7 +48,7 @@ public class JsScriptFactory implements IPlatformEntityChangeHandler, ICacheLoad
 
     @Override
     public String type() {
-        return Constant.CLS_JS_SCRIPT;
+        return JsScript.class.getName();
     }
 
     @Override
