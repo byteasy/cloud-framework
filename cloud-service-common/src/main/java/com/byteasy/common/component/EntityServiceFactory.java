@@ -24,7 +24,7 @@ import com.byteasy.enums.RelationType;
 import com.byteasy.event.IPlatformReady;
 import com.byteasy.platform.api.IEntityDefineService;
 import com.byteasy.platform.entity.EntityDefine;
-import com.byteasy.util.ColumnUtil;
+import com.byteasy.common.util.ColumnUtil;
 import com.byteasy.util.FieldValueUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Maps;

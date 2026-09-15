@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.Collection;
 
 @FeignClient(name = com.byteasy.platform.Constant.SERVICE_NAME,
-        contextId = "IFrameworkPlatformScriptFunctionService",
+        contextId = "IScriptFunctionService",
         path = "/platformSvr" + Constant.SAPI + "/scriptFunctions",
         fallback = IScriptFunctionServiceFallback.class)
 public interface IScriptFunctionService {

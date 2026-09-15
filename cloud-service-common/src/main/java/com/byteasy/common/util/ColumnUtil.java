@@ -1,4 +1,4 @@
-package com.byteasy.util;
+package com.byteasy.common.util;
 
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.EnumUtil;
@@ -10,9 +10,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.byteasy.annotations.FieldDisplay;
 import com.byteasy.annotations.FieldMeta;
-import com.byteasy.common.util.GenericTypeUtil;
-import com.byteasy.common.util.NameConvertUtil;
-import com.byteasy.component.FieldDefineUtil;
+import com.byteasy.common.component.FieldDefineLoadingCache;
 import com.byteasy.dto.Column;
 import com.byteasy.entity.LogicDeleteEntity;
 import com.byteasy.enums.*;
@@ -335,8 +333,8 @@ public class ColumnUtil {
                     } catch (Exception e) {
                         // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
                         Object resultValue = null;
-                        FieldDefineUtil fieldDefineUtil = SpringUtil.getBean(FieldDefineUtil.class);
-                        List<Column> enumDefineList = fieldDefineUtil.getColumns(className, false);
+                        FieldDefineLoadingCache fieldDefineLoadingCache = SpringUtil.getBean(FieldDefineLoadingCache.class);
+                        List<Column> enumDefineList = fieldDefineLoadingCache.getColumns(className, false);
                         for (Column enumDef : enumDefineList) {
                             if (enumDef.getName().equals(valStr)) {
                                 switch (enumDef.getType()) {
@@ -382,8 +380,8 @@ public class ColumnUtil {
                     return value;
                 } catch (Exception e) {
                     // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
-                    FieldDefineUtil fieldDefineUtil = SpringUtil.getBean(FieldDefineUtil.class);
-                    List<Column> enumDefineList = fieldDefineUtil.getColumns(className, false);
+                    FieldDefineLoadingCache fieldDefineLoadingCache = SpringUtil.getBean(FieldDefineLoadingCache.class);
+                    List<Column> enumDefineList = fieldDefineLoadingCache.getColumns(className, false);
                     for (Column enumDef : enumDefineList) {
                         if (enumDef.getFieldName().equals(String.valueOf(value))) {
                             return enumDef.getName();
