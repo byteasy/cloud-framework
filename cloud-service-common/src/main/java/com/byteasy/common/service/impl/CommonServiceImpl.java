@@ -14,7 +14,6 @@ import com.byteasy.common.component.EntityServiceFactory;
 import com.byteasy.component.FieldDefineUtil;
 import com.byteasy.component.I18nUtil;
 import com.byteasy.dto.Column;
-import com.byteasy.dto.EntityDefineDTO;
 import com.byteasy.dto.FormatMap;
 import com.byteasy.enums.Delete;
 import com.byteasy.enums.RelationType;
@@ -23,6 +22,7 @@ import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
 import com.byteasy.exception.BizException;
 import com.byteasy.common.service.IDatabaseMetaService;
+import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.util.ColumnUtil;
 import com.byteasy.util.SqlUtil;
 import com.google.common.collect.Lists;
@@ -103,22 +103,22 @@ public class CommonServiceImpl implements ICommonService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> saveOrUpdate(String className, Map<String, Object> entity) {
-        EntityDefineDTO entityDefineDTO = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         Column primaryColumn = getPrimaryColumn(columnDefList);
 
         Object primaryKeyValue = entity.get(primaryColumn.getName());
         if (ObjectUtils.isEmpty(primaryKeyValue)) {
-            insert(entityDefineDTO, entity, columnMap, primaryColumn);
+            insert(entityDefine, entity, columnMap, primaryColumn);
             primaryKeyValue = entity.get(primaryColumn.getName());
             publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.CREATE, null, entity, className)));
         } else {
             Map<String, Object> oldEntity = getByPrimaryKey(className, primaryKeyValue);
-            update(entityDefineDTO, entity, columnMap, primaryColumn);
+            update(entityDefine, entity, columnMap, primaryColumn);
             publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, oldEntity, entity, className)));
         }
-        return getByPrimaryKey(entityDefineDTO, primaryKeyValue, columnMap, primaryColumn);
+        return getByPrimaryKey(entityDefine, primaryKeyValue, columnMap, primaryColumn);
     }
 
     @Override
@@ -128,8 +128,8 @@ public class CommonServiceImpl implements ICommonService {
             return false;
         }
 
-        EntityDefineDTO entityDefineDTO = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         Column primaryColumn = getPrimaryColumn(columnDefList);
 
@@ -149,7 +149,7 @@ public class CommonServiceImpl implements ICommonService {
 
         // 1. 批量新增
         if (CollectionUtil.isNotEmpty(insertList)) {
-            int rows = batchInsert(entityDefineDTO, insertList, columnMap);
+            int rows = batchInsert(entityDefine, insertList, columnMap);
             if (rows <= 0) {
                 success = false;
             } else {
@@ -166,9 +166,9 @@ public class CommonServiceImpl implements ICommonService {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
 
-            Map<Object, Map<String, Object>> oldDataMap = getEntitiesByIds(entityDefineDTO, ids, columnMap, primaryColumn);
+            Map<Object, Map<String, Object>> oldDataMap = getEntitiesByIds(entityDefine, ids, columnMap, primaryColumn);
 
-            batchUpdate(entityDefineDTO, updateList, columnMap, primaryColumn);
+            batchUpdate(entityDefine, updateList, columnMap, primaryColumn);
 
             for (Map<String, Object> entity : updateList) {
                 Object primaryKeyValue = entity.get(primaryColumn.getName());
@@ -182,23 +182,23 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public Map<String, Object> getByPrimaryKey(String className, Object primaryKeyValue) {
-        EntityDefineDTO entityDefineDTO = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
-        return getByPrimaryKey(entityDefineDTO, primaryKeyValue, columnMap, getPrimaryColumn(columnDefList));
+        return getByPrimaryKey(entityDefine, primaryKeyValue, columnMap, getPrimaryColumn(columnDefList));
     }
 
     @Override
     public Page<Map<String, Object>> page(String className) {
-        EntityDefineDTO entityDefineDTO = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
 
         HttpServletRequest request = getHttpServletRequest();
         Map<String, String[]> multiMap = request != null ? request.getParameterMap() : Collections.emptyMap();
 
         Pair<String, List<Object>> whereSql = SqlUtil.buildWhereSql(columnMap, multiMap);
-        String fromSql = String.format("FROM %s %s", entityDefineDTO.getTableName(), whereSql.getFirst());
+        String fromSql = String.format("FROM %s %s", entityDefine.getTableName(), whereSql.getFirst());
         String selectSql = String.format("SELECT %s %s %s %s", getSelectSql(columnMap), fromSql, buildOrderBySqlByRequest(columnMap, multiMap), buildLimitSql());
 
         List<FormatMap> list = queryListInternal(selectSql, whereSql.getValue().toArray(new Object[0]), columnMap);
@@ -227,8 +227,8 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     private List<FormatMap> listInternal(String className, Object queryArgs, boolean limitSqlEnable) {
-        EntityDefineDTO entityDefineDTO = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
 
         Pair<String, List<Object>> whereSql;
@@ -253,7 +253,7 @@ public class CommonServiceImpl implements ICommonService {
             }
         }
 
-        String fromSql = String.format("FROM %s %s", entityDefineDTO.getTableName(), whereSql.getFirst());
+        String fromSql = String.format("FROM %s %s", entityDefine.getTableName(), whereSql.getFirst());
         String selectSql = String.format("SELECT %s %s %s %s", getSelectSql(columnMap), fromSql, orderBySql, limitSql);
 
         return queryListInternal(selectSql, whereSql.getValue().toArray(new Object[0]), columnMap);
@@ -277,8 +277,8 @@ public class CommonServiceImpl implements ICommonService {
         if (MapUtils.isEmpty(entity)) {
             return false;
         }
-        EntityDefineDTO entityDefineDTO = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
         Column primaryColumn = getPrimaryColumn(columnDefList);
         return removeByPrimaryKey(className, entity.get(primaryColumn.getName()));
     }
@@ -289,8 +289,8 @@ public class CommonServiceImpl implements ICommonService {
         if (ObjectUtils.isEmpty(primaryKey)) {
             throw new BizException("primary key is null");
         }
-        EntityDefineDTO entityDefineDTO = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         Column primaryColumn = getPrimaryColumn(columnDefList);
 
@@ -330,13 +330,13 @@ public class CommonServiceImpl implements ICommonService {
 
             params.add(convertToDbValue(primaryKey, primaryColumn));
             String sql = String.format("UPDATE %s SET %s WHERE %s=?",
-                    entityDefineDTO.getTableName(),
+                    entityDefine.getTableName(),
                     setJoiner,
                     primaryColumn.getFieldName()
             );
             return jdbcTemplate.update(sql, params.toArray()) >= 1;
         } else {
-            String sql = String.format("DELETE FROM %s WHERE %s=?", entityDefineDTO.getTableName(), primaryColumn.getFieldName());
+            String sql = String.format("DELETE FROM %s WHERE %s=?", entityDefine.getTableName(), primaryColumn.getFieldName());
             return jdbcTemplate.update(sql, convertToDbValue(primaryKey, primaryColumn)) >= 1;
         }
     }
@@ -347,8 +347,8 @@ public class CommonServiceImpl implements ICommonService {
         if (CollectionUtil.isEmpty(entities)) {
             return false;
         }
-        EntityDefineDTO entityDefineDTO = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
         Map<String, Column> columnMap = CastUtil.listToMap(columnDefList, Column::getName);
         Column primaryColumn = getPrimaryColumn(columnDefList);
 
@@ -386,14 +386,14 @@ public class CommonServiceImpl implements ICommonService {
             }
 
             String sql = String.format("UPDATE %s SET %s WHERE %s IN (:primaryKeys)",
-                    entityDefineDTO.getTableName(),
+                    entityDefine.getTableName(),
                     setJoiner,
                     primaryColumn.getFieldName()
             );
             return namedParameterJdbcTemplate.update(sql, paramSource) >= 1;
         } else {
             String sql = String.format("DELETE FROM %s WHERE %s IN (:primaryKeys)",
-                    entityDefineDTO.getTableName(),
+                    entityDefine.getTableName(),
                     primaryColumn.getFieldName()
             );
             return namedParameterJdbcTemplate.update(sql, paramSource) >= 1;
@@ -402,17 +402,17 @@ public class CommonServiceImpl implements ICommonService {
 
     @Override
     public Collection<Column> getColumns(String className) {
-        EntityDefineDTO entityDefineDTO = entityDefineLoadingCache.getEntityDefine(className);
+        EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
         String schema = databaseMetaService.getCurrentSchema();
-        return databaseMetaService.getColumns(className, schema, entityDefineDTO.getTableName());
+        return databaseMetaService.getColumns(className, schema, entityDefine.getTableName());
     }
 
     @Override
     public void syncColumnsToDb(String className) {
-        EntityDefineDTO entityDefineDTO = entityDefineLoadingCache.getEntityDefine(className);
-        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefineDTO.getCode(), false);
+        EntityDefine entityDefine = entityDefineLoadingCache.getEntityDefine(className);
+        List<Column> columnDefList = fieldDefineUtil.getColumns(entityDefine.getCode(), false);
         String schema = databaseMetaService.getCurrentSchema();
-        databaseMetaService.syncColumnsToDb(columnDefList, schema, entityDefineDTO.getTableName());
+        databaseMetaService.syncColumnsToDb(columnDefList, schema, entityDefine.getTableName());
     }
 
     @Override
@@ -457,7 +457,7 @@ public class CommonServiceImpl implements ICommonService {
         return map;
     }
 
-    private Map<Object, Map<String, Object>> getEntitiesByIds(EntityDefineDTO entityDefineDTO, List<Object> ids, Map<String, Column> columnMap, Column primaryColumn) {
+    private Map<Object, Map<String, Object>> getEntitiesByIds(EntityDefine entityDefine, List<Object> ids, Map<String, Column> columnMap, Column primaryColumn) {
         if (CollectionUtil.isEmpty(ids)) {
             return Collections.emptyMap();
         }
@@ -466,7 +466,7 @@ public class CommonServiceImpl implements ICommonService {
 
         String sql = String.format("SELECT %s FROM %s WHERE %s IN (:ids)",
                 getSelectSql(columnMap),
-                entityDefineDTO.getTableName(),
+                entityDefine.getTableName(),
                 primaryColumn.getFieldName()
         );
 
@@ -478,13 +478,13 @@ public class CommonServiceImpl implements ICommonService {
         return resultMap;
     }
 
-    private Map<String, Object> getByPrimaryKey(EntityDefineDTO entityDefineDTO, Object primaryKeyValue, Map<String, Column> columnMap, Column primaryKey) {
+    private Map<String, Object> getByPrimaryKey(EntityDefine entityDefine, Object primaryKeyValue, Map<String, Column> columnMap, Column primaryKey) {
         Set<Column> externalKeys = columnMap.values().stream()
                 .filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill()))
                 .collect(Collectors.toSet());
 
         StringBuilder sql = new StringBuilder(String.format("SELECT %s FROM %s WHERE %s=?",
-                getSelectSql(columnMap), entityDefineDTO.getTableName(), primaryKey.getFieldName()));
+                getSelectSql(columnMap), entityDefine.getTableName(), primaryKey.getFieldName()));
 
         List<Object> args = Lists.newArrayList();
         args.add(convertToDbValue(primaryKeyValue, primaryKey));
@@ -510,7 +510,7 @@ public class CommonServiceImpl implements ICommonService {
 
     // ======================== 通用 Insert & Update ========================
 
-    private void insert(EntityDefineDTO entityDefineDTO, Map<String, Object> entity, Map<String, Column> columnMap, Column primaryColumn) {
+    private void insert(EntityDefine entityDefine, Map<String, Object> entity, Map<String, Column> columnMap, Column primaryColumn) {
         Set<String> columns = entity.keySet();
         if (columns.isEmpty()) return;
 
@@ -550,7 +550,7 @@ public class CommonServiceImpl implements ICommonService {
         }
 
         String sql = String.format("INSERT INTO %s (%s) VALUES (%s)",
-                entityDefineDTO.getTableName(),
+                entityDefine.getTableName(),
                 colJoiner,
                 valJoiner
         );
@@ -605,7 +605,7 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    protected int batchInsert(EntityDefineDTO entityDefineDTO, List<Map<String, Object>> entityList, Map<String, Column> columnMap) {
+    protected int batchInsert(EntityDefine entityDefine, List<Map<String, Object>> entityList, Map<String, Column> columnMap) {
         if (CollectionUtil.isEmpty(entityList)) return 0;
 
         // 计算所有实体的属性 Key 并集，避免异构 Map 丢失字段
@@ -671,7 +671,7 @@ public class CommonServiceImpl implements ICommonService {
         }
 
         String sql = String.format("INSERT INTO %s (%s) VALUES %s",
-                entityDefineDTO.getTableName(),
+                entityDefine.getTableName(),
                 colJoiner,
                 allValues
         );
@@ -679,7 +679,7 @@ public class CommonServiceImpl implements ICommonService {
         return jdbcTemplate.update(sql, totalParams.toArray());
     }
 
-    private void update(EntityDefineDTO entityDefineDTO, Map<String, Object> entity, Map<String, Column> columnMap, Column primaryColumn) {
+    private void update(EntityDefine entityDefine, Map<String, Object> entity, Map<String, Column> columnMap, Column primaryColumn) {
         Set<String> columns = entity.keySet();
         if (columns.isEmpty()) return;
 
@@ -726,14 +726,14 @@ public class CommonServiceImpl implements ICommonService {
         if (hasVersion) {
             params.add(convertToDbValue(entity.get("version"), columnMap.get("version")));
             sql = String.format("UPDATE %s SET %s WHERE %s=? AND %s=?",
-                    entityDefineDTO.getTableName(),
+                    entityDefine.getTableName(),
                     setJoiner,
                     primaryColumn.getFieldName(),
                     columnMap.get("version").getFieldName()
             );
         } else {
             sql = String.format("UPDATE %s SET %s WHERE %s=?",
-                    entityDefineDTO.getTableName(),
+                    entityDefine.getTableName(),
                     setJoiner,
                     primaryColumn.getFieldName()
             );
@@ -746,7 +746,7 @@ public class CommonServiceImpl implements ICommonService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    protected void batchUpdate(EntityDefineDTO entityDefineDTO, List<Map<String, Object>> entityList, Map<String, Column> columnMap, Column primaryColumn) {
+    protected void batchUpdate(EntityDefine entityDefine, List<Map<String, Object>> entityList, Map<String, Column> columnMap, Column primaryColumn) {
         if (CollectionUtil.isEmpty(entityList)) return;
 
         Map<String, Object> firstEntity = entityList.get(0);
@@ -791,14 +791,14 @@ public class CommonServiceImpl implements ICommonService {
         String sql;
         if (hasVersion) {
             sql = String.format("UPDATE %s SET %s WHERE %s=? AND %s=?",
-                    entityDefineDTO.getTableName(),
+                    entityDefine.getTableName(),
                     setJoiner,
                     primaryColumn.getFieldName(),
                     columnMap.get("version").getFieldName()
             );
         } else {
             sql = String.format("UPDATE %s SET %s WHERE %s=?",
-                    entityDefineDTO.getTableName(),
+                    entityDefine.getTableName(),
                     setJoiner,
                     primaryColumn.getFieldName()
             );
