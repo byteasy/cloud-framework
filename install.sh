@@ -11,13 +11,16 @@ mvn clean install
 cd ../cloud-service-core
 mvn clean install
 
-cd ../cloud-service-starter
-mvn clean install
-
 cd ../cloud-platform/platform-api
 mvn clean install
 
 cd ../../cloud-script-sdk
+mvn clean install
+
+cd ../../cloud-permission-sdk
+mvn clean install
+
+cd ../cloud-service-starter
 mvn clean install
 
 cd ../cloud-redis-service
