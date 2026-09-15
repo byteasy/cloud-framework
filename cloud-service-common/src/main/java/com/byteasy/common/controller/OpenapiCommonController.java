@@ -134,7 +134,7 @@ public class OpenapiCommonController {
     @Openapi
     @Operation(summary = "下载Excel导入模板")
     public void downloadImportTemplate(@PathVariable("className") String className, HttpServletResponse response) throws Exception {
-        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(className, false);
+        List<FieldDefine> columns = fieldDefineLoadingCache.load(className);
 
         columns = columns.stream().filter(s -> YesNo.YES.equals(s.getIsForm())).toList();
 
@@ -198,7 +198,7 @@ public class OpenapiCommonController {
             return Result.success(Collections.emptyList());
         }
 
-        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(className, false);
+        List<FieldDefine> columns = fieldDefineLoadingCache.load(className);
         columns = columns.stream().filter(s -> YesNo.YES.equals(s.getIsForm())).toList();
 
         boolean success = true;
@@ -323,7 +323,7 @@ public class OpenapiCommonController {
         }
         List<Map<String, Object>> entities = JacksonUtil.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
         });
-        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(className, false);
+        List<FieldDefine> columns = fieldDefineLoadingCache.load(className);
         for (Map<String, Object> entity : entities) {
             validEntity(entity, columns);
         }
@@ -345,7 +345,7 @@ public class OpenapiCommonController {
     @Openapi
     @Operation(summary = "Excel数据导出")
     public void exportExcel(@PathVariable("className") String className, @RequestBody List<String> fieldNames, HttpServletResponse response) throws Exception {
-        List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(className, false);
+        List<FieldDefine> columns = fieldDefineLoadingCache.load(className);
         Map<String, FieldDefine> columnMap = CastUtil.listToMap(columns, FieldDefine::getName);
 
         List<String> displayNameRow = Lists.newArrayList();

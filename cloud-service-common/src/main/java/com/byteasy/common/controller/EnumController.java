@@ -30,7 +30,7 @@ public class EnumController {
     @Openapi
     public Result<List<Map<String, String>>> getEnumByClassName(@PathVariable("enumClassName") String enumClassName) {
         try {
-            List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(enumClassName, false);
+            List<FieldDefine> columns = fieldDefineLoadingCache.load(enumClassName);
             List<Map<String, String>> result = Lists.newArrayListWithCapacity(columns.size());
 
             for (FieldDefine column : columns) {

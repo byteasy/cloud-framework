@@ -2,7 +2,7 @@ package com.byteasy.platform.controller;
 
 import com.byteasy.Constant;
 import com.byteasy.Result;
-import com.byteasy.annotations.Authentication;
+import com.byteasy.annotations.Openapi;
 import com.byteasy.common.controller.AuditController;
 import com.byteasy.enums.YesNo;
 import com.byteasy.platform.entity.ResourceCategory;
@@ -11,7 +11,6 @@ import com.byteasy.platform.service.IResourceCategoryService;
 import com.byteasy.platform.service.IUserRoleService;
 import com.byteasy.platform.vo.ResourceCategoryVO;
 import com.byteasy.platform.vo.TopMenuVO;
-import io.swagger.v3.oas.annotations.Operation;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -34,8 +33,7 @@ public class ResourceCategoryController extends AuditController<Long, IResourceC
     private IUserRoleService userRoleService;
 
     @GetMapping("/topMenu")
-    @Operation(summary = "根据登录用户查询用户拥有的业务领域一级、二级、三级菜单")
-    @Authentication
+    @Openapi(title = "根据登录用户查询用户拥有的业务领域一级、二级、三级菜单")
     public Result<TopMenuVO> selectResourceCategory() {
         TopMenuVO topMenuVO = new TopMenuVO();
         topMenuVO.setResourceCategoryVOS(userRoleService.selectCategoryByLoginUser());
@@ -55,23 +53,20 @@ public class ResourceCategoryController extends AuditController<Long, IResourceC
     }
 
     @GetMapping("/tree")
-    @Operation(summary = "查询领域分类及领域分组，构建二级目录")
-    @Authentication
+    @Openapi(title = "查询领域分类及领域分组，构建二级目录")
     public Result<List<ResourceCategoryVO>> listTree() {
         return Result.success(baseService.listTree());
     }
 
     @DeleteMapping("/treeNode")
-    @Operation(summary = "删除树节点及子节点及关联的ResourceGroup")
-    @Authentication
+    @Openapi(title = "删除树节点及子节点及关联的ResourceGroup")
     public Result deleteTreeNode(@RequestBody ResourceCategoryVO resourceCategoryTreeVO) {
         baseService.deleteTreeNode(resourceCategoryTreeVO);
         return Result.success();
     }
 
     @GetMapping("/resourceGroupTree")
-    @Operation(summary = "查询所有的业务领域一级、二级、三级菜单")
-    @Authentication
+    @Openapi(title = "查询所有的业务领域一级、二级、三级菜单")
     public Result<List<ResourceCategoryVO>> listResourceGroupTree() {
         return Result.success(baseService.listResourceGroupTree());
     }

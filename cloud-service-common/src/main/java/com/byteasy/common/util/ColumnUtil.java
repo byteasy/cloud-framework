@@ -8,7 +8,6 @@ import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.byteasy.annotations.FieldDisplay;
 import com.byteasy.annotations.FieldMeta;
 import com.byteasy.common.component.FieldDefineLoadingCache;
 import com.byteasy.entity.LogicDeleteEntity;
@@ -20,10 +19,8 @@ import com.google.common.collect.Sets;
 import io.swagger.v3.core.util.ReflectionUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.cglib.proxy.Proxy;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -152,10 +149,6 @@ public class ColumnUtil {
         if (fieldMeta != null && StringUtils.isNotEmpty(fieldMeta.name())) {
             return fieldMeta.name();
         }
-        FieldDisplay fieldDisplay = ReflectionUtils.getAnnotation(cls, FieldDisplay.class);
-        if (fieldDisplay != null && StringUtils.isNotEmpty(fieldDisplay.name())) {
-            return fieldDisplay.name();
-        }
         Schema schema = ReflectionUtils.getAnnotation(cls, Schema.class);
         if (schema != null && StringUtils.isNotEmpty(schema.name())) {
             return schema.name();
@@ -175,10 +168,6 @@ public class ColumnUtil {
         FieldMeta fieldMeta = ReflectionUtils.getAnnotation(cls, FieldMeta.class);
         if (fieldMeta != null && StringUtils.isNotEmpty(fieldMeta.description())) {
             return fieldMeta.description();
-        }
-        FieldDisplay fieldDisplay = ReflectionUtils.getAnnotation(cls, FieldDisplay.class);
-        if (fieldDisplay != null && StringUtils.isNotEmpty(fieldDisplay.description())) {
-            return fieldDisplay.description();
         }
         Schema schema = ReflectionUtils.getAnnotation(cls, Schema.class);
         if (schema != null && StringUtils.isNotEmpty(schema.description())) {
@@ -224,25 +213,7 @@ public class ColumnUtil {
     }
 
     public static FieldMeta getFieldMeta(Field field) {
-        FieldMeta meta = field.getAnnotation(FieldMeta.class);
-        if (meta != null) return meta;
-
-        FieldDisplay display = field.getAnnotation(FieldDisplay.class);
-        if (display == null) return null;
-
-        // 动态代理自动映射同名字段（超级优雅）
-        return (FieldMeta) Proxy.newProxyInstance(
-                FieldMeta.class.getClassLoader(),
-                new Class[]{FieldMeta.class},
-                (proxy, method, args) -> {
-                    try {
-                        Method displayMethod = FieldDisplay.class.getMethod(method.getName());
-                        return displayMethod.invoke(display);
-                    } catch (Exception e) {
-                        return null;
-                    }
-                }
-        );
+        return field.getAnnotation(FieldMeta.class);
     }
 
     public static Set<String> getFieldNames(Class<?> cls) {
@@ -334,7 +305,7 @@ public class ColumnUtil {
                         // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
                         Object resultValue = null;
                         FieldDefineLoadingCache fieldDefineLoadingCache = SpringUtil.getBean(FieldDefineLoadingCache.class);
-                        List<FieldDefine> enumDefineList = fieldDefineLoadingCache.getColumns(className, false);
+                        List<FieldDefine> enumDefineList = fieldDefineLoadingCache.load(className);
                         for (FieldDefine enumDef : enumDefineList) {
                             if (enumDef.getName().equals(valStr)) {
                                 switch (enumDef.getType()) {
@@ -381,7 +352,7 @@ public class ColumnUtil {
                 } catch (Exception e) {
                     // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
                     FieldDefineLoadingCache fieldDefineLoadingCache = SpringUtil.getBean(FieldDefineLoadingCache.class);
-                    List<FieldDefine> enumDefineList = fieldDefineLoadingCache.getColumns(className, false);
+                    List<FieldDefine> enumDefineList = fieldDefineLoadingCache.load(className);
                     for (FieldDefine enumDef : enumDefineList) {
                         if (enumDef.getFieldName().equals(String.valueOf(value))) {
                             return enumDef.getName();
