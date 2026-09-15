@@ -111,7 +111,7 @@ public class JsFunctionFactory implements IPlatformReady {
                     }
                     ServiceInstance randomService = random(instances);
                     try {
-                        String result = OkHttpUtil.postJson(randomService.getUri().toString() + serviceInstanceLoadingCache.getServiceInstance(scriptFunction.getServiceCode()).getContextPath() + Constant.SAPI + "/scriptFunctionRunner/run/" + scriptFunction.getName(), JacksonUtil.toJson(args, true), header, null);
+                        String result = OkHttpUtil.postJson(randomService.getUri().toString() + serviceInstanceLoadingCache.load(scriptFunction.getServiceCode()).getContextPath() + Constant.SAPI + "/scriptFunctionRunner/run/" + scriptFunction.getName(), JacksonUtil.toJson(args, true), header, null);
                         return JacksonUtil.parseObj(result);
                     } catch (Exception e) {
                         log.error(scriptFunction.getName() + " remote call err", e);

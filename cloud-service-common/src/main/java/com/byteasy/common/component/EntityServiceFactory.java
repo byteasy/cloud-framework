@@ -5,6 +5,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.common.token.TokenUtil;
@@ -14,11 +15,14 @@ import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.component.CacheFactory;
+import com.byteasy.component.I18nUtil;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.dto.Column;
 import com.byteasy.dto.FormatMap;
 import com.byteasy.entity.Entity;
 import com.byteasy.enums.RelationType;
+import com.byteasy.event.IPlatformReady;
+import com.byteasy.platform.api.IEntityDefineService;
 import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.util.ColumnUtil;
 import com.byteasy.util.FieldValueUtil;
@@ -27,17 +31,21 @@ import com.google.common.collect.Maps;
 import jakarta.annotation.Resource;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Component
 @Log4j2
-public class EntityServiceFactory {
+public class EntityServiceFactory implements ApplicationContextAware, IPlatformReady {
 
     @Autowired
     private CacheFactory cacheFactory;
@@ -45,6 +53,19 @@ public class EntityServiceFactory {
     private EntityDefineLoadingCache entityDefineLoadingCache;
     @Resource
     private DiscoveryClient discoveryClient;
+    @Autowired
+    private IEntityDefineService entityDefineService;
+
+    private static Map<Class<?>, ServiceImpl> entityServiceMap = new HashMap<Class<?>, ServiceImpl>();
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        Map<String, ServiceImpl> map = applicationContext.getBeansOfType(ServiceImpl.class);
+        for (ServiceImpl value : map.values()) {
+            entityServiceMap.put(value.getEntityClass(), value);
+            log.info("entity class: {}, service: {}", value.getEntityClass().getName(), value.getClass().getName());
+        }
+    }
 
     public void updateExternalEntity(Set<Column> externalKeys, List entities) {
         if (entities.isEmpty()) {
@@ -157,5 +178,45 @@ public class EntityServiceFactory {
         }
         int random = RandomUtil.randomInt(list.size());
         return list.get(random);
+    }
+
+    @Override
+    public void platformReady() {
+        log.info("EntityServiceFactory platformReady");
+        try {
+            List<EntityDefine> list = new ArrayList<>();
+            for (ServiceImpl service : entityServiceMap.values()) {
+                Class<?> entityClass = service.getEntityClass();
+
+                EntityDefine entityDefineDTO = new EntityDefine();
+                entityDefineDTO.setCode(entityClass.getName());
+                entityDefineDTO.setTableName(ColumnUtil.getTableName(entityClass));
+                String classDesc = ColumnUtil.getSchemaDescription(entityClass);
+                String className = ColumnUtil.getSchemaName(entityClass);
+                if (StringUtils.isEmpty(className)) {
+                    className = entityClass.getSimpleName();
+                }
+                if (StringUtils.isEmpty(classDesc)) {
+                    classDesc = entityClass.getSimpleName();
+                }
+                if (className.startsWith("{")) {
+                    entityDefineDTO.setName(className);
+                } else {
+                    entityDefineDTO.setName(I18nUtil.convertI18nFieldZhValue(className));
+                }
+                entityDefineDTO.setRemark(classDesc);
+                entityDefineDTO.setServiceCode(SpringUtil.getApplicationName());
+                list.add(entityDefineDTO);
+            }
+            Result result = entityDefineService.saveOrUpdateBatch(list);
+            log.info("ServiceInstanceAutoRegister registerEntityDefine result: {}", JacksonUtil.toJson(result));
+        } catch (Exception e) {
+            log.error("ServiceInstanceAutoRegister err", e);
+        }
+    }
+
+    @Override
+    public int order() {
+        return Integer.MIN_VALUE + 1;
     }
 }

@@ -1,15 +1,8 @@
 package com.byteasy.component;
 
 import cn.hutool.extra.spring.SpringUtil;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.byteasy.Result;
-import com.byteasy.api.IEntityDefineService;
-import com.byteasy.common.util.JacksonUtil;
-import com.byteasy.dto.EntityDefineDTO;
 import com.byteasy.event.IPlatformReady;
-import com.byteasy.util.ColumnUtil;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
@@ -17,7 +10,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -29,10 +21,6 @@ public class AsyncWaitServiceListener {
 
     @Autowired
     private DiscoveryClient discoveryClient;
-    @Autowired
-    private IEntityDefineService entityDefineService;
-    @Autowired
-    private EntityServiceFactory entityServiceFactory;
 
     private static final String TARGET_SERVICE = "platform-service";
 
@@ -68,40 +56,6 @@ public class AsyncWaitServiceListener {
         for (IPlatformReady iPlatformReady : list) {
             iPlatformReady.platformReady();
         }
-        registerEntityDefine();
     }
 
-
-    private void registerEntityDefine() {
-        try {
-            List<EntityDefineDTO> list = new ArrayList<>();
-            for (ServiceImpl service : entityServiceFactory.getEntityService()) {
-                Class<?> entityClass = service.getEntityClass();
-
-                EntityDefineDTO entityDefineDTO = new EntityDefineDTO();
-                entityDefineDTO.setCode(entityClass.getName());
-                entityDefineDTO.setTableName(ColumnUtil.getTableName(entityClass));
-                String classDesc = ColumnUtil.getSchemaDescription(entityClass);
-                String className = ColumnUtil.getSchemaName(entityClass);
-                if (StringUtils.isEmpty(className)) {
-                    className = entityClass.getSimpleName();
-                }
-                if (StringUtils.isEmpty(classDesc)) {
-                    classDesc = entityClass.getSimpleName();
-                }
-                if (className.startsWith("{")) {
-                    entityDefineDTO.setName(className);
-                } else {
-                    entityDefineDTO.setName(I18nUtil.convertI18nFieldZhValue(className));
-                }
-                entityDefineDTO.setRemark(classDesc);
-                entityDefineDTO.setServiceCode(SpringUtil.getApplicationName());
-                list.add(entityDefineDTO);
-            }
-            Result result = entityDefineService.saveOrUpdateBatch(list);
-            log.info("ServiceInstanceAutoRegister registerEntityDefine result: {}", JacksonUtil.toJson(result));
-        } catch (Exception e) {
-            log.error("ServiceInstanceAutoRegister err", e);
-        }
-    }
 }
