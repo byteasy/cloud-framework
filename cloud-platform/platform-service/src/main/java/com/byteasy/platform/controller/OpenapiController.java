@@ -5,10 +5,7 @@ import com.byteasy.Result;
 import com.byteasy.common.controller.AuditController;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.platform.service.IOpenapiService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * <p>
@@ -27,4 +24,11 @@ public class OpenapiController extends AuditController<Long, IOpenapiService, Op
     public Result<Openapi> getByUriAndMethod(@RequestParam("actualUri") String actualUri, @RequestParam("uri") String uri, @RequestParam("method") Openapi.HttpMethod method) {
         return Result.success(baseService.getByUriAndMethod(actualUri, uri, method));
     }
+
+    @GetMapping("/codes/{code}")
+    @com.byteasy.annotations.Openapi
+    public Result<Openapi> getByCode(@PathVariable("code") String code) {
+        return Result.success(baseService.getByCode(code));
+    }
+
 }

@@ -8,6 +8,11 @@ public class IOpenapiServiceFallback extends IBaseEntityServiceFallback<Long, Op
 
     @Override
     public Result<Openapi> getByUriAndMethod(String actualUri, String uri, Openapi.HttpMethod method) {
-        return null;
+        return Result.error();
+    }
+
+    @Override
+    public Result<Openapi> getByCode(String code) {
+        return Result.error();
     }
 }

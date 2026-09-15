@@ -1,6 +1,7 @@
-package com.byteasy.util;
+package com.byteasy.common;
 
 
+import com.byteasy.common.util.ColumnUtil;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.dto.Column;
 import com.byteasy.enums.YesNo;

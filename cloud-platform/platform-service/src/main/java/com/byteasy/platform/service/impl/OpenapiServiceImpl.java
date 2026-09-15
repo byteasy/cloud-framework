@@ -40,4 +40,11 @@ public class OpenapiServiceImpl extends ServiceImpl<OpenapiMapper, Openapi> impl
         openapi = getOne(queryWrapper, false);
         return openapi;
     }
+
+    @Override
+    public Openapi getByCode(String code) {
+        LambdaQueryWrapper<Openapi> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Openapi::getCode, code);
+        return getOne(queryWrapper, false);
+    }
 }

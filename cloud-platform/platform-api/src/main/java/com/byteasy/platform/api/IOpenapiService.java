@@ -6,6 +6,7 @@ import com.byteasy.platform.Constant;
 import com.byteasy.platform.entity.Openapi;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = Constant.SERVICE_NAME,
@@ -18,4 +19,7 @@ public interface IOpenapiService extends IBaseEntityService<Long, Openapi> {
     Result<Openapi> getByUriAndMethod(@RequestParam("actualUri") String actualUri,
                                       @RequestParam("uri") String uri,
                                       @RequestParam("method") Openapi.HttpMethod method);
+
+    @GetMapping("/codes/{code}")
+    Result<Openapi> getByCode(@PathVariable("code") String code);
 }

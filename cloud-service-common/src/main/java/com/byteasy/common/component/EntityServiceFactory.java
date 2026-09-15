@@ -74,8 +74,8 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
         for (Column externalKey : externalKeys) {
             try {
                 String className = externalKey.getExternalClass();
-                EntityDefine entityDefineDTO = entityDefineLoadingCache.getEntityDefine(className);
-                if (entityDefineDTO == null) {
+                EntityDefine entityDefine = entityDefineLoadingCache.load(className);
+                if (entityDefine == null) {
                     log.error("entityDefineDTO is null, className: {}", className);
                     continue;
                 }
@@ -93,10 +93,10 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
                             map.put(FieldValueUtil.getFieldValue(externalEntity, externalKey.getExternalClassPrimaryField()), externalEntity);
                         }
                     } else {
-                        String url = ((Map) entityDefineDTO.getExtendField().get("serviceInstance")).get("contextPath").toString() + Constant.SAPI + "/common/" + className + "/all";
-                        List<ServiceInstance> instances = discoveryClient.getInstances(entityDefineDTO.getServiceCode());
+                        String url = ((Map) entityDefine.getExtendField().get("serviceInstance")).get("contextPath").toString() + Constant.SAPI + "/common/" + className + "/all";
+                        List<ServiceInstance> instances = discoveryClient.getInstances(entityDefine.getServiceCode());
                         if (instances.isEmpty()) {
-                            log.error("updateExternalEntity err, because no instances for service {}", entityDefineDTO.getServiceCode());
+                            log.error("updateExternalEntity err, because no instances for service {}", entityDefine.getServiceCode());
                             return;
                         }
 
@@ -143,9 +143,9 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
                         if (entity instanceof Entity<?>) {
                             Entity e = (Entity) entity;
                             // 将明细表的表头名称设置到对象属性里，前端展示后弹出明细表
-                            ReflectUtil.setFieldValue(e, externalKey.getName(), entityDefineDTO.getName());
+                            ReflectUtil.setFieldValue(e, externalKey.getName(), entityDefine.getName());
                         } else if (entity instanceof FormatMap) {
-                            ((FormatMap) entity).put(externalKey.getName(), entityDefineDTO.getName());
+                            ((FormatMap) entity).put(externalKey.getName(), entityDefine.getName());
                         }
                     }
                 }
