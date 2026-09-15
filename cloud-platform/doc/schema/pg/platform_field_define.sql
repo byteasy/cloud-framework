@@ -10,7 +10,7 @@ CREATE TABLE "platform_field_define"
     display_name                 VARCHAR(1024),
     type                         SMALLINT     NOT NULL DEFAULT 0,
     type_class_name              VARCHAR(255),
-    group_id                     BIGINT       DEFAULT NULL,
+    group_id                     BIGINT                DEFAULT NULL,
     is_primary                   SMALLINT     NOT NULL DEFAULT 0,
     is_show                      SMALLINT     NOT NULL DEFAULT 1,
     is_sort                      SMALLINT     NOT NULL DEFAULT 0,
@@ -39,10 +39,12 @@ CREATE TABLE "platform_field_define"
     external_class_primary_field VARCHAR(80)           DEFAULT NULL,
     inner_primary_field          VARCHAR(80)           DEFAULT NULL,
     external_class_display_field VARCHAR(80)           DEFAULT NULL,
-    external_class_auto_fill     BOOLEAN   NOT NULL DEFAULT 0,
+    external_class_auto_fill     BOOLEAN      NOT NULL DEFAULT 0,
     field_component              VARCHAR(512)          DEFAULT NULL,
     column_component             VARCHAR(512)          DEFAULT NULL,
     extras_params                VARCHAR(512)          DEFAULT NULL,
+    serial_pattern               VARCHAR(128)          DEFAULT NULL,
+    timezone                     VARCHAR(128)          DEFAULT NULL,
     creator_id                   VARCHAR(64)  NOT NULL,
     created_by                   VARCHAR(64)  NOT NULL,
     created_time                 TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -94,6 +96,8 @@ COMMENT ON COLUMN "platform_field_define"."external_class_display_field" IS '关
 COMMENT ON COLUMN "platform_field_define"."external_class_auto_fill" IS '接口自动填充';
 COMMENT ON COLUMN "platform_field_define"."field_component" IS '表单自定义组件';
 COMMENT ON COLUMN "platform_field_define"."column_component" IS '表格列自定义组件';
+COMMENT ON COLUMN "platform_field_define"."serial_pattern" IS '序列化格式';
+COMMENT ON COLUMN "platform_field_define"."timezone" IS '时区';
 
 -- 父类AuditEntity审计字段
 COMMENT ON COLUMN "platform_field_define".created_by IS '创建人ID';

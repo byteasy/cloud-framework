@@ -4,7 +4,7 @@ import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.component.FieldDefineLoadingCache;
-import com.byteasy.dto.Column;
+import com.byteasy.platform.entity.FieldDefine;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,10 +30,10 @@ public class EnumController {
     @Openapi
     public Result<List<Map<String, String>>> getEnumByClassName(@PathVariable("enumClassName") String enumClassName) {
         try {
-            List<Column> columns = fieldDefineLoadingCache.getColumns(enumClassName, false);
+            List<FieldDefine> columns = fieldDefineLoadingCache.getColumns(enumClassName, false);
             List<Map<String, String>> result = Lists.newArrayListWithCapacity(columns.size());
 
-            for (Column column : columns) {
+            for (FieldDefine column : columns) {
                 Map<String, String> map = Maps.newHashMapWithExpectedSize(4);
                 map.put("label", column.getDisplayName());
                 map.put("value", column.getName());

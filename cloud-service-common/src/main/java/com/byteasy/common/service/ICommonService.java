@@ -1,7 +1,7 @@
 package com.byteasy.common.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.byteasy.dto.Column;
+import com.byteasy.platform.entity.FieldDefine;
 
 import java.util.Collection;
 import java.util.List;
@@ -29,9 +29,9 @@ public interface ICommonService {
 
     boolean batchDelete(String className, List<Map<String, Object>> entities);
 
-    Collection<Column> getColumns(String className);
+    Collection<FieldDefine> getColumns(String className);
 
     void syncColumnsToDb(String className);
 
-    Collection<Column> getColumnsByTableName(String tableName);
+    Collection<FieldDefine> getColumnsByTableName(String tableName);
 }

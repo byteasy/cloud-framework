@@ -1,9 +1,7 @@
 package com.byteasy.platform.service;
 
-import com.byteasy.dto.Column;
 import com.byteasy.platform.entity.FieldDefine;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.byteasy.platform.vo.SchemaClassTreeVO;
 
 import java.util.List;
 
@@ -17,7 +15,7 @@ import java.util.List;
  */
 public interface IFieldDefineService extends IService<FieldDefine> {
 
-    List<Column> queryByClassName(String className);
+    List<FieldDefine> queryByClassName(String className);
 
     void syncSchemaMetaInfo(String serviceName, String className, List<FieldDefine> fieldDefines);
 }

@@ -1,9 +1,6 @@
-package com.byteasy.component;
+package com.byteasy.util;
 
-import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.json.JSONObject;
-import com.byteasy.dto.Column;
-import com.byteasy.enums.YesNo;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +8,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 @Component
 @Log4j2
@@ -78,22 +73,6 @@ public class I18nUtil {
         JSONObject obj = new JSONObject();
         obj.put(lang, raw);
         return obj.toString();
-    }
-
-    public static <T> void encodeToI18nFormat(List entities, List<Column> columns) {
-        for (Column column : columns) {
-            if (YesNo.YES.equals(column.getIsI18n())) {
-                for (Object entity : entities) {
-                    if (entity instanceof Map) {
-                        Object raw = ((Map) entity).get(column.getName());
-                        ((Map) entity).put(column.getName(), genLanguageValue(String.valueOf(raw)));
-                    } else {
-                        Object raw = ReflectUtil.getFieldValue(entity, column.getName());
-                        ReflectUtil.setFieldValue(entity, column.getName(), genLanguageValue(String.valueOf(raw)));
-                    }
-                }
-            }
-        }
     }
 
     public static String convertI18nFieldZhValue(String chinese) {

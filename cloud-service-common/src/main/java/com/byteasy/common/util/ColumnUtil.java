@@ -11,9 +11,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.byteasy.annotations.FieldDisplay;
 import com.byteasy.annotations.FieldMeta;
 import com.byteasy.common.component.FieldDefineLoadingCache;
-import com.byteasy.dto.Column;
 import com.byteasy.entity.LogicDeleteEntity;
 import com.byteasy.enums.*;
+import com.byteasy.platform.entity.FieldDefine;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -34,15 +34,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ColumnUtil {
-    public static Map<String, Column> getColumns(Class<?> cls) {
+    public static Map<String, FieldDefine> getColumns(Class<?> cls) {
         if (Enum.class.isAssignableFrom(cls)) {
             return ColumnUtil.getEnumColumns(cls);
         }
-        Map<String, Column> map = new HashMap<>();
+        Map<String, FieldDefine> map = new HashMap<>();
 
         List<Field> fields = ReflectionUtils.getDeclaredFields(cls);
         for (Field field : fields) {
-            Column column = new Column();
+            FieldDefine column = new FieldDefine();
             column.setClassName(cls.getName());
             Schema schema = field.getAnnotation(Schema.class);
             FieldMeta fieldMeta = getFieldMeta(field);
@@ -188,13 +188,13 @@ public class ColumnUtil {
     }
 
 
-    public static Map<String, Column> getEnumColumns(Class<?> cls) {
+    public static Map<String, FieldDefine> getEnumColumns(Class<?> cls) {
         if (IBaseEnum.class.isAssignableFrom(cls)) {
             Class<? extends IBaseEnum> enumCls = (Class<? extends IBaseEnum>) cls;
             IBaseEnum[] enums = enumCls.getEnumConstants();
-            Map<String, Column> result = Maps.newHashMapWithExpectedSize(enums.length);
+            Map<String, FieldDefine> result = Maps.newHashMapWithExpectedSize(enums.length);
             for (IBaseEnum anEnum : enums) {
-                Column column = new Column();
+                FieldDefine column = new FieldDefine();
                 column.setClassName(cls.getName());
                 column.setName(anEnum.getEnumName());
                 JSONObject jsonObject = new JSONObject();
@@ -207,9 +207,9 @@ public class ColumnUtil {
             return result;
         } else {
             List<String> names = EnumUtil.getNames((Class<? extends Enum<?>>) cls);
-            Map<String, Column> result = Maps.newHashMapWithExpectedSize(names.size());
+            Map<String, FieldDefine> result = Maps.newHashMapWithExpectedSize(names.size());
             for (String name : names) {
-                Column column = new Column();
+                FieldDefine column = new FieldDefine();
                 column.setClassName(cls.getName());
                 column.setName(name);
                 JSONObject jsonObject = new JSONObject();
@@ -280,7 +280,7 @@ public class ColumnUtil {
         return jsonObject.get(fieldName);
     }
 
-    public static Set<Object> getPrimaryKeys(Column primaryKey, List<Map<String, Object>> entities) {
+    public static Set<Object> getPrimaryKeys(FieldDefine primaryKey, List<Map<String, Object>> entities) {
         Set<Object> result = Sets.newHashSet();
         for (Map<String, Object> entity : entities) {
             result.add(convertToDbValue(entity.get(primaryKey.getName()), primaryKey));
@@ -288,7 +288,7 @@ public class ColumnUtil {
         return result;
     }
 
-    public static Object convertToDbValue(Object value, Column column) {
+    public static Object convertToDbValue(Object value, FieldDefine column) {
         if (value == null) {
             return null;
         }
@@ -334,8 +334,8 @@ public class ColumnUtil {
                         // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
                         Object resultValue = null;
                         FieldDefineLoadingCache fieldDefineLoadingCache = SpringUtil.getBean(FieldDefineLoadingCache.class);
-                        List<Column> enumDefineList = fieldDefineLoadingCache.getColumns(className, false);
-                        for (Column enumDef : enumDefineList) {
+                        List<FieldDefine> enumDefineList = fieldDefineLoadingCache.getColumns(className, false);
+                        for (FieldDefine enumDef : enumDefineList) {
                             if (enumDef.getName().equals(valStr)) {
                                 switch (enumDef.getType()) {
                                     case BYTE, SHORT, INT, LONG -> resultValue = Long.valueOf(enumDef.getFieldName());
@@ -356,7 +356,7 @@ public class ColumnUtil {
     }
 
 
-    public static Object convertToEntityValue(Object value, Column column) {
+    public static Object convertToEntityValue(Object value, FieldDefine column) {
         switch (column.getType()) {
             case ENUM -> {
                 String className = column.getTypeClassName();
@@ -381,8 +381,8 @@ public class ColumnUtil {
                 } catch (Exception e) {
                     // 枚举从数据库中定义的1、2、3...等转为枚举字母单词
                     FieldDefineLoadingCache fieldDefineLoadingCache = SpringUtil.getBean(FieldDefineLoadingCache.class);
-                    List<Column> enumDefineList = fieldDefineLoadingCache.getColumns(className, false);
-                    for (Column enumDef : enumDefineList) {
+                    List<FieldDefine> enumDefineList = fieldDefineLoadingCache.getColumns(className, false);
+                    for (FieldDefine enumDef : enumDefineList) {
                         if (enumDef.getFieldName().equals(String.valueOf(value))) {
                             return enumDef.getName();
                         }

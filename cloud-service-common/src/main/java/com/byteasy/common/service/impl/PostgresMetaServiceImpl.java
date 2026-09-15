@@ -3,11 +3,11 @@ package com.byteasy.common.service.impl;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.byteasy.common.util.NameConvertUtil;
-import com.byteasy.dto.Column;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;
 import com.byteasy.common.service.IDatabaseMetaService;
+import com.byteasy.platform.entity.FieldDefine;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,7 +28,7 @@ public class PostgresMetaServiceImpl implements IDatabaseMetaService {
     }
 
     @Override
-    public Collection<Column> getColumns(String className, String schema, String tableName) {
+    public Collection<FieldDefine> getColumns(String className, String schema, String tableName) {
         String sql = """
                 SELECT a.attname AS column_name,
                     pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type,
@@ -49,8 +49,8 @@ public class PostgresMetaServiceImpl implements IDatabaseMetaService {
                 ORDER BY a.attnum
                 """;
 
-        List<Column> list = jdbcTemplate.query(sql, new String[]{schema, tableName}, (rs, rowNum) -> {
-            Column column = new Column();
+        List<FieldDefine> list = jdbcTemplate.query(sql, new String[]{schema, tableName}, (rs, rowNum) -> {
+            FieldDefine column = new FieldDefine();
             column.setClassName(className);
             column.setFieldName(rs.getString("column_name"));
             column.setName(NameConvertUtil.underlineToCamel(column.getFieldName()));
@@ -65,7 +65,7 @@ public class PostgresMetaServiceImpl implements IDatabaseMetaService {
             return column;
         });
         int showOrder = 1;
-        for (Column column : list) {
+        for (FieldDefine column : list) {
             column.setShowOrder(showOrder++);
         }
         return list;
@@ -73,7 +73,7 @@ public class PostgresMetaServiceImpl implements IDatabaseMetaService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void syncColumnsToDb(Collection<Column> columns, String schema, String tableName) {
+    public void syncColumnsToDb(Collection<FieldDefine> columns, String schema, String tableName) {
         if (StringUtils.isEmpty(tableName)) {
             throw new BizException("table name is empty");
         }
@@ -106,13 +106,13 @@ public class PostgresMetaServiceImpl implements IDatabaseMetaService {
     /**
      * 创建新表
      */
-    private void createTable(String fullTableName, String schema, String tableName, Collection<Column> columns) {
+    private void createTable(String fullTableName, String schema, String tableName, Collection<FieldDefine> columns) {
         StringBuilder createSql = new StringBuilder("CREATE TABLE ").append(fullTableName).append(" (\n");
         List<String> columnDefs = new ArrayList<>();
         List<String> primaryKeys = new ArrayList<>();
         List<String> commentSqls = new ArrayList<>();
 
-        for (Column col : columns) {
+        for (FieldDefine col : columns) {
             String fieldName = col.getFieldName();
             if (StringUtils.isEmpty(fieldName)) {
                 fieldName = NameConvertUtil.camelToUnderline(col.getName());
@@ -156,13 +156,13 @@ public class PostgresMetaServiceImpl implements IDatabaseMetaService {
     /**
      * 对比现有列进行增量更新（新增列、改类型、非空、注释）
      */
-    private void updateTableColumns(String fullTableName, String schema, String tableName, Collection<Column> columns) {
+    private void updateTableColumns(String fullTableName, String schema, String tableName, Collection<FieldDefine> columns) {
         // 获取数据库现有字段元数据
-        Collection<Column> existingColumns = getColumns(null, schema, tableName);
-        Map<String, Column> existingMap = existingColumns.stream()
+        Collection<FieldDefine> existingColumns = getColumns(null, schema, tableName);
+        Map<String, FieldDefine> existingMap = existingColumns.stream()
                 .collect(Collectors.toMap(c -> c.getFieldName().toLowerCase(), c -> c, (k1, k2) -> k1));
 
-        for (Column col : columns) {
+        for (FieldDefine col : columns) {
             String fieldName = col.getFieldName();
             if (StringUtils.isEmpty(fieldName)) {
                 fieldName = NameConvertUtil.camelToUnderline(col.getName());
@@ -170,7 +170,7 @@ public class PostgresMetaServiceImpl implements IDatabaseMetaService {
             String targetPgType = convertToPgType(col);
             String comment = extractComment(col);
 
-            Column existCol = existingMap.get(fieldName.toLowerCase());
+            FieldDefine existCol = existingMap.get(fieldName.toLowerCase());
 
             if (existCol == null) {
                 // 1. 字段不存在：执行 ADD COLUMN
@@ -218,7 +218,7 @@ public class PostgresMetaServiceImpl implements IDatabaseMetaService {
     /**
      * 正向映射：ColumnType -> PostgreSQL DDL 类型
      */
-    public String convertToPgType(Column column) {
+    public String convertToPgType(FieldDefine column) {
         if (column == null || column.getType() == null) {
             return "varchar(255)";
         }
@@ -250,9 +250,9 @@ public class PostgresMetaServiceImpl implements IDatabaseMetaService {
     }
 
     /**
-     * 从 Column 的 displayName(JSON) 或 description 中提取注释
+     * 从 FieldDefine 的 displayName(JSON) 或 description 中提取注释
      */
-    private String extractComment(Column col) {
+    private String extractComment(FieldDefine col) {
         if (StringUtils.isNotEmpty(col.getDisplayName())) {
             try {
                 if (JSONUtil.isTypeJSON(col.getDisplayName())) {
