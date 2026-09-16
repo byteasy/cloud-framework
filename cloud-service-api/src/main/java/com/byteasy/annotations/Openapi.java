@@ -1,5 +1,7 @@
 package com.byteasy.annotations;
 
+import org.springframework.core.annotation.AliasFor;
+
 import java.lang.annotation.*;
 
 @Target({ElementType.METHOD})
@@ -8,4 +10,7 @@ import java.lang.annotation.*;
 public @interface Openapi {
 
     String title() default "";
+
+    @AliasFor("title")
+    String summary() default "";
 }

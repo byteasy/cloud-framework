@@ -3,13 +3,12 @@ package com.byteasy.permission.interceptor;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.Result;
+import com.byteasy.common.component.OpenApiLoadingCache;
+import com.byteasy.common.controller.AbstractController;
 import com.byteasy.common.controller.OpenapiCommonController;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.RequestUtil;
-import com.byteasy.common.util.FieldDefineUtil;
-import com.byteasy.common.component.OpenApiLoadingCache;
-import com.byteasy.common.controller.AbstractController;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.util.EntityCodeUtil;
 import com.byteasy.util.I18nUtil;
@@ -63,7 +62,6 @@ public class OpenapiAuthAspect {
         String methodName = request.getMethod().toUpperCase();
         Class<?> targetClass = joinPoint.getTarget().getClass();
         String fullUri = SpringContextUtil.getContextPath() + RequestMappingResolver.getFullMethodUri(targetClass, method);
-
         String actualUri = request.getRequestURI();
 
         Object[] args = joinPoint.getArgs();
@@ -73,7 +71,7 @@ public class OpenapiAuthAspect {
             openapi.setCode(EntityCodeUtil.generateCode());
             openapi.setServiceCode(SpringUtil.getApplicationName());
             String name = annotation.title();
-            if(StringUtils.isEmpty(name)){
+            if (StringUtils.isEmpty(name)) {
                 name = method.getName();
             }
             openapi.setName(I18nUtil.convertI18nFieldZhValue(name));
