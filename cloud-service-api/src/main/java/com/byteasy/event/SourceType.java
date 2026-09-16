@@ -4,7 +4,7 @@ import com.byteasy.enums.IBaseEnum;
 
 public enum SourceType implements IBaseEnum<Integer> {
     SINGLETON(0, "单机模式"),
-    ALL(1, "集群运行中服务实例"),
+    ALL(1, "集群运行中所有服务实例"),
     ONE_INSTANCE_PER_SERVICE_GROUP(2, "每个微服务的单个实例"),
     ;
     public final int value;
