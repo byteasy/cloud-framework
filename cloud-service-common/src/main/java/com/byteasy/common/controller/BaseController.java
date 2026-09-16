@@ -18,7 +18,10 @@ import com.byteasy.annotations.Openapi;
 import com.byteasy.common.component.EntityDefineLoadingCache;
 import com.byteasy.common.component.EntityServiceFactory;
 import com.byteasy.common.component.FieldDefineLoadingCache;
-import com.byteasy.common.util.*;
+import com.byteasy.common.util.CastUtil;
+import com.byteasy.common.util.FieldDefineUtil;
+import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.RequestUtil;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.RelationType;
 import com.byteasy.enums.YesNo;
@@ -26,7 +29,6 @@ import com.byteasy.exception.BizException;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.util.I18nUtil;
 import com.byteasy.util.XlsxUtil;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import jakarta.servlet.http.HttpServletRequest;
@@ -65,8 +67,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     private EntityServiceFactory entityServiceFactory;
 
     @GetMapping("")
-    @Operation(summary = "分页查询")
-    @Openapi
+    @Openapi(summary = "分页查询")
     public Result<Page<ENTITY>> page() throws Exception {
         Page<ENTITY> page = baseService.page(RequestUtil.getPage(), RequestUtil.getQueryWrapper(getEntityClass()));
 
@@ -75,8 +76,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     @GetMapping("/list/match")
-    @Operation(summary = "匹配查询")
-    @Openapi
+    @Openapi(summary = "匹配查询")
     public Result<List<ENTITY>> list() throws Exception {
         List<ENTITY> list = baseService.list(RequestUtil.getQueryWrapper(getEntityClass()));
 
@@ -92,8 +92,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     @GetMapping("/{id}")
-    @Openapi
-    @Operation(summary = "根据主键查找")
+    @Openapi(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
     public Result<ENTITY> getById(@PathVariable("id") ID id) throws Exception {
         ENTITY entity = baseService.getById(id);
@@ -106,8 +105,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     @PostMapping("")
-    @Openapi
-    @Operation(summary = "存在更新记录，否则插入一条记录")
+    @Openapi(summary = "存在更新记录，否则插入一条记录")
     public Result<ENTITY> saveOrUpdate(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdate: {}", JacksonUtil.toJson(entity));
@@ -120,8 +118,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     @PostMapping("/extra")
-    @Operation(summary = "存在更新记录，否则插入一条记录")
-    @Openapi
+    @Openapi(summary = "存在更新记录，否则插入一条记录")
     public Result<ENTITY> saveOrUpdate(@RequestBody String body) throws Exception {
         ENTITY entity = JacksonUtil.nativeRead(body, baseService.getEntityClass());
         if (log.isInfoEnabled()) {
@@ -135,8 +132,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     @PostMapping("/batch")
-    @Operation(summary = "存在更新记录，否则插入记录（批量）")
-    @Openapi
+    @Openapi(summary = "存在更新记录，否则插入记录（批量）")
     public Result<List<ENTITY>> saveOrUpdateBatch(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdateBatch: {}", JacksonUtil.toJson(entities));
@@ -152,8 +148,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     @PutMapping("")
-    @Openapi
-    @Operation(summary = "根据主键更新记录")
+    @Openapi(summary = "根据主键更新记录")
     public Result<ENTITY> updateById(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("updateById: {}", JacksonUtil.toJson(entity));
@@ -166,8 +161,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     @PutMapping("/batch")
-    @Openapi
-    @Operation(summary = "根据主键批量更新记录")
+    @Openapi(summary = "根据主键批量更新记录")
     public Result<List<ENTITY>> updateBatchById(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("updateBatchById: {}", JacksonUtil.toJson(entities));
@@ -183,8 +177,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     @DeleteMapping("/{id}")
-    @Openapi
-    @Operation(summary = "根据主键删除记录")
+    @Openapi(summary = "根据主键删除记录")
     public Result<Boolean> removeById(@PathVariable("id") ID id) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeById: {}", id);
@@ -193,8 +186,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     @DeleteMapping("/batch")
-    @Openapi
-    @Operation(summary = "根据主键批量删除记录")
+    @Openapi(summary = "根据主键批量删除记录")
     public Result<Boolean> removeByIds(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeByIds: {}", JacksonUtil.toJson(entities));
@@ -203,8 +195,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     @DeleteMapping("")
-    @Openapi
-    @Operation(summary = "根据条件批量删除记录（慎重）")
+    @Openapi(summary = "根据条件批量删除记录（慎重）")
     public Result<Boolean> removeByWrapper(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeByWrapper: {}", JacksonUtil.toJson(entity));
@@ -224,8 +215,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     @GetMapping("/excel/template")
-    @Openapi
-    @Operation(summary = "下载Excel导入模板")
+    @Openapi(summary = "下载Excel导入模板")
     public void downloadExcelTemplate(HttpServletResponse response) throws Exception {
         List<FieldDefine> columns = fieldDefineLoadingCache.load(baseService.getEntityClass().getName());
 
@@ -282,8 +272,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     @PostMapping("/excel/importPreview")
-    @Openapi
-    @Operation(summary = "Excel导入预览")
+    @Openapi(summary = "Excel导入预览")
     public Result<List<Map<String, Object>>> uploadExcelPreview(@RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
         ExcelReader excelReader = ExcelUtil.getReader(file.getInputStream(), 0);
         int rowCount = excelReader.getRowCount();
@@ -437,8 +426,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
 
 
     @PostMapping("/excel/export")
-    @Openapi
-    @Operation(summary = "Excel数据导出")
+    @Openapi(summary = "Excel数据导出")
     public void exportExcel(@RequestBody List<String> fieldNames, HttpServletResponse response) throws Exception {
         List<FieldDefine> columns = fieldDefineLoadingCache.load(baseService.getEntityClass().getName());
         Map<String, FieldDefine> columnMap = CastUtil.listToMap(columns, FieldDefine::getName);

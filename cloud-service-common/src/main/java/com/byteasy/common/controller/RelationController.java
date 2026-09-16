@@ -10,7 +10,6 @@ import com.byteasy.common.util.RequestUtil;
 import com.byteasy.entity.Relation;
 import com.byteasy.exception.BizException;
 import com.byteasy.util.I18nUtil;
-import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -28,15 +27,13 @@ import java.util.List;
 public abstract class RelationController<SERVICE extends IService<ENTITY>, ENTITY extends Relation> extends AbstractController<SERVICE, ENTITY, Long> implements Constant {
 
     @GetMapping("")
-    @Openapi
-    @Operation(summary = "分页查询")
+    @Openapi(summary = "分页查询")
     public Result<Page<? extends ENTITY>> page() throws Exception {
         return Result.success(baseService.page(RequestUtil.getPage(), RequestUtil.getQueryWrapper(baseService.getEntityClass())));
     }
 
     @PostMapping("/batch")
-    @Openapi
-    @Operation(summary = "存在更新记录，否则插入记录（批量）")
+    @Openapi(summary = "存在更新记录，否则插入记录（批量）")
     public Result<List<ENTITY>> saveOrUpdateBatch(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdateBatch: {}", JacksonUtil.toJson(entities));
@@ -48,8 +45,7 @@ public abstract class RelationController<SERVICE extends IService<ENTITY>, ENTIT
     }
 
     @DeleteMapping("/batch")
-    @Openapi
-    @Operation(summary = "根据主键批量删除记录")
+    @Openapi(summary = "根据主键批量删除记录")
     public Result<Boolean> removeByIds(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeByIds: {}", JacksonUtil.toJson(entities));
@@ -58,8 +54,7 @@ public abstract class RelationController<SERVICE extends IService<ENTITY>, ENTIT
     }
 
     @DeleteMapping("")
-    @Openapi
-    @Operation(summary = "根据条件批量删除记录（慎重）")
+    @Openapi(summary = "根据条件批量删除记录（慎重）")
     public Result<Boolean> removeByWrapper(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeByWrapper: {}", JacksonUtil.toJson(entity));
