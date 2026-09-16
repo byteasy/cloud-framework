@@ -1,6 +1,5 @@
 package com.byteasy.common.component;
 
-import com.byteasy.Constant;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IPlatformEntityChangeHandler;
@@ -16,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.util.concurrent.ExecutionException;
 
 @Component
 @Log4j2
@@ -51,12 +49,7 @@ public class EntityDefineLoadingCache implements IPlatformEntityChangeHandler, I
     }
 
     public String getEntityName(String className) {
-        EntityDefine entityDefine = null;
-        try {
-            entityDefine = cache.get(className);
-        } catch (ExecutionException e) {
-            log.error(e);
-        }
+        EntityDefine entityDefine = load(className);
         if (entityDefine != null) {
             return entityDefine.getName();
         }
