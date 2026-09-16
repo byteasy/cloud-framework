@@ -5,6 +5,7 @@ import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.controller.AuditController;
 import com.byteasy.platform.dto.EditPasswordFormDTO;
+import com.byteasy.platform.dto.UserRoleDTO;
 import com.byteasy.platform.entity.User;
 import com.byteasy.platform.service.IUserRoleService;
 import com.byteasy.platform.service.IUserService;
@@ -51,8 +52,8 @@ public class UserController extends AuditController<Long, IUserService, User> {
 
     @GetMapping("/roles")
     @Openapi(title = "查询账户角色信息")
-    public Result<UserRoleVO> getUserRoleInfo(@RequestParam("userId") Long userId) {
-        return Result.success(userRoleService.getUserRoleInfo(userId));
+    public Result<UserRoleDTO> getUserRoleInfo() {
+        return Result.success(userRoleService.getUserRoleInfo());
     }
 
     @PostMapping("/roles")

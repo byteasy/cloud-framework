@@ -2,4 +2,15 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.byteasy.platform.mapper.RoleOpenapiMapper">
 
+    <select id="listOpenapiByRoleIds" resultType="com.byteasy.platform.entity.RoleOpenapi">
+        SELECT ro.openapi_id, ro.role_id
+        FROM platform_role_openapi ro
+        JOIN platform_role rol ON rol.id = ro.role_id AND rol.status = 1
+        JOIN platform_openapi api ON api.id = ro.openapi_id AND api.status = 1
+        WHERE ro.role_id IN
+        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+    </select>
+
 </mapper>

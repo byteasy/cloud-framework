@@ -2,12 +2,15 @@ package com.byteasy.platform.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.util.CastUtil;
+import com.byteasy.common.util.RequestUtil;
 import com.byteasy.enums.Enable;
 import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;
+import com.byteasy.platform.dto.UserRoleDTO;
 import com.byteasy.platform.entity.*;
 import com.byteasy.platform.mapper.UserRoleMapper;
 import com.byteasy.platform.service.*;
@@ -71,14 +74,16 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRole> i
     }
 
     @Override
-    public UserRoleVO getUserRoleInfo(Long userId) {
-        UserRoleVO userRoleVO = new UserRoleVO();
-        userRoleVO.setUserId(userId);
-        LambdaQueryWrapper<Role> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Role::getStatus, Enable.ENABLE);
-        queryWrapper.orderByAsc(Role::getId);
-        userRoleVO.setRoles(roleService.list(queryWrapper));
-        userRoleVO.setRoleIds(getUserRoleIds(userId));
+    public UserRoleDTO getUserRoleInfo() {
+        QueryWrapper wrapper = RequestUtil.getQueryWrapper(User.class);
+        User user = userService.getOne(wrapper, false);
+        if (user == null) {
+            return null;
+        }
+        UserRoleDTO userRoleVO = new UserRoleDTO();
+        userRoleVO.setUser(user);
+
+        userRoleVO.setRoleIds(getUserRoleIds(user.getId()));
         return userRoleVO;
     }
 

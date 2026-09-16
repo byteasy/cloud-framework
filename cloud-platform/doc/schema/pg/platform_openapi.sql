@@ -14,6 +14,7 @@ CREATE TABLE platform_openapi
     script_id       BIGINT                DEFAULT NULL,
     post_script_id  BIGINT                DEFAULT NULL,
     remark          varchar(2048)         DEFAULT NULL,
+    status          SMALLINT     NOT NULL DEFAULT 1,
     creator_id      VARCHAR(64)  NOT NULL,
     created_by      VARCHAR(64)  NOT NULL,
     created_time    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -37,6 +38,7 @@ COMMENT ON COLUMN platform_openapi.pre_script_id IS '前置脚本钩子';
 COMMENT ON COLUMN platform_openapi.script_id IS '函数脚本';
 COMMENT ON COLUMN platform_openapi.post_script_id IS '后置脚本钩子';
 COMMENT ON COLUMN platform_openapi.remark IS '说明';
+COMMENT ON COLUMN platform_openapi.status IS '状态';
 COMMENT ON COLUMN platform_openapi.creator_id IS '创建人编号';
 COMMENT ON COLUMN platform_openapi.created_by IS '创建人';
 COMMENT ON COLUMN platform_openapi.created_time IS '创建时间';
