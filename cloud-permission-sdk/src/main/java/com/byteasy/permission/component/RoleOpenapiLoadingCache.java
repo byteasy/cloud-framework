@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,10 +35,10 @@ public class RoleOpenapiLoadingCache implements IEntityChangeHandler, ICacheLoad
 
     private LoadingCache<Long, Set<Long>> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(3)).maximumSize(5000).build(new CacheLoader<>() {
         @Override
-        public @Nullable Set<Long> load(Long key) {
+        public Set<Long> load(Long key) {
             List<RoleOpenapi> list = roleOpenapiService.listOpenapiByRoleIds(Set.of(key)).getIfPresent();
             if (list == null) {
-                return null;
+                return Collections.emptySet();
             }
             return list.stream().map(RoleOpenapi::getOpenapiId).collect(Collectors.toSet());
         }
