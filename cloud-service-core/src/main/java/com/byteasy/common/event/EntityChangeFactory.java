@@ -16,7 +16,7 @@ import java.util.Map;
 
 @Component
 @Log4j2
-public class EntityChangeHandler implements IEventHandler<EntityChangeEvent> {
+public class EntityChangeFactory implements IEventHandler<EntityChangeEvent> {
     private Map<String, List<IEntityChangeHandler>> cache = Maps.newHashMap();
 
     @PostConstruct

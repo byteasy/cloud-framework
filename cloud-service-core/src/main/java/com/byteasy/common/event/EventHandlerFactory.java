@@ -37,10 +37,10 @@ public class EventHandlerFactory {
     public void handleEvent(Event event) {
         IEventHandler handler = cache.get(event.getClass());
         if (handler != null) {
-            log.info("platform event handler: {}, event: {}", handler.getClass().getName(), JacksonUtil.toJson(event));
+            log.info("platform event handler: {}, event: {}", handler.getClass().getName(), JacksonUtil.toJson(event, true));
             handler.handle(event);
         } else {
-            log.info("platform event handler: null, event: {}", JacksonUtil.toJson(event));
+            log.info("platform event handler: null, event: {}", JacksonUtil.toJson(event, true));
         }
     }
 }
