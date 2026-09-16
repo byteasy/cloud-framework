@@ -27,14 +27,14 @@ import static com.byteasy.util.RandomUtil.random;
 public class EventPublishUtil {
 
     @Async
-    public void publishEvent(PlatformEvent event) {
+    public void publishEvent(Event event) {
         if (event instanceof EntityChangeEvent) {
             EntityChangeSource source = ((EntityChangeEvent) event).getSource();
             source.setSrcApplicationName(SpringUtil.getApplicationName());
         }
         SpringUtil.publishEvent(event);
 
-        if (!SourceType.SINGLETON.equals(event.getSourceType())) {
+        if (!EventType.SINGLETON.equals(event.getEventType())) {
             DiscoveryClient discoveryClient = SpringUtil.getBean(DiscoveryClient.class);
             ServiceInstanceLoadingCache serviceInstanceLoadingCache = SpringUtil.getBean(ServiceInstanceLoadingCache.class);
 
@@ -61,14 +61,14 @@ public class EventPublishUtil {
                     }
                     List<ServiceInstance> instances = discoveryClient.getInstances(serviceId);
 
-                    if (SourceType.ONE_INSTANCE_PER_SERVICE_GROUP.equals(event.getSourceType())) {
+                    if (EventType.ONE_INSTANCE_PER_SERVICE_GROUP.equals(event.getEventType())) {
                         ServiceInstance randomService = random(instances);
                         try {
                             OkHttpUtil.postJson(randomService.getUri().toString() + serviceInstanceLoadingCache.load(serviceId).getContextPath() + Constant.SAPI + "/events", JacksonUtil.toJson(event, true), header, null);
                         } catch (Exception e) {
                             log.error("publish event err", e);
                         }
-                    } else if (SourceType.ALL.equals(event.getSourceType())) {
+                    } else if (EventType.ALL.equals(event.getEventType())) {
                         for (ServiceInstance instance : instances) {
                             try {
                                 OkHttpUtil.postJson(instance.getUri().toString() + serviceInstanceLoadingCache.load(serviceId).getContextPath() + Constant.SAPI + "/events", JacksonUtil.toJson(event, true), header, null);

@@ -8,22 +8,22 @@ import java.time.Clock;
 
 @Getter
 @Setter
-public abstract class PlatformEvent<T extends EventSource> extends ApplicationEvent {
-    private final SourceType sourceType;
+public abstract class Event<T extends EventSource> extends ApplicationEvent {
+    private final EventType eventType;
 
-    public PlatformEvent() {
+    public Event() {
         super(new NullSource());
-        sourceType = SourceType.SINGLETON;
+        eventType = EventType.SINGLETON;
     }
 
-    public PlatformEvent(T source, SourceType sourceType) {
+    public Event(T source, EventType eventType) {
         super(source);
-        this.sourceType = sourceType;
+        this.eventType = eventType;
     }
 
-    public PlatformEvent(T source, Clock clock, SourceType sourceType) {
+    public Event(T source, Clock clock, EventType eventType) {
         super(source, clock);
-        this.sourceType = sourceType;
+        this.eventType = eventType;
     }
 
     @Override

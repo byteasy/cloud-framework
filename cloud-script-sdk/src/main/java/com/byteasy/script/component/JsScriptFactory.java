@@ -1,10 +1,9 @@
 package com.byteasy.script.component;
 
-import com.byteasy.Constant;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
-import com.byteasy.event.IPlatformEntityChangeHandler;
+import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.api.IJsScriptService;
 import com.byteasy.platform.entity.JsScript;
 import com.byteasy.util.FieldValueUtil;
@@ -23,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @Log4j2
-public class JsScriptFactory implements IPlatformEntityChangeHandler, ICacheLoader<Long, JsScript> {
+public class JsScriptFactory implements IEntityChangeHandler, ICacheLoader<Long, JsScript> {
 
     @Autowired
     private IJsScriptService jsScriptService;

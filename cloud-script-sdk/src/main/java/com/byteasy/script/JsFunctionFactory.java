@@ -127,7 +127,7 @@ public class JsFunctionFactory implements IPlatformReady {
     }
 
     @Override
-    public void platformReady() {
+    public void ready() {
         log.info("JsFunctionFactory platformReady");
 
         try {

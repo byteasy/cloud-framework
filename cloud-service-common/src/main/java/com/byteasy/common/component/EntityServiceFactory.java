@@ -213,7 +213,7 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
     }
 
     @Override
-    public void platformReady() {
+    public void ready() {
         log.info("EntityServiceFactory platformReady");
         try {
             List<EntityDefine> list = new ArrayList<>();

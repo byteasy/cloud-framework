@@ -2,8 +2,8 @@ package com.byteasy.common.event;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.common.util.JacksonUtil;
-import com.byteasy.event.IPlatformEventHandler;
-import com.byteasy.event.PlatformEvent;
+import com.byteasy.event.IEventHandler;
+import com.byteasy.event.Event;
 import com.google.common.collect.Maps;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
@@ -17,13 +17,13 @@ import java.util.Map;
 @Log4j2
 public class EventHandlerFactory {
 
-    private Map<Class<?>, IPlatformEventHandler> cache = Maps.newHashMap();
+    private Map<Class<?>, IEventHandler> cache = Maps.newHashMap();
 
     @PostConstruct
     public void init() {
         try {
-            Map<String, IPlatformEventHandler> map = SpringUtil.getBeansOfType(IPlatformEventHandler.class);
-            for (IPlatformEventHandler value : map.values()) {
+            Map<String, IEventHandler> map = SpringUtil.getBeansOfType(IEventHandler.class);
+            for (IEventHandler value : map.values()) {
                 log.info("register event handler, type: {}, handler: {}", value.getEventType().getName(), value.getClass().getName());
                 cache.put(value.getEventType(), value);
             }
@@ -34,8 +34,8 @@ public class EventHandlerFactory {
 
     @EventListener
     @Async
-    public void handleEvent(PlatformEvent event) {
-        IPlatformEventHandler handler = cache.get(event.getClass());
+    public void handleEvent(Event event) {
+        IEventHandler handler = cache.get(event.getClass());
         if (handler != null) {
             log.info("platform event handler: {}, event: {}", handler.getClass().getName(), JacksonUtil.toJson(event));
             handler.handle(event);

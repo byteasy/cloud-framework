@@ -5,7 +5,7 @@ import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.util.JacksonUtil;
-import com.byteasy.event.PlatformEvent;
+import com.byteasy.event.Event;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,8 +23,8 @@ public class EventReceiverController {
         if (log.isInfoEnabled()) {
             log.info("receivePublishEvent : {}", eventJson);
         }
-        PlatformEvent platformEvent = (PlatformEvent) JacksonUtil.parseObj(eventJson);
-        SpringUtil.publishEvent(platformEvent);
+        Event event = (Event) JacksonUtil.parseObj(eventJson);
+        SpringUtil.publishEvent(event);
         return Result.success();
     }
 }

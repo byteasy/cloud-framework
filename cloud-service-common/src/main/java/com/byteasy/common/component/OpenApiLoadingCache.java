@@ -1,11 +1,10 @@
 package com.byteasy.common.component;
 
-import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
-import com.byteasy.event.IPlatformEntityChangeHandler;
+import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.api.IOpenapiService;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.util.FieldValueUtil;
@@ -25,7 +24,7 @@ import java.util.concurrent.ExecutionException;
 
 @Component
 @Log4j2
-public class OpenApiLoadingCache implements IPlatformEntityChangeHandler, ICacheLoader<String, Openapi> {
+public class OpenApiLoadingCache implements IEntityChangeHandler, ICacheLoader<String, Openapi> {
 
     @Autowired
     private IOpenapiService openapiService;
