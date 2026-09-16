@@ -90,7 +90,7 @@ public class OpenapiLogAspect {
         try {
             return openApiLoadingCache.load(openApiLoadingCache.buildCompositeKey(actualUri, path, Openapi.HttpMethod.fromValue(httpMethod)));
         } catch (ExecutionException e) {
-            log.debug("未找到对应 openapi: actualUri={}, path={}, httpMethod={}", actualUri, path, httpMethod);
+            log.error("未找到对应 openapi: actualUri={}, path={}, httpMethod={}", actualUri, path, httpMethod);
             return null;
         }
     }
