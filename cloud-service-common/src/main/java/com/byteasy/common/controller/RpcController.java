@@ -6,10 +6,8 @@ import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.RequestUtil;
-import com.byteasy.common.util.FieldDefineUtil;
 import com.byteasy.exception.BizException;
 import com.byteasy.util.I18nUtil;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,31 +25,27 @@ import java.util.List;
 public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID extends Serializable> extends AbstractController<SERVICE, ENTITY, ID> {
 
     @GetMapping("")
-    @Openapi
-    @Operation(summary = "分页查询")
+    @Openapi(summary = "分页查询")
     public Page<ENTITY> page() throws Exception {
         return baseService.page(RequestUtil.getPage(), RequestUtil.getQueryWrapper(baseService.getEntityClass()));
     }
 
     @GetMapping("/{id}")
-    @Openapi
-    @Operation(summary = "根据主键查找")
+    @Openapi(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
     public ENTITY getById(@PathVariable("id") ID id) throws Exception {
         return baseService.getById(id);
     }
 
     @PostMapping("/ids")
-    @Openapi
-    @Operation(summary = "根据主键查找")
+    @Openapi(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
     public List<ENTITY> listByIds(@RequestBody List<ID> ids) throws Exception {
         return baseService.listByIds(ids);
     }
 
     @DeleteMapping("/ids")
-    @Openapi
-    @Operation(summary = "根据主键查找")
+    @Openapi(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
     public boolean removeBatchByIds(@RequestBody List<ID> ids) throws Exception {
         if (log.isInfoEnabled()) {
@@ -61,8 +55,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @PostMapping("")
-    @Openapi
-    @Operation(summary = "存在更新记录，否则插入一条记录")
+    @Openapi(summary = "存在更新记录，否则插入一条记录")
     public ENTITY saveOrUpdate(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdate: {}", JacksonUtil.toJson(entity));
@@ -74,8 +67,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @PostMapping("/batch")
-    @Openapi
-    @Operation(summary = "存在更新记录，否则插入记录（批量）")
+    @Openapi(summary = "存在更新记录，否则插入记录（批量）")
     public List<ENTITY> saveOrUpdateBatch(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdateBatch: {}", JacksonUtil.toJson(entities));
@@ -87,8 +79,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @PutMapping("")
-    @Openapi
-    @Operation(summary = "根据主键更新记录")
+    @Openapi(summary = "根据主键更新记录")
     public ENTITY updateById(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("updateById: {}", JacksonUtil.toJson(entity));
@@ -100,8 +91,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @PutMapping("/batch")
-    @Openapi
-    @Operation(summary = "根据主键批量更新记录")
+    @Openapi(summary = "根据主键批量更新记录")
     public List<ENTITY> updateBatchById(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("updateBatchById: {}", JacksonUtil.toJson(entities));
@@ -113,8 +103,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @DeleteMapping("/{id}")
-    @Openapi
-    @Operation(summary = "根据主键删除记录")
+    @Openapi(summary = "根据主键删除记录")
     public Boolean removeById(@PathVariable("id") ID id) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeById: {}", id);
@@ -123,8 +112,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @DeleteMapping("/batch")
-    @Openapi
-    @Operation(summary = "根据主键批量删除记录")
+    @Openapi(summary = "根据主键批量删除记录")
     public Result<Boolean> removeByIds(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeByIds: {}", JacksonUtil.toJson(entities));
@@ -133,8 +121,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     }
 
     @DeleteMapping("")
-    @Openapi
-    @Operation(summary = "根据条件批量删除记录（慎重）")
+    @Openapi(summary = "根据条件批量删除记录（慎重）")
     public Result<Boolean> removeByWrapper(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("removeByWrapper: {}", JacksonUtil.toJson(entity));
