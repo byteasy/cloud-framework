@@ -36,13 +36,15 @@ public class ScriptFunctionServiceImpl extends ServiceImpl<ScriptFunctionMapper,
         List<ScriptFunction> dbNotExists = scriptFunctions.stream().filter(v -> !dbMap.containsKey(v.getName())).toList();
         saveBatch(dbNotExists);
 
-        List<ScriptFunction> needUpdates = scriptFunctions.stream().filter(v -> !dbMap.get(v.getName()).getDescription().equals(v.getDescription())).map(
-                v -> {
-                    ScriptFunction dbRow = dbMap.get(v.getName());
-                    dbRow.setDescription(v.getDescription());
-                    return dbRow;
-                }
-        ).toList();
+        List<ScriptFunction> needUpdates = scriptFunctions.stream()
+                .filter(v -> dbMap.containsKey(v.getName()))
+                .filter(v -> !dbMap.get(v.getName()).getDescription().equals(v.getDescription())).map(
+                        v -> {
+                            ScriptFunction dbRow = dbMap.get(v.getName());
+                            dbRow.setDescription(v.getDescription());
+                            return dbRow;
+                        }
+                ).toList();
         updateBatchById(needUpdates);
         return list();
     }

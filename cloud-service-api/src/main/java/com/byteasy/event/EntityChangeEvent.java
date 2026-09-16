@@ -7,10 +7,18 @@ public class EntityChangeEvent extends Event<EntityChangeSource> {
     }
 
     public EntityChangeEvent(EntityChangeSource source) {
-        super(source, EventType.ONE_INSTANCE_PER_SERVICE_GROUP);
+        super(source, EventType.ALL);
+    }
+
+    public EntityChangeEvent(EntityChangeSource source, EventType eventType) {
+        super(source, eventType);
     }
 
     public EntityChangeEvent(EntityChangeSource source, Clock clock) {
-        super(source, clock, EventType.ONE_INSTANCE_PER_SERVICE_GROUP);
+        super(source, clock, EventType.ALL);
+    }
+
+    public EntityChangeEvent(EntityChangeSource source, EventType eventType, Clock clock) {
+        super(source, clock, eventType);
     }
 }
