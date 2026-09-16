@@ -1,6 +1,6 @@
 package com.byteasy.event;
 
-public interface IPlatformEntityChangeHandler {
+public interface IEntityChangeHandler {
 
     String type();
 

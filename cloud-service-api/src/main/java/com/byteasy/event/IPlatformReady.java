@@ -5,7 +5,7 @@ public interface IPlatformReady {
     /**
      * 平台服务就绪
      */
-    void platformReady();
+    void ready();
 
     /**
      * 执行顺序

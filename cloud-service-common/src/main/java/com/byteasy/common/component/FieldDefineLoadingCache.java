@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
-import com.byteasy.event.IPlatformEntityChangeHandler;
+import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.api.IFieldDefineService;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.platform.entity.FieldGroup;
@@ -22,7 +22,7 @@ import java.util.List;
 
 @Component
 @Log4j2
-public class FieldDefineLoadingCache implements IPlatformEntityChangeHandler, ICacheLoader<String, List<FieldDefine>> {
+public class FieldDefineLoadingCache implements IEntityChangeHandler, ICacheLoader<String, List<FieldDefine>> {
 
     @Autowired
     private IFieldDefineService fieldDefineService;

@@ -21,7 +21,7 @@ public class ServiceInstanceRegister implements IPlatformReady {
     private IServiceInstanceService serviceInstanceService;
 
     @Override
-    public void platformReady() {
+    public void ready() {
         log.info("ServiceInstanceRegister platformReady");
         try {
             ServiceInstance serviceInstance = new ServiceInstance();

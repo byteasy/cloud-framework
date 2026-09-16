@@ -54,7 +54,7 @@ public class AsyncWaitServiceListener {
         Map<String, IPlatformReady> beans = SpringUtil.getBeansOfType(IPlatformReady.class);
         List<IPlatformReady> list = beans.values().stream().sorted(Comparator.comparingInt(IPlatformReady::order)).toList();
         for (IPlatformReady iPlatformReady : list) {
-            iPlatformReady.platformReady();
+            iPlatformReady.ready();
         }
     }
 

@@ -2,7 +2,7 @@ package com.byteasy.common.component;
 
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
-import com.byteasy.event.IPlatformEntityChangeHandler;
+import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.api.IEntityDefineService;
 import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.util.FieldValueUtil;
@@ -18,7 +18,7 @@ import java.time.Duration;
 
 @Component
 @Log4j2
-public class EntityDefineLoadingCache implements IPlatformEntityChangeHandler, ICacheLoader<String, EntityDefine> {
+public class EntityDefineLoadingCache implements IEntityChangeHandler, ICacheLoader<String, EntityDefine> {
 
     @Autowired
     private IEntityDefineService entityDefineService;
