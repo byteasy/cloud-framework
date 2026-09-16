@@ -4,7 +4,7 @@ import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.service.ICommonService;
-import com.byteasy.common.util.ColumnUtil;
+import com.byteasy.common.util.FieldDefineUtil;
 import com.byteasy.platform.entity.FieldDefine;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
@@ -26,7 +26,7 @@ public class FieldController {
     @Operation(summary = "查询模型代码字段定义")
     @Openapi
     public Result<Collection<FieldDefine>> getSrcSchemaMetaInfo(@PathVariable("className") String className) throws ClassNotFoundException {
-        return Result.success(ColumnUtil.getColumns(Class.forName(className)).values().stream().sorted(Comparator.comparingInt(FieldDefine::getShowOrder)).toList());
+        return Result.success(FieldDefineUtil.getColumns(Class.forName(className)).values().stream().sorted(Comparator.comparingInt(FieldDefine::getShowOrder)).toList());
     }
 
     @GetMapping("/database/{className}")

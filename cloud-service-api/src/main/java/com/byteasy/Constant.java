@@ -44,6 +44,6 @@ public interface Constant {
 
     String VALID_MSG_KEY = "validateResult";
 
-    String i18nForbiddenOp = "ForbiddenOp";
+    String I_18_N_FORBIDDEN_OP = "ForbiddenOp";
 
 }

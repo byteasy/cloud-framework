@@ -12,7 +12,7 @@ import com.byteasy.common.service.IDatabaseMetaService;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.CastUtil;
-import com.byteasy.common.util.ColumnUtil;
+import com.byteasy.common.util.FieldDefineUtil;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.common.util.SqlUtil;
 import com.byteasy.dto.FormatMap;
@@ -53,8 +53,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.byteasy.common.util.ColumnUtil.convertToDbValue;
-import static com.byteasy.common.util.ColumnUtil.convertToEntityValue;
+import static com.byteasy.common.util.FieldDefineUtil.convertToDbValue;
+import static com.byteasy.common.util.FieldDefineUtil.convertToEntityValue;
 
 @Service
 @Log4j2
@@ -355,7 +355,7 @@ public class CommonServiceImpl implements ICommonService {
         publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.BATCH_DELETE, entities, null, className)));
 
         MapSqlParameterSource paramSource = new MapSqlParameterSource();
-        Set<Object> primaryKeys = ColumnUtil.getPrimaryKeys(primaryColumn, entities);
+        Set<Object> primaryKeys = FieldDefineUtil.getPrimaryKeys(primaryColumn, entities);
         paramSource.addValue("primaryKeys", primaryKeys);
 
         if (SqlUtil.isLogicDeleteEntity(columnMap)) {

@@ -23,7 +23,6 @@ import com.byteasy.enums.RelationType;
 import com.byteasy.event.IPlatformReady;
 import com.byteasy.platform.api.IEntityDefineService;
 import com.byteasy.platform.entity.EntityDefine;
-import com.byteasy.common.util.ColumnUtil;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.util.FieldValueUtil;
 import com.byteasy.util.I18nUtil;
@@ -119,7 +118,7 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
                         Result<List<JSONObject>> result = OkHttpUtil.get((randomService.isSecure() ? "https://" : "http://") + randomService.getHost() + ":" + randomService.getPort() + url, header, params, null,
                                 new TypeReference<Result<List<JSONObject>>>() {
                                 });
-                        map = CastUtil.listToMap(result.getData(), o -> ColumnUtil.toValue(o, externalKey.getType(), externalKey.getExternalClassPrimaryField()));
+                        map = CastUtil.listToMap(result.getData(), o -> FieldDefineUtil.toValue(o, externalKey.getType(), externalKey.getExternalClassPrimaryField()));
                     }
 
                     String fieldName = getClassFieldName(className);
@@ -191,9 +190,9 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
 
                 EntityDefine entityDefineDTO = new EntityDefine();
                 entityDefineDTO.setCode(entityClass.getName());
-                entityDefineDTO.setTableName(ColumnUtil.getTableName(entityClass));
-                String classDesc = ColumnUtil.getSchemaDescription(entityClass);
-                String className = ColumnUtil.getSchemaName(entityClass);
+                entityDefineDTO.setTableName(FieldDefineUtil.getTableName(entityClass));
+                String classDesc = FieldDefineUtil.getSchemaDescription(entityClass);
+                String className = FieldDefineUtil.getSchemaName(entityClass);
                 if (StringUtils.isEmpty(className)) {
                     className = entityClass.getSimpleName();
                 }

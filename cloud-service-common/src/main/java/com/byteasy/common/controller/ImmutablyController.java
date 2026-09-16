@@ -13,36 +13,36 @@ public abstract class ImmutablyController<ID extends java.io.Serializable, SERVI
 
     @Override
     public Result<ENTITY> saveOrUpdate(ENTITY entity) throws Exception {
-        throw new BizException(i18nForbiddenOp);
+        throw new BizException(I_18_N_FORBIDDEN_OP);
     }
 
     @Override
     public Result<List<ENTITY>> saveOrUpdateBatch(List<ENTITY> entities) throws Exception {
-        throw new BizException(i18nForbiddenOp);
+        throw new BizException(I_18_N_FORBIDDEN_OP);
     }
 
     @Override
     public Result<ENTITY> updateById(ENTITY entity) throws Exception {
-        throw new BizException(i18nForbiddenOp);
+        throw new BizException(I_18_N_FORBIDDEN_OP);
     }
 
     @Override
     public Result<List<ENTITY>> updateBatchById(List<ENTITY> entities) throws Exception {
-        throw new BizException(i18nForbiddenOp);
+        throw new BizException(I_18_N_FORBIDDEN_OP);
     }
 
     @Override
     public Result<Boolean> removeById(ID id) throws Exception {
-        throw new BizException(i18nForbiddenOp);
+        throw new BizException(I_18_N_FORBIDDEN_OP);
     }
 
     @Override
     public Result<Boolean> removeByIds(List<ENTITY> entities) throws Exception {
-        throw new BizException(i18nForbiddenOp);
+        throw new BizException(I_18_N_FORBIDDEN_OP);
     }
 
     @Override
     public Result<Boolean> removeByWrapper(ENTITY entity) throws Exception {
-        throw new BizException(i18nForbiddenOp);
+        throw new BizException(I_18_N_FORBIDDEN_OP);
     }
 }
