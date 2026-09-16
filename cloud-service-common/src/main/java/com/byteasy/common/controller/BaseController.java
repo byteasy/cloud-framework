@@ -368,7 +368,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     }
 
     protected String valid(ENTITY entity, List<FieldDefine> columns) {
-        Set<String> auditFields = ColumnUtil.getAuditFields();
+        Set<String> auditFields = FieldDefineUtil.getAuditFields();
         StringBuilder builder = new StringBuilder();
         for (FieldDefine column : columns) {
             if (auditFields.contains(column.getName())) {

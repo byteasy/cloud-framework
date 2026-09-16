@@ -13,10 +13,10 @@ import org.apache.commons.math3.util.Pair;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.byteasy.common.util.ColumnUtil.convertToDbValue;
+import static com.byteasy.common.util.FieldDefineUtil.convertToDbValue;
 
 public class SqlUtil {
-    private static final Set<String> auditEntityPropSet = ColumnUtil.getFieldNames(LogicDeleteEntity.class);
+    private static final Set<String> auditEntityPropSet = FieldDefineUtil.getFieldNames(LogicDeleteEntity.class);
 
     public static String getSingleStringValue(Map<String, ?> multiMap, String key, String defaultValue) {
         if (multiMap == null) return defaultValue;
