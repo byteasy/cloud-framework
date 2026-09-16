@@ -80,7 +80,6 @@ public class OpenApiLoadingCache implements IEntityChangeHandler, ICacheLoader<S
                 String code = FieldValueUtil.getFieldValue(source.getAfter(), "code", String.class);
                 log.info("OpenApiFactory invalidate cache: {}", code);
                 invalidateByCode(code);
-
                 break;
             }
             default:
