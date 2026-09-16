@@ -142,11 +142,10 @@ public class OpenapiAuthAspect {
      * 智能定位 Openapi 模型定义
      */
     private Openapi findOpenApi(String actualUri, String path, String httpMethod) {
-        if (openApiLoadingCache == null || StringUtils.isEmpty(path)) return null;
         try {
             return openApiLoadingCache.load(openApiLoadingCache.buildCompositeKey(actualUri, path, Openapi.HttpMethod.fromValue(httpMethod)));
         } catch (Exception e) {
-            log.debug("未找到对应 openapi: path={}, httpMethod={}", path, httpMethod);
+            log.debug("未找到对应 openapi: actualUri={}, path={}, httpMethod={}", actualUri, path, httpMethod);
             return null;
         }
     }
