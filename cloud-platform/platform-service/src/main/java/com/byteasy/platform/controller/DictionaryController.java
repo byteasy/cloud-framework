@@ -8,7 +8,6 @@ import com.byteasy.platform.entity.Dictionary;
 import com.byteasy.platform.entity.DictionaryItem;
 import com.byteasy.platform.service.IDictionaryService;
 import com.byteasy.platform.vo.DictionaryVO;
-import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,22 +26,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class DictionaryController extends AuditController<Long, IDictionaryService, Dictionary> {
 
     @GetMapping("/codes/{code}")
-    @Operation(summary = "查询字典定义")
-    @Openapi
+    @Openapi(summary = "查询字典定义")
     public Result<DictionaryVO> selectByCode(@PathVariable("code") String code) {
         return Result.success(baseService.selectByCode(code));
     }
 
     @GetMapping("/rpc/codes/{code}")
-    @Operation(summary = "查询字典定义")
-    @Openapi
+    @Openapi(summary = "查询字典定义")
     public DictionaryVO selectByCodeForRpc(@PathVariable("code") String code) {
         return baseService.selectByCode(code);
     }
 
     @GetMapping("/rpc/codes/{code}/items/{itemCode}")
-    @Operation(summary = "查询字典项定义")
-    @Openapi
+    @Openapi(summary = "查询字典项定义")
     public DictionaryItem selectByCodeForRpc(@PathVariable("code") String code, @PathVariable("itemCode") String itemCode) {
         return baseService.selectByCodeAndItemCode(code, itemCode);
     }

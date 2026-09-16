@@ -2,6 +2,7 @@ package com.byteasy.platform.controller;
 
 import com.byteasy.Constant;
 import com.byteasy.Result;
+import com.byteasy.annotations.Openapi;
 import io.swagger.v3.oas.annotations.Operation;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -29,7 +30,7 @@ public class FileUploadController {
     private static final String BASE_PATH = "upload" + File.separator + "files" + File.separator + "public";
 
     @PostMapping
-    @Operation(summary = "上传文件")
+    @Openapi(summary = "上传文件")
     public Result<String> uploadFiles(@RequestPart(value = "file", required = false) MultipartFile img) throws IOException {
         LocalDateTime now = LocalDateTime.now();
         String path1 = BASE_PATH + File.separator
