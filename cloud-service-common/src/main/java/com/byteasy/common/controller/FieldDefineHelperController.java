@@ -15,9 +15,9 @@ import java.util.Collection;
 import java.util.Comparator;
 
 @RestController
-@RequestMapping(Constant.SAPI + "/fields")
+@RequestMapping(Constant.SAPI + "/fieldDefineHelper")
 @Log4j2
-public class FieldController {
+public class FieldDefineHelperController {
 
     @Autowired
     private ICommonService commonService;

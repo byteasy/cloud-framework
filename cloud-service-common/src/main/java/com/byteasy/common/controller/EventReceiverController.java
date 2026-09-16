@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(Constant.SAPI + "/platformEvents")
+@RequestMapping(Constant.SAPI + "/events")
 @Log4j2
-public class PlatformEventController {
+public class EventReceiverController {
 
     @PostMapping("")
     @Openapi(title = "接收事件")
