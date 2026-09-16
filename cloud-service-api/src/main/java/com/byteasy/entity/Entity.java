@@ -26,14 +26,6 @@ public abstract class Entity<ID> implements Serializable {
     @FieldMeta(showOrder = 0, isShow = true, isForm = false)
     private ID id;
 
-    /**
-     * 乐观锁
-     */
-    @Schema(description = "版本")
-    @TableField(value = "VERSION", jdbcType = JdbcType.NUMERIC)
-    @Version
-    @FieldMeta(showOrder = 10006, isShow = false, isForm = false)
-    private Long version;
 
     /**
      * 表之外的动态字段

@@ -44,4 +44,12 @@ public abstract class AuditEntity<ID> extends ImmutablyEntity<ID> {
     @FieldMeta(showOrder = 10005, isForm = false)
     private LocalDateTime updatedTime;
 
+    /**
+     * 乐观锁
+     */
+    @Schema(description = "版本")
+    @TableField(value = "VERSION", jdbcType = JdbcType.NUMERIC)
+    @Version
+    @FieldMeta(showOrder = 10006, isShow = false, isForm = false)
+    private Long version;
 }
