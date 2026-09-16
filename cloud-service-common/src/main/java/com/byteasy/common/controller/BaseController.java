@@ -68,16 +68,9 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Operation(summary = "分页查询")
     @Openapi
     public Result<Page<ENTITY>> page() throws Exception {
-        Page<ENTITY> page = baseService.page(RequestUtil.getPage(), RequestUtil.getQueryWrapper(baseService.getEntityClass()));
+        Page<ENTITY> page = baseService.page(RequestUtil.getPage(), RequestUtil.getQueryWrapper(getEntityClass()));
 
-        /**
-         * 将外键关联的对象塞入拓展字段中
-         */
-        List<FieldDefine> columns = fieldDefineLoadingCache.load(getEntityClass().getName());
-        Set<FieldDefine> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
-        if (!externalKeys.isEmpty()) {
-            entityServiceFactory.updateExternalEntity(externalKeys, page.getRecords());
-        }
+
         return Result.success(page);
     }
 
@@ -85,7 +78,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Operation(summary = "匹配查询")
     @Openapi
     public Result<List<ENTITY>> list() throws Exception {
-        List<ENTITY> list = baseService.list(RequestUtil.getQueryWrapper(baseService.getEntityClass()));
+        List<ENTITY> list = baseService.list(RequestUtil.getQueryWrapper(getEntityClass()));
 
         /**
          * 将外键关联的对象塞入拓展字段中

@@ -5,6 +5,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.byteasy.Constant;
 import com.byteasy.Result;
@@ -12,10 +13,10 @@ import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
 import com.byteasy.common.util.CastUtil;
+import com.byteasy.common.util.FieldDefineUtil;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.component.CacheFactory;
-import com.byteasy.common.util.FieldDefineUtil;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.dto.FormatMap;
 import com.byteasy.entity.Entity;
@@ -56,7 +57,7 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
     @Autowired
     private IEntityDefineService entityDefineService;
 
-    private static Map<Class<?>, ServiceImpl> entityServiceMap = new HashMap<Class<?>, ServiceImpl>();
+    private static Map<Class<?>, ServiceImpl> entityServiceMap = Maps.newHashMap();
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -67,6 +68,19 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
         }
     }
 
+    private void setExternalKeyByService(FieldDefine externalKey, ServiceImpl service, List entities) {
+        Set keys = getPrimaryKeys(externalKey.getName(), entities);
+
+        QueryWrapper wrapper = new QueryWrapper();
+        wrapper.in(externalKey.getExternalClassPrimaryField(), keys);
+        Map<String, Object> map = CastUtil.listToMap(service.list(wrapper), e -> String.valueOf(FieldValueUtil.getFieldValue(e, externalKey.getExternalClassPrimaryField())));
+        entities.forEach(entity -> {
+            Object key = FieldValueUtil.getFieldValue(entity, externalKey.getName());
+            String fieldName = getClassFieldName(externalKey.getExternalClass());
+            FieldValueUtil.setFieldValue(entity, fieldName, map.get(String.valueOf(key)));
+        });
+    }
+
     public void updateExternalEntity(Set<FieldDefine> externalKeys, List entities) {
         if (entities.isEmpty()) {
             return;
@@ -74,14 +88,21 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
         for (FieldDefine externalKey : externalKeys) {
             try {
                 String className = externalKey.getExternalClass();
+                /**
+                 * 如果是同一个服务实例的领域对象，直接本地填充
+                 */
+                ServiceImpl service = getService(className);
+                if (service != null) {
+                    setExternalKeyByService(externalKey, service, entities);
+                    continue;
+                }
+
                 EntityDefine entityDefine = entityDefineLoadingCache.load(className);
                 if (entityDefine == null) {
                     log.error("entityDefineDTO is null, className: {}", className);
                     continue;
                 }
                 if (RelationType.EXTERNAL_KEY.equals(externalKey.getRelationType())) {
-                    // 虽然在本服务领域内定义的实体对象，但是低代码建的模型对象，没有实体类，所以统一通过接口获取
-                    // 改为远程接口调用，方便递归填充参照对象
                     Map map;
                     Set keys = getPrimaryKeys(externalKey.getName(), entities);
 
@@ -158,7 +179,7 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
     private static Set getPrimaryKeys(String fieldName, List entities) {
         Set set = new HashSet();
         for (Object entity : entities) {
-            Object value = entity instanceof FormatMap ? ((FormatMap) entity).get(fieldName) : ReflectUtil.getFieldValue(entity, fieldName);
+            Object value = FieldValueUtil.getFieldValue(entity, fieldName);
             if (value != null) {
                 set.add(value);
             }
@@ -178,6 +199,17 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
         }
         int random = RandomUtil.randomInt(list.size());
         return list.get(random);
+    }
+
+    private ServiceImpl getService(String className) {
+        try {
+            Class<?> cls = Class.forName(className);
+            if (entityServiceMap.containsKey(cls)) {
+                return entityServiceMap.get(cls);
+            }
+        } catch (Exception e) {
+        }
+        return null;
     }
 
     @Override
