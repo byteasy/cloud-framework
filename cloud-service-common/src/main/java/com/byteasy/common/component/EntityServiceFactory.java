@@ -201,7 +201,7 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
         return list.get(random);
     }
 
-    private ServiceImpl getService(String className) {
+    public static ServiceImpl getService(String className) {
         try {
             Class<?> cls = Class.forName(className);
             if (entityServiceMap.containsKey(cls)) {
