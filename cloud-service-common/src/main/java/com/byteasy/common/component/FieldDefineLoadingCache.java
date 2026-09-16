@@ -1,7 +1,8 @@
 package com.byteasy.common.component;
 
 import cn.hutool.core.util.ArrayUtil;
-import com.byteasy.Constant;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IPlatformEntityChangeHandler;
@@ -29,11 +30,19 @@ public class FieldDefineLoadingCache implements IPlatformEntityChangeHandler, IC
     private LoadingCache<String, List<FieldDefine>> columnsCacheLoader = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
         @Override
         public List<FieldDefine> load(String key) {
-            List<FieldDefine> list = fieldDefineService.listEntityFieldDefines(key).getIfPresent();
-            if (list != null && !list.isEmpty()) {
-                return list;
+            ServiceImpl service = EntityServiceFactory.getService(FieldDefine.class.getName());
+            if (service != null) {
+                LambdaUpdateWrapper<FieldDefine> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+                lambdaUpdateWrapper.eq(FieldDefine::getClassName, key);
+                lambdaUpdateWrapper.orderByAsc(FieldDefine::getShowOrder);
+                return service.list(lambdaUpdateWrapper);
+            } else {
+                List<FieldDefine> list = fieldDefineService.listEntityFieldDefines(key).getIfPresent();
+                if (list != null && !list.isEmpty()) {
+                    return list;
+                }
+                return List.of();
             }
-            return List.of();
         }
     });
 

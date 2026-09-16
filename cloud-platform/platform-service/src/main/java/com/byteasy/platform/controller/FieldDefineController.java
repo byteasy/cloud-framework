@@ -4,6 +4,7 @@ import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.Status;
 import com.byteasy.annotations.Openapi;
+import com.byteasy.common.component.FieldDefineLoadingCache;
 import com.byteasy.common.controller.AuditController;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.platform.service.IFieldDefineService;
@@ -27,11 +28,13 @@ import java.util.List;
 public class FieldDefineController extends AuditController<Long, IFieldDefineService, FieldDefine> {
     @Autowired
     private INacosConfigService nacosConfigService;
+    @Autowired
+    private FieldDefineLoadingCache cache;
 
     @GetMapping("/entity/{className}")
     @Openapi(title = "查询业务对象的字段信息")
     public Result<List<FieldDefine>> listEntityFieldDefines(@PathVariable("className") String className) throws Exception {
-        return Result.success(baseService.queryByClassName(className));
+        return Result.success(cache.load(className));
     }
 
     @PutMapping("/{serviceName}/{className}")
