@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -34,13 +35,13 @@ public class UserRoleLoadingCache implements IEntityChangeHandler, ICacheLoader<
 
     private LoadingCache<String /* username */, Set<Long>> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(3)).maximumSize(5000).build(new CacheLoader<>() {
         @Override
-        public @Nullable Set<Long> load(String key) {
+        public Set<Long> load(String key) {
             Map<String, Object> params = new HashMap<>();
             params.put("username", key);
             params.put("usernameQueryType", "eq");
             UserRoleDTO userRoleDTO = userService.getUserRoleInfo(params).getIfPresent();
             if (userRoleDTO == null) {
-                return null;
+                return Collections.emptySet();
             }
             return userRoleDTO.getRoleIds();
         }
