@@ -3,12 +3,16 @@ package com.byteasy.permission.interceptor;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.Result;
+import com.byteasy.Status;
 import com.byteasy.common.component.OpenApiLoadingCache;
 import com.byteasy.common.controller.AbstractController;
 import com.byteasy.common.controller.OpenapiCommonController;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.RequestUtil;
+import com.byteasy.exception.BizException;
+import com.byteasy.permission.component.RoleOpenapiLoadingCache;
+import com.byteasy.permission.component.UserRoleLoadingCache;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.util.EntityCodeUtil;
 import com.byteasy.util.I18nUtil;
@@ -27,6 +31,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.util.Set;
 
 @Aspect
 @Component
@@ -36,6 +41,10 @@ public class OpenapiAuthAspect {
 
     @Autowired
     private OpenApiLoadingCache openApiLoadingCache;
+    @Autowired
+    private UserRoleLoadingCache userRoleLoadingCache;
+    @Autowired
+    private RoleOpenapiLoadingCache roleOpenapiLoadingCache;
 
     @Pointcut("@annotation(com.byteasy.annotations.Openapi) || @within(com.byteasy.annotations.Openapi)")
     public void openapiPointcut() {
@@ -45,15 +54,6 @@ public class OpenapiAuthAspect {
     @Around("openapiPointcut()")
     public Object aroundOpenapiCall(ProceedingJoinPoint joinPoint) throws Throwable {
         UserInfo userInfo = TokenUtil.getUserinfo();
-
-        if (userInfo == null) {
-            return Result.error("缺少认证信息");
-        }
-        // 仅拦截用户发起的请求，避免递归调用
-        if (userInfo.isForwardBy()) {
-            return joinPoint.proceed();
-        }
-
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
         com.byteasy.annotations.Openapi annotation = method.getAnnotation(com.byteasy.annotations.Openapi.class);
@@ -63,40 +63,78 @@ public class OpenapiAuthAspect {
         Class<?> targetClass = joinPoint.getTarget().getClass();
         String fullUri = SpringContextUtil.getContextPath() + RequestMappingResolver.getFullMethodUri(targetClass, method);
         String actualUri = request.getRequestURI();
-
         Object[] args = joinPoint.getArgs();
-        Openapi openApi = findOpenApi(actualUri, fullUri, methodName);
-        if (openApi == null) {
-            Openapi openapi = new Openapi();
-            openapi.setCode(EntityCodeUtil.generateCode());
-            openapi.setServiceCode(SpringUtil.getApplicationName());
-            String name = annotation.title();
-            if (StringUtils.isEmpty(name)) {
-                name = method.getName();
+
+        if (userInfo == null) {
+            // public
+            Openapi openApi = findOpenApi(actualUri, fullUri, methodName);
+            if (openApi == null) {
+                return joinPoint.proceed();
             }
-            openapi.setName(I18nUtil.convertI18nFieldZhValue(name));
-            openapi.setHttpMethod(Openapi.HttpMethod.fromValue(methodName));
-            openapi.setUri(fullUri);
-            openapi.setType(Openapi.Type.DEVELOP);
-            openapi.setPermissionType(Openapi.PermissionType.PUBLIC);
-            openapi.setLoggable(false);
-            if (AbstractController.class.isAssignableFrom(targetClass)) {
-                Method getEntityClassMethod = ReflectUtil.getMethod(targetClass, "getEntityClass");
-                Class<?> entityClass = ReflectUtil.invoke(joinPoint.getTarget(), getEntityClassMethod);
-                openapi.setClassName(entityClass.getName());
-                openApiLoadingCache.register(openapi);
-                log.info("Openapi not found, auto registe: {}", openapi);
-            } else if (OpenapiCommonController.class.isAssignableFrom(targetClass)) {
-                openapi.setClassName(extractClassName(signature, args));
-                openApiLoadingCache.register(openapi);
-                log.info("Openapi not found, auto registe: {}", openapi);
-            } else {
-                log.error("Openapi not found, src: {}, uri: {}, method: {}, class: {} ", fullUri, actualUri, methodName, targetClass.getName());
+            if (Openapi.PermissionType.PUBLIC.equals(openApi.getPermissionType())) {
+                return joinPoint.proceed();
             }
-            return joinPoint.proceed();
+            return Result.error("缺少认证信息");
         } else {
-            // TODO 根据角色进行校验
-            return joinPoint.proceed();
+            // 仅拦截用户发起的请求，避免递归调用
+            if (userInfo.isForwardBy()) {
+                return joinPoint.proceed();
+            }
+
+            /**
+             * 系统未注册接口，调用时自动注册为LOGIN访问接口
+             */
+            Openapi openApi = findOpenApi(actualUri, fullUri, methodName);
+            if (openApi == null) {
+                Openapi openapi = new Openapi();
+                openapi.setCode(EntityCodeUtil.generateCode());
+                openapi.setServiceCode(SpringUtil.getApplicationName());
+                String name = annotation.title();
+                if (StringUtils.isEmpty(name)) {
+                    name = method.getName();
+                }
+                openapi.setName(I18nUtil.convertI18nFieldZhValue(name));
+                openapi.setHttpMethod(Openapi.HttpMethod.fromValue(methodName));
+                openapi.setUri(fullUri);
+                openapi.setType(Openapi.Type.DEVELOP);
+                openapi.setPermissionType(Openapi.PermissionType.LOGIN);
+                openapi.setLoggable(false);
+                if (AbstractController.class.isAssignableFrom(targetClass)) {
+                    Method getEntityClassMethod = ReflectUtil.getMethod(targetClass, "getEntityClass");
+                    Class<?> entityClass = ReflectUtil.invoke(joinPoint.getTarget(), getEntityClassMethod);
+                    openapi.setClassName(entityClass.getName());
+                    openApiLoadingCache.register(openapi);
+                    log.info("Openapi not found, auto registe: {}", openapi);
+                } else if (OpenapiCommonController.class.isAssignableFrom(targetClass)) {
+                    openapi.setClassName(extractClassName(signature, args));
+                    openApiLoadingCache.register(openapi);
+                    log.info("Openapi not found, auto registe: {}", openapi);
+                } else {
+                    log.error("Openapi not found, src: {}, uri: {}, method: {}, class: {} ", fullUri, actualUri, methodName, targetClass.getName());
+                }
+                return joinPoint.proceed();
+            } else {
+                switch (openApi.getPermissionType()) {
+                    case PUBLIC, LOGIN:
+                        return joinPoint.proceed();
+                    case AUTH: {
+                        Set<Long> roleIds = userRoleLoadingCache.load(userInfo.getUsername());
+                        if (roleIds == null || roleIds.isEmpty()) {
+                            throw new BizException(Status.AUTHENTICATION_FAILED.getI18nKey());
+                        }
+                        for (Long roleId : roleIds) {
+                            Set<Long> apiIds = roleOpenapiLoadingCache.load(roleId);
+                            if (apiIds != null) {
+                                if (apiIds.contains(openApi.getId())) {
+                                    return joinPoint.proceed();
+                                }
+                            }
+                        }
+                        throw new BizException(Status.AUTHENTICATION_FAILED.getI18nKey());
+                    }
+                }
+                return joinPoint.proceed();
+            }
         }
     }
 

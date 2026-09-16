@@ -37,6 +37,10 @@ public class Result<T> {
         return of(Status.INTERNAL_SERVER_ERROR, Status.INTERNAL_SERVER_ERROR.getDescription(), null, null);
     }
 
+    public static <T> Result<T> error(Status status) {
+        return of(status, status.getDescription(), null, null);
+    }
+
     public static <T> Result<T> error(String description) {
         return of(Status.INTERNAL_SERVER_ERROR, description, null, null);
     }

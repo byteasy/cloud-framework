@@ -1,6 +1,7 @@
 package com.byteasy.platform.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.byteasy.platform.dto.UserRoleDTO;
 import com.byteasy.platform.entity.UserRole;
 import com.byteasy.platform.vo.LeftMenuVO;
 import com.byteasy.platform.vo.ResourceCategoryVO;
@@ -20,7 +21,7 @@ import java.util.Set;
  */
 public interface IUserRoleService extends IService<UserRole> {
 
-    UserRoleVO getUserRoleInfo(Long userId);
+    UserRoleDTO getUserRoleInfo();
 
     void saveUserRole(UserRoleVO userRoleVO);
 

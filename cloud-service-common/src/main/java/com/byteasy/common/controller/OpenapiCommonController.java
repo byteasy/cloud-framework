@@ -65,22 +65,19 @@ public class OpenapiCommonController {
     private EntityDefineLoadingCache entityDefineLoadingCache;
 
     @GetMapping("/{className}")
-    @Openapi
-    @Operation(summary = "分页查询")
+    @Openapi(summary = "分页查询")
     public Result<Page<Map<String, Object>>> page(@PathVariable("className") String className) throws Exception {
         return Result.success(commonService.page(className));
     }
 
     @GetMapping("/{className}/all")
-    @Openapi
-    @Operation(summary = "查询所有")
+    @Openapi(summary = "查询所有")
     public Result<List<Map<String, Object>>> list(@PathVariable("className") String className) throws Exception {
         return Result.success(commonService.list(className));
     }
 
     @PostMapping("/{className}")
-    @Openapi
-    @Operation(summary = "存在更新记录，否则插入一条记录")
+    @Openapi(summary = "存在更新记录，否则插入一条记录")
     public Result<Map<String, Object>> saveOrUpdate(@PathVariable("className") String className, @RequestBody String body) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("className: {}, saveOrUpdate: {}", className, body);
@@ -90,16 +87,14 @@ public class OpenapiCommonController {
     }
 
     @GetMapping("/{className}/{primaryKey}")
-    @Openapi
-    @Operation(summary = "根据主键查找")
+    @Openapi(summary = "根据主键查找")
     @Parameters({@Parameter(name = "id", description = "主键")})
     public Result<Map<String, Object>> getByPrimaryKey(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
         return Result.success(commonService.getByPrimaryKey(className, primaryKey));
     }
 
     @DeleteMapping("/{className}")
-    @Openapi
-    @Operation(summary = "根据主键删除记录")
+    @Openapi(summary = "根据主键删除记录")
     public Result<Boolean> removeByEntity(@PathVariable("className") String className, @RequestBody String body) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("className: {}, removeByEntity: {}", className, body);
@@ -109,8 +104,7 @@ public class OpenapiCommonController {
     }
 
     @DeleteMapping("/{className}/{primaryKey}")
-    @Openapi
-    @Operation(summary = "根据主键删除记录")
+    @Openapi(summary = "根据主键删除记录")
     public Result<Boolean> removeByPrimaryKey(@PathVariable("className") String className, @PathVariable("primaryKey") Object primaryKey) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("className: {}, removeById: {}", className, primaryKey);
@@ -119,8 +113,7 @@ public class OpenapiCommonController {
     }
 
     @DeleteMapping("/{className}/batch")
-    @Openapi
-    @Operation(summary = "批量删除")
+    @Openapi(summary = "批量删除")
     public Result<Boolean> batchDelete(@PathVariable("className") String className, @RequestBody String body) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("className: {}, batchRemove: {}", className, body);
@@ -131,8 +124,7 @@ public class OpenapiCommonController {
     }
 
     @GetMapping("/{className}/excel/template")
-    @Openapi
-    @Operation(summary = "下载Excel导入模板")
+    @Openapi(summary = "下载Excel导入模板")
     public void downloadImportTemplate(@PathVariable("className") String className, HttpServletResponse response) throws Exception {
         List<FieldDefine> columns = fieldDefineLoadingCache.load(className);
 
@@ -189,8 +181,7 @@ public class OpenapiCommonController {
     }
 
     @PostMapping("/{className}/excel/importPreview")
-    @Openapi
-    @Operation(summary = "Excel导入预览")
+    @Openapi(summary = "Excel导入预览")
     public Result<List<Map<String, Object>>> importPreview(@PathVariable("className") String className, @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
         ExcelReader excelReader = ExcelUtil.getReader(file.getInputStream(), 0);
         int rowCount = excelReader.getRowCount();
@@ -315,8 +306,7 @@ public class OpenapiCommonController {
     }
 
     @PostMapping("/{className}/batch")
-    @Openapi
-    @Operation(summary = "存在更新记录，否则插入记录（批量）")
+    @Openapi(summary = "存在更新记录，否则插入记录（批量）")
     public Result<List<Map<String, Object>>> saveOrUpdateBatch(@PathVariable("className") String className, @RequestBody String body) throws Exception {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdateBatch: {}", body);
@@ -342,8 +332,7 @@ public class OpenapiCommonController {
     }
 
     @PostMapping("/{className}/excel/export")
-    @Openapi
-    @Operation(summary = "Excel数据导出")
+    @Openapi(summary = "Excel数据导出")
     public void exportExcel(@PathVariable("className") String className, @RequestBody List<String> fieldNames, HttpServletResponse response) throws Exception {
         List<FieldDefine> columns = fieldDefineLoadingCache.load(className);
         Map<String, FieldDefine> columnMap = CastUtil.listToMap(columns, FieldDefine::getName);
