@@ -44,7 +44,7 @@ public class OpenapiLog extends ImmutablyEntity<Long> {
     private String queryString;
 
     @FieldMeta(name = "请求头", showOrder = 104)
-    @TableField("http_header")
+    @TableField(value = "http_header", typeHandler = PgJsonbTypeHandler.class)
     private Map<String, String[]> httpHeader;
 
     @FieldMeta(name = "请求类型", showOrder = 105)

@@ -27,11 +27,14 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @Aspect
 @Component
@@ -45,6 +48,9 @@ public class OpenapiAuthAspect {
     private UserRoleLoadingCache userRoleLoadingCache;
     @Autowired
     private RoleOpenapiLoadingCache roleOpenapiLoadingCache;
+    @Autowired(required = false)
+    @Qualifier("openapiLogExecutor")
+    private Executor openapiLogExecutor;
 
     @Pointcut("@annotation(com.byteasy.annotations.Openapi) || @within(com.byteasy.annotations.Openapi)")
     public void openapiPointcut() {
@@ -99,18 +105,35 @@ public class OpenapiAuthAspect {
                 openapi.setType(Openapi.Type.DEVELOP);
                 openapi.setPermissionType(Openapi.PermissionType.LOGIN);
                 openapi.setLoggable(false);
+                Runnable saveTask = null;
                 if (AbstractController.class.isAssignableFrom(targetClass)) {
                     Method getEntityClassMethod = ReflectUtil.getMethod(targetClass, "getEntityClass");
                     Class<?> entityClass = ReflectUtil.invoke(joinPoint.getTarget(), getEntityClassMethod);
                     openapi.setClassName(entityClass.getName());
-                    openApiLoadingCache.register(openapi);
+                    saveTask = () -> {
+                        try {
+                            openApiLoadingCache.register(openapi);
+                        } catch (Exception e) {
+                            log.error("Openapi not found, auto registe api: {}, error: {}", openapi, e.getMessage());
+                        }
+                    };
                     log.info("Openapi not found, auto registe: {}", openapi);
                 } else if (OpenapiCommonController.class.isAssignableFrom(targetClass)) {
                     openapi.setClassName(extractClassName(signature, args));
-                    openApiLoadingCache.register(openapi);
+                    saveTask = () -> {
+                        try {
+                            openApiLoadingCache.register(openapi);
+                        } catch (Exception e) {
+                            log.error("Openapi not found, auto registe api: {}, error: {}", openapi, e.getMessage());
+                        }
+                    };
                     log.info("Openapi not found, auto registe: {}", openapi);
                 } else {
                     log.error("Openapi not found, src: {}, uri: {}, method: {}, class: {} ", fullUri, actualUri, methodName, targetClass.getName());
+                }
+
+                if (saveTask != null) {
+                    CompletableFuture.runAsync(saveTask, openapiLogExecutor);
                 }
                 return joinPoint.proceed();
             } else {

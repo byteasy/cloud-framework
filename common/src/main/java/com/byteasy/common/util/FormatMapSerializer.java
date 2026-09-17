@@ -2,8 +2,11 @@ package com.byteasy.common.util;
 
 import com.byteasy.dto.FormatMap;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.type.WritableTypeId;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -23,13 +26,47 @@ public class FormatMapSerializer extends JsonSerializer<FormatMap> {
 
     @Override
     public void serialize(FormatMap map, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        if (map == null) {
+            gen.writeNull();
+            return;
+        }
         gen.writeStartObject();
+        writeMapFields(map, gen);
+        gen.writeEndObject();
+    }
+
+    /**
+     * 🔥 补全核心：处理多态/带 TypeId（如 @class）场景下的序列化
+     */
+    @Override
+    public void serializeWithType(FormatMap map, JsonGenerator gen, SerializerProvider serializers,
+                                  TypeSerializer typeSer) throws IOException {
+        if (map == null) {
+            gen.writeNull();
+            return;
+        }
+
+        // 1. 写入类型前缀（包含 @class 元信息与 START_OBJECT）
+        WritableTypeId typeIdDef = typeSer.writeTypePrefix(gen,
+                typeSer.typeId(map, FormatMap.class, JsonToken.START_OBJECT));
+
+        // 2. 写入格式化后的字段内容
+        writeMapFields(map, gen);
+
+        // 3. 写入类型后缀（END_OBJECT）
+        typeSer.writeTypeSuffix(gen, typeIdDef);
+    }
+
+    /**
+     * 抽取公共的字段格式化输出逻辑
+     */
+    private void writeMapFields(FormatMap map, JsonGenerator gen) throws IOException {
         Map<String, String> rules = map.getFormatRules();
 
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            String pattern = rules.get(key);
+            String pattern = rules != null ? rules.get(key) : null;
 
             gen.writeFieldName(key);
 
@@ -104,7 +141,5 @@ public class FormatMapSerializer extends JsonSerializer<FormatMap> {
                 gen.writeObject(value);
             }
         }
-
-        gen.writeEndObject();
     }
 }
