@@ -26,8 +26,15 @@ logging:
 decorator:
   datasource:
     p6spy:
-      # 日志格式
-      log-format: "category:%(category) || sql:%(sqlSingleLine)"
-      # 排除
-      exclude-categories: batch,result,commit
+      enable-logging: true
+      multiline: false
+      # 日志输出格式
+      log-format: "category:%(category) || executionTime:%(executionTime)ms || sql:%(sqlSingleLine)"
+      # 🔥 核心修正：使用 YAML 列表格式，精确匹配 List<String> excludeCategories
+      exclude-categories:
+        - result
+        - resultset
+        - batch
+        - commit
+        - rollback
 

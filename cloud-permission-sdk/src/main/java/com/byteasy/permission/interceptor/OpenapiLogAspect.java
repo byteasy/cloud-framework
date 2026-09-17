@@ -29,9 +29,9 @@ import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
 @Aspect
@@ -122,6 +122,9 @@ public class OpenapiLogAspect {
             logEntity.setOpenapiName(openApi.getName());
             logEntity.setUserInfo(userInfo);
             logEntity.setCostTime(costTime);
+            logEntity.setCreatedBy(userInfo.getName());
+            logEntity.setCreatorId(userInfo.getUsername());
+            logEntity.setCreatedTime(LocalDateTime.now());
 
             // 🔥 核心点：识别是否为重放调用，并提取来源日志 ID
             String isReplayHeader = request.getHeader("X-Openapi-Replay");
@@ -203,7 +206,7 @@ public class OpenapiLogAspect {
     private Openapi findOpenApi(String actualUri, String path, String httpMethod) {
         try {
             return openApiLoadingCache.load(openApiLoadingCache.buildCompositeKey(actualUri, path, Openapi.HttpMethod.fromValue(httpMethod)));
-        } catch (ExecutionException e) {
+        } catch (Exception e) {
             log.error("未找到对应 openapi: actualUri={}, path={}, httpMethod={}", actualUri, path, httpMethod);
             return null;
         }
