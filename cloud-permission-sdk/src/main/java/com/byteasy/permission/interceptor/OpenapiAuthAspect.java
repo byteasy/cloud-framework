@@ -104,7 +104,7 @@ public class OpenapiAuthAspect {
                 openapi.setUri(fullUri);
                 openapi.setType(Openapi.Type.DEVELOP);
                 openapi.setPermissionType(Openapi.PermissionType.LOGIN);
-                openapi.setLoggable(false);
+                openapi.setLoggable(openapi.getHttpMethod() != null && !Openapi.HttpMethod.GET.equals(openApi.getHttpMethod()));
                 Runnable saveTask = null;
                 if (AbstractController.class.isAssignableFrom(targetClass)) {
                     Method getEntityClassMethod = ReflectUtil.getMethod(targetClass, "getEntityClass");
@@ -114,25 +114,24 @@ public class OpenapiAuthAspect {
                         try {
                             openApiLoadingCache.register(openapi);
                         } catch (Exception e) {
-                            log.error("Openapi not found, auto registe api: {}, error: {}", openapi, e.getMessage());
+                            log.error("Openapi not found, auto register api failed: {}, error: {}", openapi, e.getMessage());
                         }
                     };
-                    log.info("Openapi not found, auto registe: {}", openapi);
                 } else if (OpenapiCommonController.class.isAssignableFrom(targetClass)) {
                     openapi.setClassName(extractClassName(signature, args));
                     saveTask = () -> {
                         try {
                             openApiLoadingCache.register(openapi);
                         } catch (Exception e) {
-                            log.error("Openapi not found, auto registe api: {}, error: {}", openapi, e.getMessage());
+                            log.error("Openapi not found, auto register api failed: {}, error: {}", openapi, e.getMessage());
                         }
                     };
-                    log.info("Openapi not found, auto registe: {}", openapi);
                 } else {
                     log.error("Openapi not found, src: {}, uri: {}, method: {}, class: {} ", fullUri, actualUri, methodName, targetClass.getName());
                 }
 
                 if (saveTask != null) {
+                    log.info("Openapi not found, auto register: {}", openapi);
                     CompletableFuture.runAsync(saveTask, openapiLogExecutor);
                 }
                 return joinPoint.proceed();
