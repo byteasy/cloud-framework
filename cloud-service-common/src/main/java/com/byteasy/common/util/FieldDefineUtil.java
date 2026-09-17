@@ -1,5 +1,6 @@
 package com.byteasy.common.util;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.EnumUtil;
 import cn.hutool.core.util.NumberUtil;
@@ -12,6 +13,7 @@ import com.byteasy.annotations.FieldMeta;
 import com.byteasy.common.component.FieldDefineLoadingCache;
 import com.byteasy.entity.LogicDeleteEntity;
 import com.byteasy.enums.*;
+import com.byteasy.exception.BizException;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.util.I18nUtil;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -19,18 +21,17 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import io.swagger.v3.core.util.ReflectionUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Field;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Log4j2
 public class FieldDefineUtil {
     public static Map<String, FieldDefine> getColumns(Class<?> cls) {
         if (Enum.class.isAssignableFrom(cls)) {
@@ -390,5 +391,19 @@ public class FieldDefineUtil {
                 }
             }
         }
+    }
+
+    public static FieldDefine getPrimaryColumn(Collection<FieldDefine> columnDefList) {
+        if (CollectionUtil.isEmpty(columnDefList)) {
+            throw new BizException("实体字段定义列表为空，无法获取主键");
+        }
+        return columnDefList.stream()
+                .filter(s -> YesNo.YES.equals(s.getIsPrimary()))
+                .findFirst()
+                .orElseThrow(() -> {
+                    String className = columnDefList.iterator().next().getClassName();
+                    log.error("className: {} 缺少主键定义", className);
+                    return new BizException("className: " + className + " 缺少主键定义");
+                });
     }
 }
