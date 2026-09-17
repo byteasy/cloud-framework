@@ -1,11 +1,13 @@
 package com.byteasy.permission.interceptor;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.util.NumberUtil;
 import com.byteasy.common.component.OpenApiLoadingCache;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.RequestUtil;
+import com.byteasy.enums.YesNo;
 import com.byteasy.platform.api.IOpenapiLogService;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.platform.entity.OpenapiLog;
@@ -13,6 +15,7 @@ import com.byteasy.util.RequestMappingResolver;
 import com.byteasy.util.SpringContextUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -42,8 +45,8 @@ public class OpenapiLogAspect {
 
     @Autowired
     private IOpenapiLogService openapiLogService;
-    // 🔥 注入刚刚定义的专用日志线程池
-    @Autowired
+
+    @Autowired(required = false)
     @Qualifier("openapiLogExecutor")
     private Executor openapiLogExecutor;
 
@@ -60,12 +63,12 @@ public class OpenapiLogAspect {
         }
 
         UserInfo userInfo = TokenUtil.getUserinfo();
-        // 1. 仅拦截用户发起的请求，避免内部系统转发或递归调用
+        // 1. 避免微服务间自动传递链路产生的自反调用
         if (userInfo != null && userInfo.isForwardBy()) {
             return joinPoint.proceed();
         }
 
-        // 2. 物理防重入：如果当前正在请求日志本身的 API，坚决不再记录日志！
+        // 2. 避免日志服务自身的记录接口产生递归
         String actualUri = request.getRequestURI();
         if (actualUri != null && actualUri.contains("/openapiLogs")) {
             return joinPoint.proceed();
@@ -77,10 +80,8 @@ public class OpenapiLogAspect {
         Class<?> targetClass = joinPoint.getTarget().getClass();
         String fullUri = SpringContextUtil.getContextPath() + RequestMappingResolver.getFullMethodUri(targetClass, method);
 
-        // 3. 匹配 OpenAPI 模型定义
+        // 3. 匹配 OpenAPI 接口定义
         Openapi openApi = findOpenApi(actualUri, fullUri, methodName);
-
-        // 如果未定义或未开启 loggable，直接放行
         if (openApi == null || !Boolean.TRUE.equals(openApi.getLoggable())) {
             return joinPoint.proceed();
         }
@@ -97,18 +98,17 @@ public class OpenapiLogAspect {
             throw ex;
         } finally {
             long costTime = System.currentTimeMillis() - startTime;
-            // 异步持久化接口调用日志，避免影响主业务性能
+            // 组装并异步持久化日志
             asyncRecordLog(openApi, request, result, error, costTime, userInfo);
         }
     }
 
     /**
-     * 异步组装并记录日志
+     * 异步记录日志
      */
     private void asyncRecordLog(Openapi openApi, HttpServletRequest request, Object result,
                                 Throwable error, long costTime, UserInfo userInfo) {
         try {
-            // 必须在当前主线程先提取 Request 相关参数（防止异步线程脱离 Web 作用域后 request 被销毁或回收）
             OpenapiLog logEntity = new OpenapiLog();
             logEntity.setServiceCode(openApi.getServiceCode());
             logEntity.setUri(request.getRequestURI());
@@ -123,9 +123,22 @@ public class OpenapiLogAspect {
             logEntity.setUserInfo(userInfo);
             logEntity.setCostTime(costTime);
 
+            // 🔥 核心点：识别是否为重放调用，并提取来源日志 ID
+            String isReplayHeader = request.getHeader("X-Openapi-Replay");
+            if ("true".equalsIgnoreCase(isReplayHeader)) {
+                logEntity.setIsReplay(YesNo.YES);
+                String sourceIdStr = request.getHeader("X-Replay-Source-Id");
+                if (StringUtils.isNotBlank(sourceIdStr) && NumberUtil.isNumber(sourceIdStr)) {
+                    logEntity.setReplaySourceId(Long.valueOf(sourceIdStr));
+                }
+            } else {
+                logEntity.setIsReplay(YesNo.NO);
+                logEntity.setReplaySourceId(null);
+            }
+
+            // 结果与异常处理
             if (error != null) {
                 logEntity.setStatus(OpenapiLog.Status.FAILED);
-                // 记录异常错误信息摘要（控制长度，防止大堆栈撑爆日志）
                 logEntity.setErrorMessage(ExceptionUtil.stacktraceToString(error, 2048));
                 logEntity.setHttpResponse(error.getMessage());
             } else {
@@ -140,29 +153,24 @@ public class OpenapiLogAspect {
                 }
             }
 
-            // 异步调用 Feign 写入，避免阻塞业务返回
-            CompletableFuture.runAsync(() -> {
+            Runnable saveTask = () -> {
                 try {
                     openapiLogService.saveOrUpdate(logEntity);
                 } catch (Exception e) {
-                    log.error("保存 OpenAPI 接口调用日志失败: uri={}, error={}", logEntity.getUri(), e.getMessage());
+                    log.error("保存 OpenAPI 执行日志异常: uri={}, error={}", logEntity.getUri(), e.getMessage());
                 }
-            }, openapiLogExecutor);
+            };
 
+            CompletableFuture.runAsync(saveTask, openapiLogExecutor);
         } catch (Exception e) {
-            log.error("构建 OpenAPI 调用日志异常: {}", e.getMessage(), e);
+            log.error("构建 OpenAPI 执行日志失败: {}", e.getMessage(), e);
         }
     }
 
-    /**
-     * 提取请求头为 Map<String, String[]>
-     */
     private Map<String, String[]> extractHeaders(HttpServletRequest request) {
         Map<String, String[]> headerMap = new HashMap<>();
         Enumeration<String> headerNames = request.getHeaderNames();
-        if (headerNames == null) {
-            return headerMap;
-        }
+        if (headerNames == null) return headerMap;
 
         while (headerNames.hasMoreElements()) {
             String name = headerNames.nextElement();
@@ -176,9 +184,6 @@ public class OpenapiLogAspect {
         return headerMap;
     }
 
-    /**
-     * 提取请求体（支持 ContentCachingRequestWrapper 包装流）
-     */
     private String extractRequestBody(HttpServletRequest request) {
         ContentCachingRequestWrapper wrapper = org.springframework.web.util.WebUtils.getNativeRequest(request, ContentCachingRequestWrapper.class);
         if (wrapper != null) {
@@ -188,16 +193,13 @@ public class OpenapiLogAspect {
                     String encoding = wrapper.getCharacterEncoding() != null ? wrapper.getCharacterEncoding() : StandardCharsets.UTF_8.name();
                     return new String(buf, encoding);
                 } catch (Exception e) {
-                    log.debug("读取 RequestBody 字符集异常", e);
+                    log.error("提取 RequestBody 字符集异常", e);
                 }
             }
         }
         return null;
     }
 
-    /**
-     * 智能定位 Openapi 模型定义
-     */
     private Openapi findOpenApi(String actualUri, String path, String httpMethod) {
         try {
             return openApiLoadingCache.load(openApiLoadingCache.buildCompositeKey(actualUri, path, Openapi.HttpMethod.fromValue(httpMethod)));

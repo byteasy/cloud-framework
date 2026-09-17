@@ -6,6 +6,7 @@ import com.byteasy.annotations.FieldMeta;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.entity.ImmutablyEntity;
 import com.byteasy.enums.IBaseEnum;
+import com.byteasy.enums.YesNo;
 import com.byteasy.typehandler.PgJsonbTypeHandler;
 import lombok.Getter;
 import lombok.Setter;
@@ -81,6 +82,14 @@ public class OpenapiLog extends ImmutablyEntity<Long> {
     @FieldMeta(name = "异常错误详细信息", showOrder = 113)
     @TableField("error_message")
     private String errorMessage;
+
+    @FieldMeta(name = "是否重放", showOrder = 114)
+    @TableField("is_replay")
+    private YesNo isReplay;
+
+    @FieldMeta(name = "重放来源ID", showOrder = 115)
+    @TableField("replay_source_id")
+    private Long replaySourceId;
 
     public enum Status implements IBaseEnum<Integer> {
         SUCCESS(0, "成功"),
