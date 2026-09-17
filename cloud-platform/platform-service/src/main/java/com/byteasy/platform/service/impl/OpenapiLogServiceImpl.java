@@ -1,6 +1,8 @@
 package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.byteasy.Result;
+import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.platform.entity.OpenapiLog;
@@ -39,9 +41,7 @@ public class OpenapiLogServiceImpl extends ServiceImpl<OpenapiLogMapper, Openapi
     @Autowired
     private DiscoveryClient discoveryClient;
 
-    private static final Set<String> EXCLUDE_HEADERS = Set.of(
-            "content-length", "host", "connection", "accept-encoding"
-    );
+    private static final Set<String> EXCLUDE_HEADERS = Set.of("content-length", "host", "connection", "accept-encoding");
 
     /**
      * 重放指定日志对应的接口
@@ -49,7 +49,7 @@ public class OpenapiLogServiceImpl extends ServiceImpl<OpenapiLogMapper, Openapi
      * @param logId 接口执行日志ID
      * @return 目标接口返回的真实响应体字符串（业务切面会自动生成一条新的日志记录）
      */
-    public String replay(Long logId) throws IOException {
+    public Result replay(Long logId) throws IOException {
         OpenapiLog logEntity = getById(logId);
         if (logEntity == null) {
             throw new IllegalArgumentException("未找到对应的接口调用日志记录, id: " + logId);
@@ -74,24 +74,18 @@ public class OpenapiLogServiceImpl extends ServiceImpl<OpenapiLogMapper, Openapi
         RequestBody requestBody = buildRequestBody(methodStr, logEntity.getContentType(), logEntity.getHttpBody());
 
         // 3. 构建 OkHttp Request，还原 Headers
-        Request.Builder requestBuilder = new Request.Builder()
-                .url(fullUrl)
-                .method(methodStr, requestBody);
+        Request.Builder requestBuilder = new Request.Builder().url(fullUrl).method(methodStr, requestBody);
 
-        Map<String, String[]> headers = logEntity.getHttpHeader();
+        Map<String, String> headers = logEntity.getHttpHeader();
         if (headers != null && !headers.isEmpty()) {
-            for (Map.Entry<String, String[]> entry : headers.entrySet()) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
                 String headerName = entry.getKey();
                 if (headerName == null || EXCLUDE_HEADERS.contains(headerName.toLowerCase())) {
                     continue;
                 }
-                String[] values = entry.getValue();
+                String values = entry.getValue();
                 if (values != null) {
-                    for (String val : values) {
-                        if (val != null) {
-                            requestBuilder.addHeader(headerName, val);
-                        }
-                    }
+                    requestBuilder.addHeader(headerName, values);
                 }
             }
         }
@@ -103,9 +97,13 @@ public class OpenapiLogServiceImpl extends ServiceImpl<OpenapiLogMapper, Openapi
         // 4. 发起真实请求（被调用的业务接口会自动触发 OpenapiLogAspect，写入一条全新的执行日志！）
         try (Response response = OkHttpUtil.getDefaultClient().newCall(requestBuilder.build()).execute()) {
             String responseBody = response.body() != null ? response.body().string() : "";
-            log.info("【接口重放完成】sourceLogId={}, method={}, url={}, statusCode={}, responseBody={}",
-                    logId, methodStr, fullUrl, response.code(), responseBody);
-            return responseBody;
+            log.info("【接口重放完成】sourceLogId={}, method={}, url={}, statusCode={}, responseBody={}", logId, methodStr, fullUrl, response.code(), responseBody);
+            Result result = JacksonUtil.parse(responseBody, Result.class);
+            if (result.isSuccess()) {
+                return Result.success();
+            } else {
+                return Result.error(result.getDescription());
+            }
         }
     }
 
@@ -117,9 +115,7 @@ public class OpenapiLogServiceImpl extends ServiceImpl<OpenapiLogMapper, Openapi
             return null;
         }
 
-        MediaType mediaType = MediaType.parse(StringUtils.isNotBlank(contentType)
-                ? contentType
-                : "application/json; charset=utf-8");
+        MediaType mediaType = MediaType.parse(StringUtils.isNotBlank(contentType) ? contentType : "application/json; charset=utf-8");
 
         if (StringUtils.isNotBlank(httpBody)) {
             return RequestBody.create(httpBody, mediaType);

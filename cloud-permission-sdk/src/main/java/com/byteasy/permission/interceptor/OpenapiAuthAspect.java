@@ -90,8 +90,8 @@ public class OpenapiAuthAspect {
             /**
              * 系统未注册接口，调用时自动注册为LOGIN访问接口
              */
-            Openapi openApi = findOpenApi(actualUri, fullUri, methodName);
-            if (openApi == null) {
+            Openapi dbOpenapi = findOpenApi(actualUri, fullUri, methodName);
+            if (dbOpenapi == null) {
                 Openapi openapi = new Openapi();
                 openapi.setCode(EntityCodeUtil.generateCode());
                 openapi.setServiceCode(SpringUtil.getApplicationName());
@@ -104,7 +104,11 @@ public class OpenapiAuthAspect {
                 openapi.setUri(fullUri);
                 openapi.setType(Openapi.Type.DEVELOP);
                 openapi.setPermissionType(Openapi.PermissionType.LOGIN);
-                openapi.setLoggable(openapi.getHttpMethod() != null && !Openapi.HttpMethod.GET.equals(openApi.getHttpMethod()));
+                if (openapi.getHttpMethod() != null) {
+                    openapi.setLoggable(!Openapi.HttpMethod.GET.equals(openapi.getHttpMethod()));
+                } else {
+                    openapi.setLoggable(false);
+                }
                 Runnable saveTask = null;
                 if (AbstractController.class.isAssignableFrom(targetClass)) {
                     Method getEntityClassMethod = ReflectUtil.getMethod(targetClass, "getEntityClass");
@@ -136,7 +140,7 @@ public class OpenapiAuthAspect {
                 }
                 return joinPoint.proceed();
             } else {
-                switch (openApi.getPermissionType()) {
+                switch (dbOpenapi.getPermissionType()) {
                     case PUBLIC, LOGIN:
                         return joinPoint.proceed();
                     case AUTH: {
@@ -147,7 +151,7 @@ public class OpenapiAuthAspect {
                         for (Long roleId : roleIds) {
                             Set<Long> apiIds = roleOpenapiLoadingCache.load(roleId);
                             if (apiIds != null) {
-                                if (apiIds.contains(openApi.getId())) {
+                                if (apiIds.contains(dbOpenapi.getId())) {
                                     return joinPoint.proceed();
                                 }
                             }

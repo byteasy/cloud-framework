@@ -25,7 +25,7 @@ public class OpenapiLogController extends ImmutablyController<Long, IOpenapiLogS
 
     @PostMapping("/{id}/replay")
     @Openapi(title = "重放接口调用")
-    public Result<String> replayLog(@PathVariable("id") Long id) throws Exception {
-        return Result.success(baseService.replay(id));
+    public Result replayLog(@PathVariable("id") Long id) throws Exception {
+        return baseService.replay(id);
     }
 }

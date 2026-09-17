@@ -180,6 +180,7 @@ public class FieldDefineUtil {
 
 
     public static Map<String, FieldDefine> getEnumColumns(Class<?> cls) {
+        int showOrder = 100;
         if (IBaseEnum.class.isAssignableFrom(cls)) {
             Class<? extends IBaseEnum> enumCls = (Class<? extends IBaseEnum>) cls;
             IBaseEnum[] enums = enumCls.getEnumConstants();
@@ -193,6 +194,7 @@ public class FieldDefineUtil {
                 column.setDisplayName(jsonObject.toString());
                 column.setType(ColumnType.ENUM);
                 column.setTypeClassName(anEnum.getCss());
+                column.setShowOrder(showOrder++);
                 result.put(anEnum.getEnumName(), column);
             }
             return result;
@@ -208,6 +210,7 @@ public class FieldDefineUtil {
                 column.setDisplayName(jsonObject.toString());
                 column.setType(ColumnType.ENUM);
                 column.setTypeClassName(null);
+                column.setShowOrder(showOrder++);
                 result.put(name, column);
             }
             return result;

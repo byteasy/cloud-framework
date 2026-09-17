@@ -1,6 +1,7 @@
 package com.byteasy.platform.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.byteasy.Result;
 import com.byteasy.platform.entity.OpenapiLog;
 
 import java.io.IOException;
@@ -15,5 +16,5 @@ import java.io.IOException;
  */
 public interface IOpenapiLogService extends IService<OpenapiLog> {
 
-    String replay(Long logId) throws IOException;
+    Result replay(Long logId) throws IOException;
 }
