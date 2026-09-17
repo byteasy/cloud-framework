@@ -23,7 +23,7 @@ import java.util.Map;
  */
 @Getter
 @Setter
-@TableName("platform_openapi_log")
+@TableName(value = "platform_openapi_log", autoResultMap = true)
 @FieldMeta(name = "OpenapiLog", description = "接口执行日志记录表")
 public class OpenapiLog extends ImmutablyEntity<Long> {
 
@@ -45,7 +45,7 @@ public class OpenapiLog extends ImmutablyEntity<Long> {
 
     @FieldMeta(name = "请求头", showOrder = 104)
     @TableField(value = "http_header", typeHandler = PgJsonbTypeHandler.class)
-    private Map<String, String[]> httpHeader;
+    private Map<String, String> httpHeader;
 
     @FieldMeta(name = "请求类型", showOrder = 105)
     @TableField("content_type")

@@ -170,8 +170,8 @@ public class OpenapiLogAspect {
         }
     }
 
-    private Map<String, String[]> extractHeaders(HttpServletRequest request) {
-        Map<String, String[]> headerMap = new HashMap<>();
+    private Map<String, String> extractHeaders(HttpServletRequest request) {
+        Map<String, String> headerMap = new HashMap<>();
         Enumeration<String> headerNames = request.getHeaderNames();
         if (headerNames == null) return headerMap;
 
@@ -182,7 +182,7 @@ public class OpenapiLogAspect {
             while (values.hasMoreElements()) {
                 valList.add(values.nextElement());
             }
-            headerMap.put(name, valList.toArray(new String[0]));
+            headerMap.put(name, StringUtils.join(valList, ","));
         }
         return headerMap;
     }

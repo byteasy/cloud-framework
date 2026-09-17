@@ -2,6 +2,7 @@ package com.byteasy.common.util;
 
 import cn.hutool.core.util.NumberUtil;
 import com.byteasy.dto.FormatMap;
+import com.byteasy.typehandler.PgJsonbTypeHandler;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonGenerator;
