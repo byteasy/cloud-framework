@@ -1,27 +1,29 @@
 CREATE TABLE "platform_openapi_log"
 (
-    id            BIGSERIAL PRIMARY KEY,
-    service_code  VARCHAR(128) NOT NULL,
-    uri           VARCHAR(512) NOT NULL,
-    http_method   VARCHAR(16)  NOT NULL,
-    query_string  TEXT,
-    http_header   JSONB                 DEFAULT '{}'::jsonb,
-    content_type  VARCHAR(128),
-    http_body     TEXT,
-    http_response TEXT,
-    user_info     JSONB                 DEFAULT '{}'::jsonb,
-    openapi_id    BIGINT       NOT NULL,
-    openapi_name  VARCHAR(512) NOT NULL,
-    cost_time     BIGINT       NOT NULL DEFAULT 0, -- 耗时(ms)
-    status        SMALLINT     NOT NULL DEFAULT 1, -- 1: 成功, 0: 异常/失败
-    error_message TEXT,
-    creator_id    VARCHAR(64),
-    created_by    VARCHAR(64),
-    created_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+    id               BIGSERIAL PRIMARY KEY,
+    service_code     VARCHAR(128) NOT NULL,
+    uri              VARCHAR(512) NOT NULL,
+    http_method      VARCHAR(16)  NOT NULL,
+    query_string     TEXT,
+    http_header      JSONB                 DEFAULT '{}'::jsonb,
+    content_type     VARCHAR(128),
+    http_body        TEXT,
+    http_response    TEXT,
+    user_info        JSONB                 DEFAULT '{}'::jsonb,
+    openapi_id       BIGINT       NOT NULL,
+    openapi_name     VARCHAR(512) NOT NULL,
+    cost_time        BIGINT       NOT NULL DEFAULT 0,
+    status           SMALLINT     NOT NULL DEFAULT 1,
+    error_message    TEXT,
+    is_replay        SMALLINT     NOT NULL DEFAULT 0,
+    replay_source_id BIGINT,
+    creator_id       VARCHAR(64),
+    created_by       VARCHAR(64),
+    created_time     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. 补全完整规范的表及列注释
-COMMENT ON TABLE "platform_openapi_log" IS '接口执行日志记录表';
+-- 表和字段注释
+COMMENT ON TABLE "platform_openapi_log" IS '接口执行日志记录表(只读流水)';
 COMMENT ON COLUMN "platform_openapi_log"."id" IS '主键编号';
 COMMENT ON COLUMN "platform_openapi_log"."service_code" IS '微服务编码';
 COMMENT ON COLUMN "platform_openapi_log"."uri" IS '请求路径(URI)';
@@ -35,14 +37,16 @@ COMMENT ON COLUMN "platform_openapi_log"."user_info" IS '请求发起人身份�
 COMMENT ON COLUMN "platform_openapi_log"."openapi_id" IS 'OpenAPI模型定义ID';
 COMMENT ON COLUMN "platform_openapi_log"."openapi_name" IS 'OpenAPI接口名称';
 COMMENT ON COLUMN "platform_openapi_log"."cost_time" IS '接口执行总耗时(毫秒)';
-COMMENT ON COLUMN "platform_openapi_log"."status" IS '执行状态(1:成功, 0:失败/异常)';
+COMMENT ON COLUMN "platform_openapi_log"."status" IS '执行状态(0:成功, 1:失败)';
 COMMENT ON COLUMN "platform_openapi_log"."error_message" IS '异常错误详细信息';
+COMMENT ON COLUMN "platform_openapi_log"."is_replay" IS '是否为重放请求(0:正常请求, 1:重放请求)';
+COMMENT ON COLUMN "platform_openapi_log"."replay_source_id" IS '重放来源日志ID';
 COMMENT ON COLUMN "platform_openapi_log"."creator_id" IS '创建人ID';
 COMMENT ON COLUMN "platform_openapi_log"."created_by" IS '创建人姓名/账号';
-COMMENT ON COLUMN "platform_openapi_log"."created_time" IS '创建时间';
+COMMENT ON COLUMN "platform_openapi_log"."created_time" IS '创建时间(不可修改)';
 
--- 3. 生产级必备检索索引（日志表排查与检索必备）
+-- 核心索引
 CREATE INDEX "idx_openapi_log_created_time" ON "platform_openapi_log" ("created_time" DESC);
 CREATE INDEX "idx_openapi_log_openapi_id" ON "platform_openapi_log" ("openapi_id");
 CREATE INDEX "idx_openapi_log_service_uri" ON "platform_openapi_log" ("service_code", "uri");
-CREATE INDEX "idx_openapi_log_status" ON "platform_openapi_log" ("status");
+CREATE INDEX "idx_openapi_log_replay" ON "platform_openapi_log" ("is_replay", "replay_source_id");

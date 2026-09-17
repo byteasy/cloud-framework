@@ -6,9 +6,10 @@ import com.byteasy.annotations.Openapi;
 import com.byteasy.common.controller.ImmutablyController;
 import com.byteasy.platform.entity.OpenapiLog;
 import com.byteasy.platform.service.IOpenapiLogService;
-import com.byteasy.platform.service.impl.OpenapiReplayService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * <p>
@@ -22,12 +23,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(Constant.SAPI + "/openapiLogs")
 public class OpenapiLogController extends ImmutablyController<Long, IOpenapiLogService, OpenapiLog> {
 
-    @Autowired
-    private OpenapiReplayService openapiReplayService;
-
     @PostMapping("/{id}/replay")
     @Openapi(title = "重放接口调用")
-    public Result<String> replayLog(@PathVariable("id") Long id, @RequestParam(value = "targetHost", required = false) String targetHost) throws Exception {
-        return Result.success(openapiReplayService.replay(id, targetHost));
+    public Result<String> replayLog(@PathVariable("id") Long id) throws Exception {
+        return Result.success(baseService.replay(id));
     }
 }

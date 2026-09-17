@@ -3,6 +3,8 @@ package com.byteasy.platform.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.byteasy.platform.entity.OpenapiLog;
 
+import java.io.IOException;
+
 /**
  * <p>
  * 接口执行日志记录表 服务类
@@ -13,4 +15,5 @@ import com.byteasy.platform.entity.OpenapiLog;
  */
 public interface IOpenapiLogService extends IService<OpenapiLog> {
 
+    String replay(Long logId) throws IOException;
 }
