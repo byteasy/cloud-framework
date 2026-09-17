@@ -4,21 +4,39 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.byteasy.Result;
 import com.byteasy.entity.ImmutablyEntity;
 import com.byteasy.exception.BizException;
+import com.byteasy.platform.entity.FieldDefine;
+import com.byteasy.util.FieldValueUtil;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.List;
+
+import static com.byteasy.common.util.FieldDefineUtil.getPrimaryColumn;
 
 @Log4j2
 public abstract class ImmutablyController<ID extends java.io.Serializable, SERVICE extends IService<ENTITY>, ENTITY extends ImmutablyEntity<ID>> extends BaseController<SERVICE, ENTITY, ID> {
 
     @Override
     public Result<ENTITY> saveOrUpdate(ENTITY entity) throws Exception {
-        throw new BizException(I_18_N_FORBIDDEN_OP);
+        List<FieldDefine> columns = fieldDefineLoadingCache.load(getEntityClass().getName());
+        FieldDefine primaryColumn = getPrimaryColumn(columns);
+        Object key = FieldValueUtil.getFieldValue(entity, primaryColumn.getName());
+        if (key != null) {
+            throw new BizException(I_18_N_FORBIDDEN_OP);
+        }
+        return super.saveOrUpdate(entity);
     }
 
     @Override
     public Result<List<ENTITY>> saveOrUpdateBatch(List<ENTITY> entities) throws Exception {
-        throw new BizException(I_18_N_FORBIDDEN_OP);
+        List<FieldDefine> columns = fieldDefineLoadingCache.load(getEntityClass().getName());
+        FieldDefine primaryColumn = getPrimaryColumn(columns);
+        for (ENTITY entity : entities) {
+            Object key = FieldValueUtil.getFieldValue(entity, primaryColumn.getName());
+            if (key != null) {
+                throw new BizException(I_18_N_FORBIDDEN_OP);
+            }
+        }
+        return super.saveOrUpdateBatch(entities);
     }
 
     @Override

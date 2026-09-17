@@ -53,8 +53,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.byteasy.common.util.FieldDefineUtil.convertToDbValue;
-import static com.byteasy.common.util.FieldDefineUtil.convertToEntityValue;
+import static com.byteasy.common.util.FieldDefineUtil.*;
 
 @Service
 @Log4j2
@@ -79,19 +78,7 @@ public class CommonServiceImpl implements ICommonService {
         eventPublishUtil.publishEvent(event);
     }
 
-    private FieldDefine getPrimaryColumn(Collection<FieldDefine> columnDefList) {
-        if (CollectionUtil.isEmpty(columnDefList)) {
-            throw new BizException("实体字段定义列表为空，无法获取主键");
-        }
-        return columnDefList.stream()
-                .filter(s -> YesNo.YES.equals(s.getIsPrimary()))
-                .findFirst()
-                .orElseThrow(() -> {
-                    String className = columnDefList.iterator().next().getClassName();
-                    log.error("className: {} 缺少主键定义", className);
-                    return new BizException("className: " + className + " 缺少主键定义");
-                });
-    }
+
 
     /**
      * 通用 新增/更新
