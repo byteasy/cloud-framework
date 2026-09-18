@@ -27,7 +27,7 @@ import java.util.Map;
  */
 @Getter
 @Setter
-@TableName("platform_user")
+@TableName(value = "platform_user", autoResultMap = true)
 @Schema(name = "User", description = "{\"zh_CN\":\"系统账号\",\"en\":\"System Account\"}")
 public class User extends LogicDeleteEntity<Long> {
 

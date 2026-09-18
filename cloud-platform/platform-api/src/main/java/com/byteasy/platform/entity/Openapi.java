@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.byteasy.annotations.FieldMeta;
 import com.byteasy.entity.AuditEntity;
+import com.byteasy.enums.Enable;
 import com.byteasy.enums.IBaseEnum;
 import lombok.Getter;
 import lombok.Setter;
@@ -73,6 +74,10 @@ public class Openapi extends AuditEntity<Long> {
     @FieldMeta(name = "后置脚本钩子", showOrder = 113)
     @TableField("post_script_id")
     private Long postScriptId;
+
+    @FieldMeta(name = "状态", showOrder = 114)
+    @TableField("status")
+    private Enable status;
 
     public enum PermissionType implements IBaseEnum<Integer> {
         PUBLIC(0, "开放访问"), LOGIN(1, "登录用户访问"), AUTH(2, "授权后访问");
