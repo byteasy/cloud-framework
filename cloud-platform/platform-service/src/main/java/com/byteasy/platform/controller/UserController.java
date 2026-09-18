@@ -27,7 +27,7 @@ public class UserController extends AuditController<Long, IUserService, User> {
     }
 
     @PutMapping("/status")
-    @Openapi(title = "修改密码")
+    @Openapi(title = "修改状态")
     public Result updateUserStatus(@RequestBody User user) {
         return baseService.updateUserStatus(user);
     }
