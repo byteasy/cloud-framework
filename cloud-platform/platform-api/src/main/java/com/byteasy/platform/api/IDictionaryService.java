@@ -1,5 +1,6 @@
 package com.byteasy.platform.api;
 
+import com.byteasy.Result;
 import com.byteasy.platform.Constant;
 import com.byteasy.platform.entity.DictionaryItem;
 import com.byteasy.platform.vo.DictionaryVO;
@@ -14,8 +15,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface IDictionaryService {
 
     @GetMapping("/rpc/codes/{code}")
-    DictionaryVO getByCode(@PathVariable("code") String code);
+    Result<DictionaryVO> getByCode(@PathVariable("code") String code);
 
     @GetMapping("/rpc/codes/{code}/items/{itemCode}")
-    DictionaryItem getItemByCode(@PathVariable("code") String code, @PathVariable("itemCode") String itemCode);
+    Result<DictionaryItem> getItemByCode(@PathVariable("code") String code, @PathVariable("itemCode") String itemCode);
 }

@@ -1,17 +1,18 @@
 package com.byteasy.platform.api;
 
+import com.byteasy.Result;
 import com.byteasy.platform.entity.DictionaryItem;
 import com.byteasy.platform.vo.DictionaryVO;
 
 public class IDictionaryServiceFallback implements IDictionaryService {
 
     @Override
-    public DictionaryVO getByCode(String code) {
-        return null;
+    public Result<DictionaryVO> getByCode(String code) {
+        return Result.error();
     }
 
     @Override
-    public DictionaryItem getItemByCode(String code, String itemCode) {
-        return null;
+    public Result<DictionaryItem> getItemByCode(String code, String itemCode) {
+        return Result.error();
     }
 }
