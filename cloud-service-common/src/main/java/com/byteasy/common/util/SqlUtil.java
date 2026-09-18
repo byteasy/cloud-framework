@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import static com.byteasy.common.util.FieldDefineUtil.convertToDbValue;
 
 public class SqlUtil {
-    private static final Set<String> auditEntityPropSet = FieldDefineUtil.getFieldNames(LogicDeleteEntity.class);
+    private static final Set<String> auditEntityPropSet = FieldDefineUtil.getFieldNames(LogicDeleteEntity.class).stream().filter(s -> !s.equalsIgnoreCase("extendMap")).collect(Collectors.toSet());
 
     public static String getSingleStringValue(Map<String, ?> multiMap, String key, String defaultValue) {
         if (multiMap == null) return defaultValue;
@@ -286,11 +286,11 @@ public class SqlUtil {
             // 必须带括号，防止 OR 条件污染逻辑删除！
             sqlBuilder.append("(").append(conditionJoiner).append(")");
             if (hasLogicDelete) {
-                sqlBuilder.append(" AND \"IS_DELETED\" = ?");
+                sqlBuilder.append(" AND IS_DELETED = ?");
                 params.add(convertToDbValue(Delete.NORMAL, columnMap.get("isDeleted")));
             }
         } else if (hasLogicDelete) {
-            sqlBuilder.append("\"IS_DELETED\" = ?");
+            sqlBuilder.append("IS_DELETED = ?");
             params.add(convertToDbValue(Delete.NORMAL, columnMap.get("isDeleted")));
         }
 

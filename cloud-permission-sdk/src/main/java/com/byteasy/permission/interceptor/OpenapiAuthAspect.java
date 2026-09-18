@@ -10,6 +10,7 @@ import com.byteasy.common.controller.OpenapiCommonController;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.util.RequestUtil;
+import com.byteasy.enums.Enable;
 import com.byteasy.exception.BizException;
 import com.byteasy.permission.component.RoleOpenapiLoadingCache;
 import com.byteasy.permission.component.UserRoleLoadingCache;
@@ -104,6 +105,7 @@ public class OpenapiAuthAspect {
                 openapi.setUri(fullUri);
                 openapi.setType(Openapi.Type.DEVELOP);
                 openapi.setPermissionType(Openapi.PermissionType.LOGIN);
+                openapi.setStatus(Enable.ENABLE);
                 if (openapi.getHttpMethod() != null) {
                     openapi.setLoggable(!Openapi.HttpMethod.GET.equals(openapi.getHttpMethod()));
                 } else {

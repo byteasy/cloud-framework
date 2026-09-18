@@ -40,15 +40,17 @@ public class FieldDefineUtil {
         Map<String, FieldDefine> map = new HashMap<>();
 
         List<Field> fields = ReflectionUtils.getDeclaredFields(cls);
+        int showOrder = 100;
         for (Field field : fields) {
             FieldDefine column = new FieldDefine();
             column.setClassName(cls.getName());
+            column.setShowOrder(showOrder++);
             Schema schema = field.getAnnotation(Schema.class);
             FieldMeta fieldMeta = getFieldMeta(field);
             TableField tableField = field.getAnnotation(TableField.class);
             column.setName(field.getName());
             if (tableField != null) {
-                column.setFieldName(tableField.value());
+                column.setFieldName(tableField.value().toLowerCase());
             }
             String name = schema != null ? schema.description() : (fieldMeta != null ? fieldMeta.name() : field.getName());
             if (StringUtils.isEmpty(name)) {

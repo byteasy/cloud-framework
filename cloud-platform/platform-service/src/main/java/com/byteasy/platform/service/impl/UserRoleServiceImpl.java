@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.RequestUtil;
-import com.byteasy.enums.Enable;
 import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;
 import com.byteasy.platform.dto.UserRoleDTO;
@@ -79,6 +78,9 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRole> i
         User user = userService.getOne(wrapper, false);
         if (user == null) {
             return null;
+        }
+        if (!UserStatus.NORMAL.equals(user.getStatus())) {
+            throw new BizException("账户被锁定或者禁用");
         }
         UserRoleDTO userRoleVO = new UserRoleDTO();
         userRoleVO.setUser(user);
