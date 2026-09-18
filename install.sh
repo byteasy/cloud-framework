@@ -14,6 +14,9 @@ mvn clean install
 cd ../cloud-platform/platform-api
 mvn clean install
 
+cd ../cloud-service-common
+mvn clean install
+
 cd ../../cloud-script-sdk
 mvn clean install
 
