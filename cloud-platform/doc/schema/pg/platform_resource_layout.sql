@@ -4,6 +4,7 @@ CREATE TABLE platform_resource_layout
     resource_id          BIGINT        NOT NULL,
     name                 VARCHAR(1024) NOT NULL,
     is_default           BOOL                   DEFAULT FALSE,
+    is_public            BOOL                   DEFAULT FALSE,
     type                 SMALLINT      NOT NULL,
     std_layout_params_id BIGINT                 DEFAULT NULL,
     component_path       VARCHAR(128)           DEFAULT NULL,
@@ -22,6 +23,7 @@ COMMENT ON COLUMN platform_resource_layout.resource_id IS '菜单';
 -- 0： 标准布局 1：EB布局 2: 定制开发布局
 COMMENT ON COLUMN platform_resource_layout.name IS '名称';
 COMMENT ON COLUMN platform_resource_layout.is_default IS '默认布局';
+COMMENT ON COLUMN platform_resource_layout.is_public IS '公开访问';
 COMMENT ON COLUMN platform_resource_layout.type IS '类型';
 COMMENT ON COLUMN platform_resource_layout.component_path IS '组件路径';
 COMMENT ON COLUMN platform_resource_layout.component_param IS '组件参数';
