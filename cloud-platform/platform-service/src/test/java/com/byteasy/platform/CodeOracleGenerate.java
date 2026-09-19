@@ -31,7 +31,8 @@ public class CodeOracleGenerate {
                         .xml("mapper.xml")
                 )
                 .strategyConfig(builder -> builder
-                        .addInclude("platform_openapi_log")
+                        .addInclude("platform_resource_layout")
+                        .addInclude("platform_std_layout_params")
                         .addTablePrefix("platform_")
                         .entityBuilder()
                         .addSuperEntityColumns("id", "version", "deleted_time", "deleted_by", "deleter_id", "is_deleted", "updated_time", "updated_by", "updater_id", "created_time", "created_by", "creator_id")
