@@ -386,7 +386,7 @@ public class RequestUtil {
                 break;
             case "notlikeright":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.notLikeRight(dbFieldName, value[0]);
+                    wrapper.notLikeLeft(dbFieldName, value[0]);
                 }
                 break;
             case "likeleft":
@@ -396,7 +396,7 @@ public class RequestUtil {
                 break;
             case "notlikeleft":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.notLikeLeft(dbFieldName, value[0]);
+                    wrapper.notLikeRight(dbFieldName, value[0]);
                 }
                 break;
             case "between":
