@@ -36,10 +36,8 @@ public class ServiceInstanceServiceImpl extends EntityChangeService<Long, Servic
             ServiceInstance serviceInstance = getOne(queryWrapper, false);
             if (serviceInstance == null) {
                 return super.saveOrUpdate(entity);
-            } else {
-                entity.setId(serviceInstance.getId());
-                return super.saveOrUpdate(entity);
             }
+            return true;
         } else {
             return super.saveOrUpdate(entity);
         }
