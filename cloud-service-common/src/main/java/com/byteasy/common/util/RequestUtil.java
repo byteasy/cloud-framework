@@ -242,13 +242,18 @@ public class RequestUtil {
                 defaultQueryType = "in";
             }
 
+            if (fieldName.endsWith("QueryType")) {
+                String queryType = getSingleValue(multiMap, fieldName, null);
+                if (("isnull".equalsIgnoreCase(queryType) || "isnotnull".equalsIgnoreCase(queryType))) {
+                    fieldName = fieldName.replace("QueryType", "");
+                }
+            }
             if (!fieldDefineMap.containsKey(fieldName) || fieldName.endsWith("QueryType") || fieldName.endsWith("Readonly")) {
                 continue;
             }
 
             String[] value = multiMap.get(name);
-            String queryType = getSingleValue(multiMap, fieldName + "QueryType", defaultQueryType);
-
+            String queryType = getSingleValue(multiMap, fieldName + "QueryType", null);
             boolean isNullQuery = "null".equalsIgnoreCase(queryType) || "notNull".equalsIgnoreCase(queryType)
                     || "isnull".equalsIgnoreCase(queryType) || "isnotnull".equalsIgnoreCase(queryType);
             if (!isNullQuery && (value == null || value.length == 0 || StringUtils.isBlank(value[0]))) {
@@ -376,7 +381,7 @@ public class RequestUtil {
                 break;
             case "likeright":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.likeRight(dbFieldName, value[0]);
+                    wrapper.likeLeft(dbFieldName, value[0]);
                 }
                 break;
             case "notlikeright":
@@ -386,7 +391,7 @@ public class RequestUtil {
                 break;
             case "likeleft":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.likeLeft(dbFieldName, value[0]);
+                    wrapper.likeRight(dbFieldName, value[0]);
                 }
                 break;
             case "notlikeleft":
