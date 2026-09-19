@@ -119,8 +119,8 @@ public class Resource extends AuditEntity<Long> {
             return this.value;
         }
 
-        public static com.byteasy.enums.YesNo fromValue(int value) {
-            for (com.byteasy.enums.YesNo status : com.byteasy.enums.YesNo.values()) {
+        public static Type fromValue(int value) {
+            for (Type status : Type.values()) {
                 if (status.value == value) {
                     return status;
                 }

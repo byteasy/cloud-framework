@@ -55,11 +55,8 @@ public class OpenapiScriptHookAspect {
             try {
                 UserInfo userInfo = TokenUtil.getUserinfo();
 
-                if (userInfo == null) {
-                    return Result.error("缺少认证信息");
-                }
-                // 仅拦截用户发起的请求，避免递归调用
-                if (userInfo.isForwardBy()) {
+                // 微服务之间的调用直接放行
+                if (userInfo != null && userInfo.isForwardBy()) {
                     return joinPoint.proceed();
                 }
 
