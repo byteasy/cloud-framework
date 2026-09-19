@@ -234,6 +234,7 @@ public class RequestUtil {
      * 高级条件检索（完全由 FieldDefine 元数据驱动）
      */
     private static <T> void buildAdvanceWrapper(QueryWrapper<T> wrapper, Map<String, String[]> multiMap, Map<String, FieldDefine> fieldDefineMap) {
+        String matchLogic = getSingleValue(multiMap, "matchLogic", "AND").trim().toUpperCase();
         for (String name : multiMap.keySet()) {
             String defaultQueryType = null;
             String fieldName = name;
@@ -292,41 +293,65 @@ public class RequestUtil {
                 value = value[0].split(",");
             }
 
-            applyFieldCondition(wrapper, dbFieldName, queryType, value, column);
+            applyFieldCondition(wrapper, dbFieldName, queryType, value, column, matchLogic);
         }
     }
 
-    private static <T> void applyFieldCondition(QueryWrapper<T> wrapper, String dbFieldName, String queryType, String[] value, FieldDefine column) {
+    private static <T> void applyFieldCondition(QueryWrapper<T> wrapper, String dbFieldName, String queryType, String[] value, FieldDefine column, String matchLogic) {
         String typeLower = queryType.toLowerCase();
         switch (typeLower) {
             case "eq":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.eq(dbFieldName, convertToDbValue(value[0], column));
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.eq(dbFieldName, convertToDbValue(value[0], column));
+                    } else {
+                        wrapper.or(w -> w.eq(dbFieldName, convertToDbValue(value[0], column)));
+                    }
                 }
                 break;
             case "ne":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.ne(dbFieldName, convertToDbValue(value[0], column));
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.ne(dbFieldName, convertToDbValue(value[0], column));
+                    } else {
+                        wrapper.or(w -> w.ne(dbFieldName, convertToDbValue(value[0], column)));
+                    }
                 }
                 break;
             case "ge":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.ge(dbFieldName, convertToDbValue(value[0], column));
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.ge(dbFieldName, convertToDbValue(value[0], column));
+                    } else {
+                        wrapper.or(w -> w.ge(dbFieldName, convertToDbValue(value[0], column)));
+                    }
                 }
                 break;
             case "gt":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.gt(dbFieldName, convertToDbValue(value[0], column));
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.gt(dbFieldName, convertToDbValue(value[0], column));
+                    } else {
+                        wrapper.or(w -> w.gt(dbFieldName, convertToDbValue(value[0], column)));
+                    }
                 }
                 break;
             case "le":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.le(dbFieldName, convertToDbValue(value[0], column));
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.le(dbFieldName, convertToDbValue(value[0], column));
+                    } else {
+                        wrapper.or(w -> w.le(dbFieldName, convertToDbValue(value[0], column)));
+                    }
                 }
                 break;
             case "lt":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.lt(dbFieldName, convertToDbValue(value[0], column));
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.lt(dbFieldName, convertToDbValue(value[0], column));
+                    } else {
+                        wrapper.or(w -> w.lt(dbFieldName, convertToDbValue(value[0], column)));
+                    }
                 }
                 break;
             case "in":
@@ -335,7 +360,11 @@ public class RequestUtil {
                         .map(v -> convertToDbValue(v.trim(), column))
                         .collect(Collectors.toList());
                 if (!inList.isEmpty()) {
-                    wrapper.in(dbFieldName, inList);
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.in(dbFieldName, inList);
+                    } else {
+                        wrapper.or(w -> w.in(dbFieldName, inList));
+                    }
                 }
                 break;
             case "notin":
@@ -344,74 +373,135 @@ public class RequestUtil {
                         .map(v -> convertToDbValue(v.trim(), column))
                         .collect(Collectors.toList());
                 if (!notInList.isEmpty()) {
-                    wrapper.notIn(dbFieldName, notInList);
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.notIn(dbFieldName, notInList);
+                    } else {
+                        wrapper.or(w -> w.notIn(dbFieldName, notInList));
+                    }
                 }
                 break;
             case "notnull":
             case "isnotnull":
-                wrapper.isNotNull(dbFieldName);
+                if (matchLogic.equalsIgnoreCase("and")) {
+                    wrapper.isNotNull(dbFieldName);
+                } else {
+                    wrapper.or(w -> w.isNotNull(dbFieldName));
+                }
                 break;
             case "null":
             case "isnull":
-                wrapper.isNull(dbFieldName);
+                if (matchLogic.equalsIgnoreCase("and")) {
+                    wrapper.isNull(dbFieldName);
+                } else {
+                    wrapper.or(w -> w.isNull(dbFieldName));
+                }
                 break;
             case "like":
                 // ⭐️ 如果是 UUID 字段降级为 eq，杜绝 PG 语法报错
                 if (isUuidColumn(column)) {
                     if (StringUtils.isNotEmpty(value[0])) {
-                        wrapper.eq(dbFieldName, convertToDbValue(value[0], column));
+                        if (matchLogic.equalsIgnoreCase("and")) {
+                            wrapper.eq(dbFieldName, convertToDbValue(value[0], column));
+                        } else {
+                            wrapper.or(w -> w.eq(dbFieldName, convertToDbValue(value[0], column)));
+                        }
                     }
                 } else if (value.length > 1) {
-                    wrapper.and(sub -> {
-                        for (int i = 0; i < value.length; i++) {
-                            if (i > 0) sub.or();
-                            sub.like(dbFieldName, value[i]);
-                        }
-                    });
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.and(sub -> {
+                            for (int i = 0; i < value.length; i++) {
+                                if (i > 0) sub.or();
+                                sub.like(dbFieldName, value[i]);
+                            }
+                        });
+                    } else {
+                        wrapper.or(w -> w.and(sub -> {
+                            for (int i = 0; i < value.length; i++) {
+                                if (i > 0) sub.or();
+                                sub.like(dbFieldName, value[i]);
+                            }
+                        }));
+                    }
                 } else {
                     if (StringUtils.isNotEmpty(value[0])) {
-                        wrapper.like(dbFieldName, value[0]);
+                        if (matchLogic.equalsIgnoreCase("and")) {
+                            wrapper.like(dbFieldName, value[0]);
+                        } else {
+                            wrapper.or(w -> w.like(dbFieldName, value[0]));
+                        }
                     }
                 }
                 break;
             case "notlike":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.notLike(dbFieldName, value[0]);
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.notLike(dbFieldName, value[0]);
+                    } else {
+                        wrapper.or(w -> w.notLike(dbFieldName, value[0]));
+                    }
                 }
                 break;
             case "likeright":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.likeLeft(dbFieldName, value[0]);
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.likeLeft(dbFieldName, value[0]);
+                    } else {
+                        wrapper.or(w -> w.likeLeft(dbFieldName, value[0]));
+                    }
                 }
                 break;
             case "notlikeright":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.notLikeLeft(dbFieldName, value[0]);
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.notLikeLeft(dbFieldName, value[0]);
+                    } else {
+                        wrapper.or(w -> w.notLikeLeft(dbFieldName, value[0]));
+                    }
                 }
                 break;
             case "likeleft":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.likeRight(dbFieldName, value[0]);
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.likeRight(dbFieldName, value[0]);
+                    } else {
+                        wrapper.or(w -> w.likeRight(dbFieldName, value[0]));
+                    }
                 }
                 break;
             case "notlikeleft":
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.notLikeRight(dbFieldName, value[0]);
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.notLikeRight(dbFieldName, value[0]);
+                    } else {
+                        wrapper.or(w -> w.notLikeRight(dbFieldName, value[0]));
+                    }
                 }
                 break;
             case "between":
                 if (StringUtils.isNotEmpty(value[0]) && value.length > 1 && StringUtils.isNotEmpty(value[1])) {
-                    wrapper.between(dbFieldName, convertToDbValue(value[0].trim(), column), convertToDbValue(value[1].trim(), column));
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.between(dbFieldName, convertToDbValue(value[0].trim(), column), convertToDbValue(value[1].trim(), column));
+                    } else {
+                        wrapper.or(w -> w.between(dbFieldName, convertToDbValue(value[0].trim(), column), convertToDbValue(value[1].trim(), column)));
+                    }
                 }
                 break;
             case "notbetween":
                 if (StringUtils.isNotEmpty(value[0]) && value.length > 1 && StringUtils.isNotEmpty(value[1])) {
-                    wrapper.notBetween(dbFieldName, convertToDbValue(value[0].trim(), column), convertToDbValue(value[1].trim(), column));
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.notBetween(dbFieldName, convertToDbValue(value[0].trim(), column), convertToDbValue(value[1].trim(), column));
+                    } else {
+                        wrapper.or(w -> w.notBetween(dbFieldName, convertToDbValue(value[0].trim(), column), convertToDbValue(value[1].trim(), column)));
+                    }
                 }
                 break;
             default:
                 if (StringUtils.isNotEmpty(value[0])) {
-                    wrapper.eq(dbFieldName, convertToDbValue(value[0], column));
+                    if (matchLogic.equalsIgnoreCase("and")) {
+                        wrapper.eq(dbFieldName, convertToDbValue(value[0], column));
+                    } else {
+                        wrapper.or(w -> w.eq(dbFieldName, convertToDbValue(value[0], column)));
+                    }
                 }
                 break;
         }
