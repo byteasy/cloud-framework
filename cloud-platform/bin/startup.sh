@@ -25,6 +25,7 @@ case $ENV in
 esac
 
 source /etc/profile
+export JAVA_HOME=/data/tools/jdk-25.0.2
 
 echo "启动环境: $PROFILE"
 
