@@ -1,7 +1,7 @@
-create table platform_entity_define
+create table mdm_material_category
 (
-    "id"                    int8        NOT NULL,
-    "classification_code"   varchar(64) COLLATE "pg_catalog"."default",
+    "id"                    id BIGSERIAL PRIMARY KEY,
+    "code"                  code VARCHAR(64) NOT NULL,
     "parent_id"             int8,
     "ancestors"             varchar(2000) COLLATE "pg_catalog"."default",
     "classification_name"   varchar(100) COLLATE "pg_catalog"."default",

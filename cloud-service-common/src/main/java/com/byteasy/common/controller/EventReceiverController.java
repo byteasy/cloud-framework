@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class EventReceiverController {
 
     @PostMapping("")
-    @Openapi(title = "接收事件")
+    @Openapi(title = "接收事件", uri = "/{svrCode}" + Constant.SAPI + "/events")
     public Result receivePublishEvent(@RequestBody String eventJson) {
         if (log.isInfoEnabled()) {
             log.info("receivePublishEvent : {}", eventJson);

@@ -79,6 +79,10 @@ public class OpenapiLogAspect {
         String methodName = request.getMethod().toUpperCase();
         Class<?> targetClass = joinPoint.getTarget().getClass();
         String fullUri = SpringContextUtil.getContextPath() + RequestMappingResolver.getFullMethodUri(targetClass, method);
+        com.byteasy.annotations.Openapi annotation = method.getAnnotation(com.byteasy.annotations.Openapi.class);
+        if (StringUtils.isNotEmpty(annotation.uri())) {
+            fullUri = annotation.uri();
+        }
 
         // 3. 匹配 OpenAPI 接口定义
         Openapi openApi = findOpenApi(actualUri, fullUri, methodName);

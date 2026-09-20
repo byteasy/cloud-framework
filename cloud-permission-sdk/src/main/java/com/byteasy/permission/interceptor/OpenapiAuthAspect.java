@@ -70,6 +70,9 @@ public class OpenapiAuthAspect {
         String methodName = request.getMethod().toUpperCase();
         Class<?> targetClass = joinPoint.getTarget().getClass();
         String fullUri = SpringContextUtil.getContextPath() + RequestMappingResolver.getFullMethodUri(targetClass, method);
+        if (StringUtils.isNotEmpty(annotation.uri())) {
+            fullUri = annotation.uri();
+        }
         String actualUri = request.getRequestURI();
         Object[] args = joinPoint.getArgs();
 

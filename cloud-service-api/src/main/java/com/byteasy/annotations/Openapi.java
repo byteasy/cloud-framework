@@ -27,4 +27,11 @@ public @interface Openapi {
      * @return
      */
     String entityName() default "";
+
+    /**
+     * 接口路径定义，适用于通用接口，拥有最高优先级
+     *
+     * @return
+     */
+    String uri() default "";
 }

@@ -67,6 +67,10 @@ public class OpenapiScriptHookAspect {
                 String methodName = request.getMethod().toUpperCase();
                 Class<?> targetClass = joinPoint.getTarget().getClass();
                 String fullUri = SpringContextUtil.getContextPath() + RequestMappingResolver.getFullMethodUri(targetClass, method);
+                com.byteasy.annotations.Openapi annotation = method.getAnnotation(com.byteasy.annotations.Openapi.class);
+                if (StringUtils.isNotEmpty(annotation.uri())) {
+                    fullUri = annotation.uri();
+                }
 
                 String actualUri = request.getRequestURI();
 
