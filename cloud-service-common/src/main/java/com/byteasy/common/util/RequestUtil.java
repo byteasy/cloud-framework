@@ -236,11 +236,9 @@ public class RequestUtil {
     private static <T> void buildAdvanceWrapper(QueryWrapper<T> wrapper, Map<String, String[]> multiMap, Map<String, FieldDefine> fieldDefineMap) {
         String matchLogic = getSingleValue(multiMap, "matchLogic", "AND").trim().toUpperCase();
         for (String name : multiMap.keySet()) {
-            String defaultQueryType = null;
             String fieldName = name;
             if (fieldName.contains("[]")) {
                 fieldName = name.replace("[]", "");
-                defaultQueryType = "in";
             }
 
             if (fieldName.endsWith("QueryType")) {
