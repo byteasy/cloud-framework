@@ -1,4 +1,4 @@
-package com.byteasy.permission.component;
+package com.byteasy.common.component;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Bean;
@@ -9,9 +9,9 @@ import java.util.concurrent.Executor;
 
 @Configuration
 @Log4j2
-public class AsyncLogThreadPoolConfig {
+public class AsyncExecutorConfig {
 
-    @Bean("openapiLogExecutor")
+    @Bean("asyncExecutor")
     public Executor openapiLogExecutor() {
         // 1. 动态感知系统/容器的有效 CPU 核心数
         int cpuCores = Runtime.getRuntime().availableProcessors();

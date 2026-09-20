@@ -11,14 +11,17 @@ import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.event.*;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import static com.byteasy.util.RandomUtil.random;
 
@@ -26,8 +29,23 @@ import static com.byteasy.util.RandomUtil.random;
 @Log4j2
 public class EventPublishUtil {
 
-    @Async
+    @Autowired(required = false)
+    @Qualifier("asyncExecutor")
+    private Executor executor;
+
     public void publishEvent(Event event) {
+        Runnable saveTask = () -> {
+            try {
+                doPublishEvent(event);
+                log.info("publish event: {}", JacksonUtil.toJson(event));
+            } catch (Exception e) {
+                log.error("publishEvent event: {}, error: {}", JacksonUtil.toJson(event), e.getMessage());
+            }
+        };
+        CompletableFuture.runAsync(saveTask, executor);
+    }
+
+    private void doPublishEvent(Event event) {
         if (event instanceof EntityChangeEvent) {
             EntityChangeSource source = ((EntityChangeEvent) event).getSource();
             source.setSrcApplicationName(SpringUtil.getApplicationName());
