@@ -47,8 +47,8 @@ public class OpenapiLogAspect {
     private IOpenapiLogService openapiLogService;
 
     @Autowired(required = false)
-    @Qualifier("openapiLogExecutor")
-    private Executor openapiLogExecutor;
+    @Qualifier("asyncExecutor")
+    private Executor executor;
 
     @Pointcut("@annotation(com.byteasy.annotations.Openapi) || @within(com.byteasy.annotations.Openapi)")
     public void openapiPointcut() {
@@ -164,7 +164,7 @@ public class OpenapiLogAspect {
                 }
             };
 
-            CompletableFuture.runAsync(saveTask, openapiLogExecutor);
+            CompletableFuture.runAsync(saveTask, executor);
         } catch (Exception e) {
             log.error("构建 OpenAPI 执行日志失败: {}", e.getMessage(), e);
         }

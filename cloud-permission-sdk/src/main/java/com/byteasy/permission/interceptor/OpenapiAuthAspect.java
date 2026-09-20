@@ -51,8 +51,8 @@ public class OpenapiAuthAspect {
     @Autowired
     private RoleOpenapiLoadingCache roleOpenapiLoadingCache;
     @Autowired(required = false)
-    @Qualifier("openapiLogExecutor")
-    private Executor openapiLogExecutor;
+    @Qualifier("asyncExecutor")
+    private Executor executor;
 
     @Pointcut("@annotation(com.byteasy.annotations.Openapi) || @within(com.byteasy.annotations.Openapi)")
     public void openapiPointcut() {
@@ -143,7 +143,7 @@ public class OpenapiAuthAspect {
             }
             if (saveTask != null) {
                 log.info("Openapi not found, auto register: {}", openapi);
-                CompletableFuture.runAsync(saveTask, openapiLogExecutor);
+                CompletableFuture.runAsync(saveTask, executor);
             }
 
             /**
