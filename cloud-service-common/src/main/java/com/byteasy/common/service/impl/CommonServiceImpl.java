@@ -140,9 +140,7 @@ public class CommonServiceImpl implements ICommonService {
             if (rows <= 0) {
                 success = false;
             } else {
-                for (Map<String, Object> entity : insertList) {
-                    publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.CREATE, null, entity, className)));
-                }
+                publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.BATCH_CREATE, null, insertList, className)));
             }
         }
 
@@ -156,12 +154,7 @@ public class CommonServiceImpl implements ICommonService {
             Map<Object, Map<String, Object>> oldDataMap = getEntitiesByIds(entityDefine, ids, columnMap, primaryColumn);
 
             batchUpdate(entityDefine, updateList, columnMap, primaryColumn);
-
-            for (Map<String, Object> entity : updateList) {
-                Object primaryKeyValue = entity.get(primaryColumn.getName());
-                Map<String, Object> oldEntity = oldDataMap.get(primaryKeyValue);
-                publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, oldEntity, entity, className)));
-            }
+            publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.BATCH_UPDATE, oldDataMap, updateList, className)));
         }
 
         return success;

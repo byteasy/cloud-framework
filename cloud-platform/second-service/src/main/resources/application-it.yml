@@ -1,0 +1,20 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: dev.byteasy.cn:8848
+      config:
+        server-addr: dev.byteasy.cn:8848
+        file-extension: yml
+        shared-configs:
+          - application-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+    loadbalancer:
+      nacos:
+        enabled: true
+  config:
+    import:
+      - nacos:${spring.application.name}-${spring.profiles.active}.yml?refreshEnabled=true
+logging:
+  file:
+    path: ${LOG_HOME}/${spring.application.name}
+  config: classpath:log4j2-spring-${spring.profiles.active}.xml
