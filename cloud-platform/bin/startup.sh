@@ -46,7 +46,7 @@ nohup $JAVA_HOME/bin/java \
     --add-opens java.base/java.nio=ALL-UNNAMED \
     --add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
     --add-opens java.base/jdk.internal.platform=ALL-UNNAMED \
-    -Dspring.cloud.nacos.discovery.ip=127.0.0.1 \
+    -Dspring.cloud.nacos.discovery.ip=192.168.56.102 \
     -Dnacos.logging.config=classpath:nacos-log4j2-prod.xml \
     -Duser.timezone=Asia/Shanghai \
     -jar /data/app/platform/platform-service-1.0.0.jar \
