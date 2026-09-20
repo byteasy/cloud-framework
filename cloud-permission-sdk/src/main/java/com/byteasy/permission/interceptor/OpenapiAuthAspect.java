@@ -9,6 +9,7 @@ import com.byteasy.common.controller.AbstractController;
 import com.byteasy.common.controller.OpenapiCommonController;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
+import com.byteasy.common.util.OpenapiUtil;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.enums.Enable;
 import com.byteasy.exception.BizException;
@@ -72,75 +73,89 @@ public class OpenapiAuthAspect {
         String actualUri = request.getRequestURI();
         Object[] args = joinPoint.getArgs();
 
-        if (userInfo == null) {
-            // public
-            Openapi openApi = findOpenApi(actualUri, fullUri, methodName);
-            if (openApi == null) {
-                return joinPoint.proceed();
+        // 仅拦截用户发起的请求，避免递归调用
+        if (userInfo != null && userInfo.isForwardBy()) {
+            return joinPoint.proceed();
+        }
+
+        // TODO 要做一个安全处理，防止用户DDOS攻击
+        Openapi dbOpenapi = findOpenApi(actualUri, fullUri, methodName);
+        /**
+         * 系统未注册接口，调用时自动注册为LOGIN访问接口
+         */
+        if (dbOpenapi == null) {
+            Openapi openapi = new Openapi();
+            openapi.setCode(EntityCodeUtil.generateCode());
+            openapi.setServiceCode(SpringUtil.getApplicationName());
+            String name = annotation.title();
+            if (StringUtils.isEmpty(name)) {
+                name = method.getName();
             }
-            if (Openapi.PermissionType.PUBLIC.equals(openApi.getPermissionType())) {
-                return joinPoint.proceed();
+            openapi.setName(I18nUtil.convertI18nFieldZhValue(name));
+            openapi.setHttpMethod(Openapi.HttpMethod.fromValue(methodName));
+            openapi.setUri(fullUri);
+            openapi.setType(Openapi.Type.DEVELOP);
+            openapi.setPermissionType(Openapi.PermissionType.LOGIN);
+            openapi.setStatus(Enable.ENABLE);
+            if (openapi.getHttpMethod() != null) {
+                openapi.setLoggable(!Openapi.HttpMethod.GET.equals(openapi.getHttpMethod()));
+            } else {
+                openapi.setLoggable(false);
             }
-            return Result.error("缺少认证信息");
-        } else {
-            // 仅拦截用户发起的请求，避免递归调用
-            if (userInfo.isForwardBy()) {
-                return joinPoint.proceed();
+            Runnable saveTask = null;
+            if (AbstractController.class.isAssignableFrom(targetClass)) {
+                Method getEntityClassMethod = ReflectUtil.getMethod(targetClass, "getEntityClass");
+                Class<?> entityClass = ReflectUtil.invoke(joinPoint.getTarget(), getEntityClassMethod);
+                openapi.setClassName(entityClass.getName());
+                saveTask = () -> {
+                    try {
+                        openApiLoadingCache.register(openapi);
+                    } catch (Exception e) {
+                        log.error("Openapi not found, auto register api failed: {}, error: {}", openapi, e.getMessage());
+                    }
+                };
+            } else if (OpenapiCommonController.class.isAssignableFrom(targetClass)) {
+                openapi.setClassName(extractClassName(signature, args));
+                saveTask = () -> {
+                    try {
+                        openApiLoadingCache.register(openapi);
+                    } catch (Exception e) {
+                        log.error("Openapi not found, auto register api failed: {}, error: {}", openapi, e.getMessage());
+                    }
+                };
+            } else {
+                /**
+                 * 一些特殊API，如papi，对外网公开的接口，需要单独的安全设计
+                 */
+                String entityName = OpenapiUtil.getEntityName(annotation);
+                if (StringUtils.isEmpty(entityName)) {
+                    log.error("Openapi not found, src: {}, uri: {}, method: {}, class: {} ", fullUri, actualUri, methodName, targetClass.getName());
+                } else {
+                    openapi.setClassName(entityName);
+                    saveTask = () -> {
+                        try {
+                            openApiLoadingCache.register(openapi);
+                        } catch (Exception e) {
+                            log.error("Openapi not found, auto register api failed: {}, error: {}", openapi, e.getMessage());
+                        }
+                    };
+                }
+            }
+            if (saveTask != null) {
+                log.info("Openapi not found, auto register: {}", openapi);
+                CompletableFuture.runAsync(saveTask, openapiLogExecutor);
             }
 
             /**
-             * 系统未注册接口，调用时自动注册为LOGIN访问接口
+             * 平台所有接口实现白名单管理，未明确定义的接口，直接拒绝
              */
-            Openapi dbOpenapi = findOpenApi(actualUri, fullUri, methodName);
-            if (dbOpenapi == null) {
-                Openapi openapi = new Openapi();
-                openapi.setCode(EntityCodeUtil.generateCode());
-                openapi.setServiceCode(SpringUtil.getApplicationName());
-                String name = annotation.title();
-                if (StringUtils.isEmpty(name)) {
-                    name = method.getName();
+            throw new BizException(Status.AUTHORIZATION_FAILED.getI18nKey());
+        } else {
+            if (userInfo == null) {
+                if (Openapi.PermissionType.PUBLIC.equals(dbOpenapi.getPermissionType())) {
+                    return joinPoint.proceed();
                 }
-                openapi.setName(I18nUtil.convertI18nFieldZhValue(name));
-                openapi.setHttpMethod(Openapi.HttpMethod.fromValue(methodName));
-                openapi.setUri(fullUri);
-                openapi.setType(Openapi.Type.DEVELOP);
-                openapi.setPermissionType(Openapi.PermissionType.LOGIN);
-                openapi.setStatus(Enable.ENABLE);
-                if (openapi.getHttpMethod() != null) {
-                    openapi.setLoggable(!Openapi.HttpMethod.GET.equals(openapi.getHttpMethod()));
-                } else {
-                    openapi.setLoggable(false);
-                }
-                Runnable saveTask = null;
-                if (AbstractController.class.isAssignableFrom(targetClass)) {
-                    Method getEntityClassMethod = ReflectUtil.getMethod(targetClass, "getEntityClass");
-                    Class<?> entityClass = ReflectUtil.invoke(joinPoint.getTarget(), getEntityClassMethod);
-                    openapi.setClassName(entityClass.getName());
-                    saveTask = () -> {
-                        try {
-                            openApiLoadingCache.register(openapi);
-                        } catch (Exception e) {
-                            log.error("Openapi not found, auto register api failed: {}, error: {}", openapi, e.getMessage());
-                        }
-                    };
-                } else if (OpenapiCommonController.class.isAssignableFrom(targetClass)) {
-                    openapi.setClassName(extractClassName(signature, args));
-                    saveTask = () -> {
-                        try {
-                            openApiLoadingCache.register(openapi);
-                        } catch (Exception e) {
-                            log.error("Openapi not found, auto register api failed: {}, error: {}", openapi, e.getMessage());
-                        }
-                    };
-                } else {
-                    log.error("Openapi not found, src: {}, uri: {}, method: {}, class: {} ", fullUri, actualUri, methodName, targetClass.getName());
-                }
-
-                if (saveTask != null) {
-                    log.info("Openapi not found, auto register: {}", openapi);
-                    CompletableFuture.runAsync(saveTask, openapiLogExecutor);
-                }
-                return joinPoint.proceed();
+                return Result.error("缺少认证信息");
             } else {
                 switch (dbOpenapi.getPermissionType()) {
                     case PUBLIC, LOGIN:

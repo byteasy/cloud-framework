@@ -13,4 +13,18 @@ public @interface Openapi {
 
     @AliasFor("title")
     String summary() default "";
+
+    /**
+     * 接口所在的领域对象
+     *
+     * @return
+     */
+    Class<?> entity() default Void.class;
+
+    /**
+     * 接口所在的领域对象
+     *
+     * @return
+     */
+    String entityName() default "";
 }
