@@ -1,0 +1,40 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.56.102:8848
+      config:
+        namespace: public
+        group: DEFAULT_GROUP
+        server-addr: 192.168.56.102:8848
+        refresh-enabled: true
+        file-extension: yml
+        shared-configs:
+          - application-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+    loadbalancer:
+      nacos:
+        enabled: true
+  config:
+    import:
+      - optional:nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+logging:
+  file:
+    path: ${LOG_HOME}/${spring.application.name}
+  config: classpath:log4j2-spring-${spring.profiles.active}.xml
+  level:
+    org.springframework.security.oauth2.server.authorization: TRACE
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true
+      multiline: false
+      # 日志输出格式
+      log-format: "category:%(category) || executionTime:%(executionTime)ms || sql:%(sqlSingleLine)"
+      # 🔥 核心修正：使用 YAML 列表格式，精确匹配 List<String> excludeCategories
+      exclude-categories:
+        - result
+        - resultset
+        - batch
+        - commit
+        - rollback
+

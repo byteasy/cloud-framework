@@ -1,0 +1,25 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 172.16.250.70:8848
+      config:
+        namespace: public
+        group: DEFAULT_GROUP
+        server-addr: 172.16.250.70:8848
+        refresh-enabled: true
+        file-extension: yml
+        shared-configs:
+          - application-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+    loadbalancer:
+      nacos:
+        enabled: true
+  config:
+    import:
+      - optional:nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+logging:
+  file:
+    path: ${LOG_HOME}/${spring.application.name}
+  config: classpath:log4j2-spring-${spring.profiles.active}.xml
+  level:
+    org.springframework.security.oauth2.server.authorization: TRACE
