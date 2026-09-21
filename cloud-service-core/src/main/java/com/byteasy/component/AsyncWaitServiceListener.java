@@ -24,7 +24,7 @@ public class AsyncWaitServiceListener {
 
     private static final String TARGET_SERVICE = "platform-service";
 
-    @Async // 异步执行，不阻塞 Spring Boot 主线程启动
+    @Async("asyncExecutor") // 异步执行，不阻塞 Spring Boot 主线程启动
     @EventListener(ApplicationReadyEvent.class)
     public void waitUntilServiceReady() {
 

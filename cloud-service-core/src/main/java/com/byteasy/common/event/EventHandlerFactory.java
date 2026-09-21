@@ -33,7 +33,7 @@ public class EventHandlerFactory {
     }
 
     @EventListener
-    @Async
+    @Async("asyncExecutor")
     public void handleEvent(Event event) {
         IEventHandler handler = cache.get(event.getClass());
         if (handler != null) {

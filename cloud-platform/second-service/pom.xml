@@ -16,12 +16,6 @@
 
         <dependency>
             <groupId>com.byteasy</groupId>
-            <artifactId>cloud-platform-common-ui</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.byteasy</groupId>
             <artifactId>cloud-service-starter</artifactId>
             <version>${project.version}</version>
         </dependency>

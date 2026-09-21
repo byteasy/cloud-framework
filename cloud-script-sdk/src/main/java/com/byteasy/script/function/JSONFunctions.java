@@ -71,13 +71,22 @@ public class JSONFunctions implements JsFunctions {
                 return """
                         Convert json object or object array to json string.
                         函数原型:
-                                JacksonUtil.toJson(Object obj);
+                                JacksonUtil.toJson(Object obj, boolean withClass);
                         """;
             }
 
             @Override
             public Object run(Object[] args) throws Exception {
-                return JacksonUtil.toJson(args[0]);
+                if (args.length == 1) {
+                    return JacksonUtil.toJson(args[0]);
+                } else {
+                    boolean withClass = (boolean) args[1];
+                    if (withClass) {
+                        return JacksonUtil.toJson(args[0], true);
+                    } else {
+                        return JacksonUtil.toJson(args[0], false);
+                    }
+                }
             }
         });
         return list;
