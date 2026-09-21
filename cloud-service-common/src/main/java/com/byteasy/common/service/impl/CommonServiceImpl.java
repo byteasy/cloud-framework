@@ -95,6 +95,11 @@ public class CommonServiceImpl implements ICommonService {
         Map<String, FieldDefine> columnMap = CastUtil.listToMap(columnDefList, FieldDefine::getName);
         FieldDefine primaryColumn = getPrimaryColumn(columnDefList);
 
+        // 判断是js脚本调用
+        if (entity != null && entity.getClass().getName().contains("polyglot")) {
+            entity = new HashMap<>(entity);
+        }
+
         Object primaryKeyValue = entity.get(primaryColumn.getName());
         if (ObjectUtils.isEmpty(primaryKeyValue)) {
             insert(entityDefine, entity, columnMap, primaryColumn);
@@ -123,6 +128,11 @@ public class CommonServiceImpl implements ICommonService {
         // 拆分为新增和更新列表
         List<Map<String, Object>> insertList = new ArrayList<>();
         List<Map<String, Object>> updateList = new ArrayList<>();
+
+        // 判断是js脚本调用
+        if (entities.getFirst().getClass().getName().contains("polyglot")) {
+            entities = entities.stream().map(HashMap::new).collect(Collectors.toList());
+        }
 
         for (Map<String, Object> entity : entities) {
             if (ObjectUtils.isEmpty(entity.get(primaryColumn.getName()))) {
@@ -331,6 +341,11 @@ public class CommonServiceImpl implements ICommonService {
         List<FieldDefine> columnDefList = fieldDefineLoadingCache.load(entityDefine.getCode());
         Map<String, FieldDefine> columnMap = CastUtil.listToMap(columnDefList, FieldDefine::getName);
         FieldDefine primaryColumn = getPrimaryColumn(columnDefList);
+
+        // 判断是js脚本调用
+        if (entities.getFirst().getClass().getName().contains("polyglot")) {
+            entities = entities.stream().map(HashMap::new).collect(Collectors.toList());
+        }
 
         publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.BATCH_DELETE, entities, null, className)));
 
