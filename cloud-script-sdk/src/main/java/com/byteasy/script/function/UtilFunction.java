@@ -1,6 +1,7 @@
 package com.byteasy.script.function;
 
 import com.byteasy.common.component.EventPublishUtil;
+import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.EntityChangeSource;
 import com.byteasy.event.EventType;
@@ -83,7 +84,7 @@ public class UtilFunction implements JsFunctions {
                 if (args == null || args.length != 5) {
                     throw new BizException("参数输入不合法");
                 }
-                eventPublishUtil.publishEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.valueOf((String) args[1]), args[3], args[4], (String) args[0]), EventType.valueOf((String) args[2])));
+                eventPublishUtil.publishEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.valueOf((String) args[1]), JacksonUtil.parseObj(JacksonUtil.toJson(args[3], true)), JacksonUtil.parseObj(JacksonUtil.toJson(args[4], true)), (String) args[0]), EventType.valueOf((String) args[2])));
                 return null;
             }
         });
