@@ -13,9 +13,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Component
 @Log4j2
@@ -84,8 +82,15 @@ public class UtilFunction implements JsFunctions {
                 if (args == null || args.length != 5) {
                     throw new BizException("参数输入不合法");
                 }
-                Object before = JacksonUtil.parseObj(JacksonUtil.toJson(args[3], true));
-                Object after = JacksonUtil.parseObj(JacksonUtil.toJson(args[4], true));
+                // 判断是js脚本调用
+                Object before = null;
+                if (args[3] != null && args[3].getClass().getName().contains("PolyglotMap")) {
+                    before = new HashMap<>((Map) args[3]);
+                }
+                Object after = null;
+                if (args[4] != null && args[4].getClass().getName().contains("PolyglotMap")) {
+                    after = new HashMap<>((Map) args[4]);
+                }
                 eventPublishUtil.publishEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.valueOf((String) args[1]),
                         before,
                         after,
