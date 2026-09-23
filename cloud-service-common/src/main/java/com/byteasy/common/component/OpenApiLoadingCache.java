@@ -3,7 +3,6 @@ package com.byteasy.common.component;
 import com.byteasy.Result;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
-import com.byteasy.event.EntityChangeSource;
 import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.api.IOpenapiService;
 import com.byteasy.platform.entity.Openapi;
@@ -69,16 +68,15 @@ public class OpenApiLoadingCache implements IEntityChangeHandler, ICacheLoader<S
 
     @Override
     public void handle(EntityChangeEvent event) {
-        EntityChangeSource source = event.getSource();
-        switch (source.getChangeType()) {
+        switch (event.getChangeType()) {
             case DELETE: {
-                String code = FieldValueUtil.getFieldValue(source.getBefore(), "code", String.class);
+                String code = FieldValueUtil.getFieldValue(event.getBefore(), "code", String.class);
                 log.info("OpenApiFactory invalidate cache: {}", code);
                 invalidateByCode(code);
                 break;
             }
             case UPDATE: {
-                String code = FieldValueUtil.getFieldValue(source.getAfter(), "code", String.class);
+                String code = FieldValueUtil.getFieldValue(event.getAfter(), "code", String.class);
                 log.info("OpenApiFactory invalidate cache: {}", code);
                 invalidateByCode(code);
                 break;

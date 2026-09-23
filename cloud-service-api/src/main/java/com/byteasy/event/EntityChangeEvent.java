@@ -1,24 +1,88 @@
 package com.byteasy.event;
 
-import java.time.Clock;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Data;
+import lombok.ToString;
 
-public class EntityChangeEvent extends Event<EntityChangeSource> {
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * 实体变更事件类，用于描述数据实体的变更操作
+ *
+ */
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@ToString
+public class EntityChangeEvent implements Serializable {
+
+    public enum ChangeType {
+        CREATE, UPDATE, DELETE, BATCH_CREATE, BATCH_UPDATE, BATCH_DELETE
+    }
+
+    private String eventId;
+    private ChangeType changeType;
+    /**
+     * 变更前
+     */
+    private Object before;
+    /**
+     * 变更后
+     */
+    private Object after;
+
+    /**
+     * 变更实体类
+     */
+    private String className;
+
+    /**
+     * 变更服务
+     */
+    private String srcApplicationName;
+
+    /**
+     * 拓展字段
+     */
+    private Map<String, Object> extendedFields;
+
+    // 无参构造方法（Jackson反序列化需要）
     public EntityChangeEvent() {
+        this.eventId = UUID.randomUUID().toString();
+        this.extendedFields = new HashMap<>();
     }
 
-    public EntityChangeEvent(EntityChangeSource source) {
-        super(source, EventType.ALL);
+    // 全参数构造方法
+    public EntityChangeEvent(ChangeType changeType, Object before, Object after) {
+        this();
+        this.changeType = changeType;
+        this.before = before;
+        this.after = after;
     }
 
-    public EntityChangeEvent(EntityChangeSource source, EventType eventType) {
-        super(source, eventType);
+    public EntityChangeEvent(ChangeType changeType, Object before, Object after, String className) {
+        this.changeType = changeType;
+        this.before = before;
+        this.after = after;
+        this.className = className;
     }
 
-    public EntityChangeEvent(EntityChangeSource source, Clock clock) {
-        super(source, clock, EventType.ALL);
+    public static EntityChangeEvent of(ChangeType changeType, Object before, Object after) {
+        return new EntityChangeEvent(changeType, before, after);
     }
 
-    public EntityChangeEvent(EntityChangeSource source, EventType eventType, Clock clock) {
-        super(source, clock, eventType);
+    public static EntityChangeEvent of(ChangeType changeType, Object before, Object after, String className) {
+        return new EntityChangeEvent(changeType, before, after, className);
     }
+
+    @JsonAnySetter
+    public void addExtendedField(String key, Object value) {
+        this.extendedFields.put(key, value);
+    }
+
 }

@@ -2,7 +2,6 @@ package com.byteasy.script.component;
 
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
-import com.byteasy.event.EntityChangeSource;
 import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.api.IJsScriptService;
 import com.byteasy.platform.entity.JsScript;
@@ -52,17 +51,16 @@ public class JsScriptFactory implements IEntityChangeHandler, ICacheLoader<Long,
 
     @Override
     public void handle(EntityChangeEvent event) {
-        EntityChangeSource source = event.getSource();
-        switch (source.getChangeType()) {
+        switch (event.getChangeType()) {
             case DELETE: {
-                Long id = FieldValueUtil.getFieldValue(source.getBefore(), "id", Long.class);
+                Long id = FieldValueUtil.getFieldValue(event.getBefore(), "id", Long.class);
                 log.info("JsScriptFactory cache delete id:{}", id);
                 cache.invalidate((Long) id);
                 SCRIPT_CACHE.invalidate(String.valueOf(id));
                 break;
             }
             case UPDATE: {
-                Long id = FieldValueUtil.getFieldValue(source.getAfter(), "id", Long.class);
+                Long id = FieldValueUtil.getFieldValue(event.getAfter(), "id", Long.class);
                 log.info("JsScriptFactory cache update id:{}", id);
                 cache.invalidate((Long) id);
                 SCRIPT_CACHE.invalidate(String.valueOf(id));

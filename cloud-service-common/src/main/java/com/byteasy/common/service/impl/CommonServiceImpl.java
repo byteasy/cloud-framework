@@ -3,25 +3,22 @@ package com.byteasy.common.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.byteasy.Constant;
 import com.byteasy.common.component.EntityDefineLoadingCache;
 import com.byteasy.common.component.EntityServiceFactory;
-import com.byteasy.common.component.EventPublishUtil;
 import com.byteasy.common.component.FieldDefineLoadingCache;
+import com.byteasy.common.event.EntityChangeFactory;
 import com.byteasy.common.service.ICommonService;
 import com.byteasy.common.service.IDatabaseMetaService;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
-import com.byteasy.common.util.CastUtil;
-import com.byteasy.common.util.FieldDefineUtil;
-import com.byteasy.common.util.RequestUtil;
-import com.byteasy.common.util.SqlUtil;
+import com.byteasy.common.util.*;
 import com.byteasy.dto.FormatMap;
 import com.byteasy.enums.Delete;
 import com.byteasy.enums.RelationType;
-import com.byteasy.enums.YesNo;
 import com.byteasy.event.EntityChangeEvent;
-import com.byteasy.event.EntityChangeSource;
 import com.byteasy.exception.BizException;
+import com.byteasy.mq.IProducer;
 import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.util.I18nUtil;
@@ -72,12 +69,14 @@ public class CommonServiceImpl implements ICommonService {
     @Autowired
     private IDatabaseMetaService databaseMetaService;
     @Autowired
-    private EventPublishUtil eventPublishUtil;
+    private IProducer producer;
+    @Autowired
+    private EntityChangeFactory entityChangeFactory;
 
-    protected void publicEvent(EntityChangeEvent event) {
-        eventPublishUtil.publishEvent(event);
+    protected void publicEvent(String className, EntityChangeEvent event) {
+        producer.publish(Constant.TOPIC_PLATFORM_ENTITY_CHANGE, className, JacksonUtil.toJson(event, true));
+        entityChangeFactory.handle(event);
     }
-
 
 
     /**
@@ -104,11 +103,11 @@ public class CommonServiceImpl implements ICommonService {
         if (ObjectUtils.isEmpty(primaryKeyValue)) {
             insert(entityDefine, entity, columnMap, primaryColumn);
             primaryKeyValue = entity.get(primaryColumn.getName());
-            publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.CREATE, null, entity, className)));
+            publicEvent(className, new EntityChangeEvent(EntityChangeEvent.ChangeType.CREATE, null, entity, className));
         } else {
             Map<String, Object> oldEntity = getByPrimaryKey(className, primaryKeyValue);
             update(entityDefine, entity, columnMap, primaryColumn);
-            publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.UPDATE, oldEntity, entity, className)));
+            publicEvent(className, new EntityChangeEvent(EntityChangeEvent.ChangeType.UPDATE, oldEntity, entity, className));
         }
         return getByPrimaryKey(entityDefine, primaryKeyValue, columnMap, primaryColumn);
     }
@@ -150,7 +149,7 @@ public class CommonServiceImpl implements ICommonService {
             if (rows <= 0) {
                 success = false;
             } else {
-                publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.BATCH_CREATE, null, insertList, className)));
+                publicEvent(className, new EntityChangeEvent(EntityChangeEvent.ChangeType.BATCH_CREATE, null, insertList, className));
             }
         }
 
@@ -164,7 +163,7 @@ public class CommonServiceImpl implements ICommonService {
             Map<Object, Map<String, Object>> oldDataMap = getEntitiesByIds(entityDefine, ids, columnMap, primaryColumn);
 
             batchUpdate(entityDefine, updateList, columnMap, primaryColumn);
-            publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.BATCH_UPDATE, oldDataMap, updateList, className)));
+            publicEvent(className, new EntityChangeEvent(EntityChangeEvent.ChangeType.BATCH_UPDATE, oldDataMap, updateList, className));
         }
 
         return success;
@@ -285,7 +284,7 @@ public class CommonServiceImpl implements ICommonService {
         FieldDefine primaryColumn = getPrimaryColumn(columnDefList);
 
         Map<String, Object> oldEntity = getByPrimaryKey(className, primaryKey);
-        publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, oldEntity, null, className)));
+        publicEvent(className, new EntityChangeEvent(EntityChangeEvent.ChangeType.DELETE, oldEntity, null, className));
 
         if (SqlUtil.isLogicDeleteEntity(columnMap)) {
             StringJoiner setJoiner = new StringJoiner(",");
@@ -347,7 +346,7 @@ public class CommonServiceImpl implements ICommonService {
             entities = entities.stream().map(HashMap::new).collect(Collectors.toList());
         }
 
-        publicEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.BATCH_DELETE, entities, null, className)));
+        publicEvent(className, new EntityChangeEvent(EntityChangeEvent.ChangeType.BATCH_DELETE, entities, null, className));
 
         MapSqlParameterSource paramSource = new MapSqlParameterSource();
         Set<Object> primaryKeys = FieldDefineUtil.getPrimaryKeys(primaryColumn, entities);

@@ -59,14 +59,14 @@ public class FieldDefineLoadingCache implements IEntityChangeHandler, ICacheLoad
 
     @Override
     public void handle(EntityChangeEvent event) {
-        if (event.getSource().getClassName().equals(FieldGroup.class.getName())) {
+        if (event.getClassName().equals(FieldGroup.class.getName())) {
             columnsCacheLoader.invalidateAll();
         } else {
-            switch (event.getSource().getChangeType()) {
+            switch (event.getChangeType()) {
                 case DELETE ->
-                        columnsCacheLoader.invalidate(FieldValueUtil.getFieldValue(event.getSource().getBefore(), "className", String.class));
+                        columnsCacheLoader.invalidate(FieldValueUtil.getFieldValue(event.getBefore(), "className", String.class));
                 case CREATE, UPDATE ->
-                        columnsCacheLoader.invalidate(FieldValueUtil.getFieldValue(event.getSource().getAfter(), "className", String.class));
+                        columnsCacheLoader.invalidate(FieldValueUtil.getFieldValue(event.getAfter(), "className", String.class));
             }
         }
     }

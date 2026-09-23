@@ -1,10 +1,13 @@
 package com.byteasy.common.event;
 
 import cn.hutool.extra.spring.SpringUtil;
+import com.byteasy.Constant;
+import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.event.EntityChangeEvent;
-import com.byteasy.event.EntityChangeSource;
 import com.byteasy.event.IEntityChangeHandler;
-import com.byteasy.event.IEventHandler;
+import com.byteasy.mq.IConsumer;
+import com.byteasy.mq.SubscriptionType;
+import com.byteasy.util.EntityCodeUtil;
 import com.google.common.collect.Maps;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
@@ -16,7 +19,7 @@ import java.util.Map;
 
 @Component
 @Log4j2
-public class EntityChangeFactory implements IEventHandler<EntityChangeEvent> {
+public class EntityChangeFactory implements IConsumer {
     private Map<String, List<IEntityChangeHandler>> cache = Maps.newHashMap();
 
     @PostConstruct
@@ -39,11 +42,9 @@ public class EntityChangeFactory implements IEventHandler<EntityChangeEvent> {
         }
     }
 
-    @Override
     public void handle(EntityChangeEvent event) {
-        EntityChangeSource source = event.getSource();
-        if (cache.containsKey(source.getClassName())) {
-            cache.get(source.getClassName()).forEach(handler -> {
+        if (cache.containsKey(event.getClassName())) {
+            cache.get(event.getClassName()).forEach(handler -> {
                 try {
                     handler.handle(event);
                 } catch (Exception e) {
@@ -51,11 +52,6 @@ public class EntityChangeFactory implements IEventHandler<EntityChangeEvent> {
                 }
             });
         }
-    }
-
-    @Override
-    public Class<EntityChangeEvent> getEventType() {
-        return EntityChangeEvent.class;
     }
 
     private void addToCache(String clsName, IEntityChangeHandler handler) {
@@ -66,5 +62,26 @@ public class EntityChangeFactory implements IEventHandler<EntityChangeEvent> {
             list.add(handler);
             cache.put(clsName, list);
         }
+    }
+
+    @Override
+    public SubscriptionType subscribeType() {
+        return SubscriptionType.ALL;
+    }
+
+    @Override
+    public String groupId() {
+        return SpringUtil.getApplicationName() + "_" + EntityCodeUtil.generateCode();
+    }
+
+    @Override
+    public String topic() {
+        return Constant.TOPIC_PLATFORM_ENTITY_CHANGE;
+    }
+
+    @Override
+    public void receive(String key, String message) {
+        EntityChangeEvent event = (EntityChangeEvent) JacksonUtil.parseObj(message);
+        handle(event);
     }
 }

@@ -2,11 +2,9 @@ package com.byteasy.permission.component;
 
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
-import com.byteasy.event.EntityChangeSource;
 import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.api.IUserService;
 import com.byteasy.platform.dto.UserRoleDTO;
-import com.byteasy.platform.entity.Openapi;
 import com.byteasy.platform.entity.Role;
 import com.byteasy.platform.entity.User;
 import com.byteasy.util.FieldValueUtil;
@@ -15,7 +13,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -59,35 +56,34 @@ public class UserRoleLoadingCache implements IEntityChangeHandler, ICacheLoader<
 
     @Override
     public void handle(EntityChangeEvent event) {
-        EntityChangeSource.ChangeType changeType = event.getSource().getChangeType();
-        EntityChangeSource changeSource = event.getSource();
+        EntityChangeEvent.ChangeType changeType = event.getChangeType();
         switch (changeType) {
             case UPDATE -> {
-                if (changeSource.getClassName().equals(Role.class.getName())) {
-                    Long roleId = FieldValueUtil.getFieldValue(changeSource.getAfter(), "id", Long.class);
+                if (event.getClassName().equals(Role.class.getName())) {
+                    Long roleId = FieldValueUtil.getFieldValue(event.getAfter(), "id", Long.class);
                     for (Map.Entry<String, Set<Long>> entry : cache.asMap().entrySet()) {
                         if (entry.getValue().contains(roleId)) {
                             cache.invalidate(entry.getKey());
                             log.info("UserRoleLoadingCache update. invalid roleId: {}, roleId: {}", roleId, entry.getKey());
                         }
                     }
-                } else if (changeSource.getClassName().equals(User.class.getName())) {
-                    String username = FieldValueUtil.getFieldValue(changeSource.getAfter(), "username", String.class);
+                } else if (event.getClassName().equals(User.class.getName())) {
+                    String username = FieldValueUtil.getFieldValue(event.getAfter(), "username", String.class);
                     cache.invalidate(username);
                     log.info("UserRoleLoadingCache update. invalid username: {}", username);
                 }
             }
             case DELETE -> {
-                if (changeSource.getClassName().equals(Role.class.getName())) {
-                    Long roleId = FieldValueUtil.getFieldValue(changeSource.getBefore(), "id", Long.class);
+                if (event.getClassName().equals(Role.class.getName())) {
+                    Long roleId = FieldValueUtil.getFieldValue(event.getBefore(), "id", Long.class);
                     for (Map.Entry<String, Set<Long>> entry : cache.asMap().entrySet()) {
                         if (entry.getValue().contains(roleId)) {
                             cache.invalidate(entry.getKey());
                             log.info("UserRoleLoadingCache delete. invalid roleId: {}, username: {}", roleId, entry.getKey());
                         }
                     }
-                } else if (changeSource.getClassName().equals(User.class.getName())) {
-                    String username = FieldValueUtil.getFieldValue(changeSource.getBefore(), "username", String.class);
+                } else if (event.getClassName().equals(User.class.getName())) {
+                    String username = FieldValueUtil.getFieldValue(event.getBefore(), "username", String.class);
                     cache.invalidate(username);
                     log.info("UserRoleLoadingCache delete. invalid username: {}", username);
                 }
