@@ -23,6 +23,9 @@ mvn clean install
 cd ../cloud-permission-sdk
 mvn clean install
 
+cd ../cloud-mq-restfull
+mvn clean install
+
 cd ../cloud-service-starter
 mvn clean install
 
