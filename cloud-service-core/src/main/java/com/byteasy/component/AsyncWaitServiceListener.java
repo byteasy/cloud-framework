@@ -2,9 +2,12 @@ package com.byteasy.component;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.event.IPlatformReady;
+import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -17,6 +20,9 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @Log4j2
+@ConditionalOnProperty(prefix = "byteasy.auto-register", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConfigurationProperties(prefix = "byteasy.auto-register")
+@Data
 public class AsyncWaitServiceListener {
 
     @Autowired

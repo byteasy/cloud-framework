@@ -70,8 +70,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Openapi(summary = "分页查询")
     public Result<Page<ENTITY>> page() throws Exception {
         Page<ENTITY> page = baseService.page(RequestUtil.getPage(), RequestUtil.getQueryWrapper(getEntityClass()));
-
-
+        updateExternalEntity(page.getRecords());
         return Result.success(page);
     }
 
@@ -79,15 +78,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Openapi(summary = "匹配查询")
     public Result<List<ENTITY>> list() throws Exception {
         List<ENTITY> list = baseService.list(RequestUtil.getQueryWrapper(getEntityClass()));
-
-        /**
-         * 将外键关联的对象塞入拓展字段中
-         */
-        List<FieldDefine> columns = fieldDefineLoadingCache.load(getEntityClass().getName());
-        Set<FieldDefine> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
-        if (!externalKeys.isEmpty()) {
-            entityServiceFactory.updateExternalEntity(externalKeys, list);
-        }
+        updateExternalEntity(list);
         return Result.success(list);
     }
 
@@ -96,11 +87,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Parameters({@Parameter(name = "id", description = "主键")})
     public Result<ENTITY> getById(@PathVariable("id") ID id) throws Exception {
         ENTITY entity = baseService.getById(id);
-        List<FieldDefine> columns = fieldDefineLoadingCache.load(getEntityClass().getName());
-        Set<FieldDefine> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
-        if (!externalKeys.isEmpty()) {
-            entityServiceFactory.updateExternalEntity(externalKeys, List.of(entity));
-        }
+        updateExternalEntity(List.of(entity));
         return Result.success(entity);
     }
 
@@ -522,5 +509,31 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
         }
         style.setDataFormat(dataFormat.getFormat(format.toString()));
         return style;
+    }
+
+    protected boolean updateExternalEntityEnable() {
+        return true;
+    }
+
+    /**
+     * 自动填充参照对象
+     *
+     * @param entities
+     */
+    private void updateExternalEntity(List<ENTITY> entities) {
+        if (!updateExternalEntityEnable()) {
+            return;
+        }
+        if (entities == null || entities.isEmpty()) {
+            return;
+        }
+        /**
+         * 将外键关联的对象塞入拓展字段中
+         */
+        List<FieldDefine> columns = fieldDefineLoadingCache.load(getEntityClass().getName());
+        Set<FieldDefine> externalKeys = columns.stream().filter(f -> f.getExternalClass() != null && Boolean.TRUE.equals(f.getExternalClassAutoFill())).collect(Collectors.toSet());
+        if (!externalKeys.isEmpty()) {
+            entityServiceFactory.updateExternalEntity(externalKeys, entities);
+        }
     }
 }
