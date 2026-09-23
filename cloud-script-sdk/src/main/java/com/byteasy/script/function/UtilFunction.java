@@ -1,11 +1,7 @@
 package com.byteasy.script.function;
 
-import com.byteasy.common.component.EventPublishUtil;
-import com.byteasy.common.util.JacksonUtil;
-import com.byteasy.event.EntityChangeEvent;
-import com.byteasy.event.EntityChangeSource;
-import com.byteasy.event.EventType;
 import com.byteasy.exception.BizException;
+import com.byteasy.mq.IProducer;
 import com.byteasy.script.JsFunction;
 import com.byteasy.script.JsFunctions;
 import com.byteasy.util.EntityCodeUtil;
@@ -13,13 +9,15 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Component
 @Log4j2
 public class UtilFunction implements JsFunctions {
     @Autowired
-    private EventPublishUtil eventPublishUtil;
+    private IProducer producer;
 
     @Override
     public Collection<JsFunction> jsFunctions() {
@@ -60,42 +58,24 @@ public class UtilFunction implements JsFunctions {
 
             @Override
             public String name() {
-                return "pubEvent";
+                return "producerPublish";
             }
 
             @Override
             public String description() {
                 return """
-                        Use EntityCodeUtil to generate a union entity code.
+                        Use mq producer to public a message.
                         函数原型:
-                                 public static String publishEvent(String className, ChangeType changeType, EventType eventType, Object oldEntity, Object newEntity);
-                                 ChangeType: CREATE, UPDATE, DELETE, BATCH_CREATE, BATCH_UPDATE, BATCH_DELETE
-                                 EventType:
-                                     SINGLETON: 单机模式
-                                     ALL: 集群运行中所有服务实例
-                                     ONE_INSTANCE_PER_SERVICE_GROUP: 每个微服务的单个实例
+                                 public static String publish(String topic, String key, String message);
                         """;
             }
 
             @Override
             public Object run(Object[] args) throws Exception {
-                if (args == null || args.length != 5) {
+                if (args == null || args.length != 3) {
                     throw new BizException("参数输入不合法");
                 }
-                // 判断是js脚本调用
-                Object before = null;
-                if (args[3] != null && args[3].getClass().getName().contains("PolyglotMap")) {
-                    before = new HashMap<>((Map) args[3]);
-                }
-                Object after = null;
-                if (args[4] != null && args[4].getClass().getName().contains("PolyglotMap")) {
-                    after = new HashMap<>((Map) args[4]);
-                }
-                eventPublishUtil.publishEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.valueOf((String) args[1]),
-                        before,
-                        after,
-                        (String) args[0]),
-                        EventType.valueOf((String) args[2])));
+                producer.publish((String) args[0], (String) args[1], (String) args[2]);
                 return null;
             }
         });

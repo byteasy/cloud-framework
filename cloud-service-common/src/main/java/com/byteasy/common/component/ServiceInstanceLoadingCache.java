@@ -56,11 +56,11 @@ public class ServiceInstanceLoadingCache implements IEntityChangeHandler, ICache
     @Override
     public void handle(EntityChangeEvent event) {
         String code = null;
-        if (event.getSource().getBefore() != null) {
-            code = FieldValueUtil.getFieldValue(event.getSource().getBefore(), "code", String.class);
+        if (event.getBefore() != null) {
+            code = FieldValueUtil.getFieldValue(event.getBefore(), "code", String.class);
         }
-        if (event.getSource().getAfter() != null) {
-            code = FieldValueUtil.getFieldValue(event.getSource().getAfter(), "code", String.class);
+        if (event.getAfter() != null) {
+            code = FieldValueUtil.getFieldValue(event.getAfter(), "code", String.class);
         }
         log.info("ServiceInstanceLoadingCache invalid code: {}", code);
         cache.invalidate(code);

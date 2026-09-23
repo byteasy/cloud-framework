@@ -1,0 +1,38 @@
+package com.byteasy.mq.restfull.controller;
+
+import com.byteasy.Constant;
+import com.byteasy.Result;
+import com.byteasy.annotations.Openapi;
+import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.mq.ConsumerInstance;
+import com.byteasy.mq.Message;
+import com.byteasy.mq.restfull.ConsumerFactory;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Collection;
+import java.util.List;
+
+@RestController
+@RequestMapping(Constant.SAPI + "/consumers")
+@ConditionalOnProperty(prefix = "byteasy.mq.consumer", name = "enabled", havingValue = "true", matchIfMissing = true)
+@Log4j2
+public class ConsumerController {
+
+    @Autowired
+    private ConsumerFactory consumerFactory;
+
+    @PostMapping("/{topic}")
+    @Openapi(title = "接收事件", uri = "/{svrCode}" + Constant.SAPI + "/consumers/{topic}")
+    public Result<Collection<ConsumerInstance>> consumer(@PathVariable("topic") String topic, @RequestBody List<Message> messages) {
+        if (log.isInfoEnabled()) {
+            log.info("Restfull consumer topic: {}, message: {}", topic, JacksonUtil.toJson(messages));
+        }
+        messages.forEach(message -> {
+            consumerFactory.receive(topic, message.getKey(), message.getMessage());
+        });
+        return Result.success(consumerFactory.getConsumers());
+    }
+}

@@ -7,11 +7,13 @@ import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.byteasy.common.component.EventPublishUtil;
+import com.byteasy.Constant;
+import com.byteasy.common.event.EntityChangeFactory;
+import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.entity.Entity;
 import com.byteasy.event.EntityChangeEvent;
-import com.byteasy.event.EntityChangeSource;
 import com.byteasy.exception.BizException;
+import com.byteasy.mq.IProducer;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,22 +27,25 @@ import java.util.Objects;
 public abstract class EntityChangeService<ID, M extends BaseMapper<T>, T extends Entity<ID>> extends ServiceImpl<M, T> {
 
     @Autowired
-    private EventPublishUtil eventPublishUtil;
+    private IProducer producer;
+    @Autowired
+    private EntityChangeFactory entityChangeFactory;
 
     protected void publishEvent(EntityChangeEvent event) {
-        eventPublishUtil.publishEvent(event);
+        producer.publish(Constant.TOPIC_PLATFORM_ENTITY_CHANGE, getEntityClass().getName(), JacksonUtil.toJson(event, true));
+        entityChangeFactory.handle(event);
     }
 
-    protected void doHandleSaveOrUpdate(EntityChangeSource.ChangeType changeType, T before, T after) {
-        publishEvent(new EntityChangeEvent(new EntityChangeSource(changeType, before, after, getEntityClass().getName())));
+    protected void doHandleSaveOrUpdate(EntityChangeEvent.ChangeType changeType, T before, T after) {
+        publishEvent(new EntityChangeEvent(changeType, before, after, getEntityClass().getName()));
     }
 
-    protected EntityChangeSource.ChangeType getChangeType(T entity) {
+    protected EntityChangeEvent.ChangeType getChangeType(T entity) {
         Object idVal = getIdVal(entity);
         if (StringUtils.checkValNull(idVal) || Objects.isNull(baseMapper.selectById((Serializable) idVal))) {
-            return EntityChangeSource.ChangeType.CREATE;
+            return EntityChangeEvent.ChangeType.CREATE;
         } else {
-            return EntityChangeSource.ChangeType.UPDATE;
+            return EntityChangeEvent.ChangeType.UPDATE;
         }
     }
 
@@ -54,18 +59,18 @@ public abstract class EntityChangeService<ID, M extends BaseMapper<T>, T extends
     }
 
     protected void doHandleDelete(T entity) {
-        publishEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, entity, null, getEntityClass().getName())));
+        publishEvent(new EntityChangeEvent(EntityChangeEvent.ChangeType.DELETE, entity, null, getEntityClass().getName()));
     }
 
     protected void doHandleDelete(Serializable id) {
-        publishEvent(new EntityChangeEvent(new EntityChangeSource(EntityChangeSource.ChangeType.DELETE, getById(id), null, getEntityClass().getName())));
+        publishEvent(new EntityChangeEvent(EntityChangeEvent.ChangeType.DELETE, getById(id), null, getEntityClass().getName()));
     }
 
     @Override
     public boolean saveOrUpdate(T entity) {
         boolean result = false;
-        EntityChangeSource.ChangeType changeType = getChangeType(entity);
-        if (EntityChangeSource.ChangeType.CREATE.equals(changeType)) {
+        EntityChangeEvent.ChangeType changeType = getChangeType(entity);
+        if (EntityChangeEvent.ChangeType.CREATE.equals(changeType)) {
             result = super.saveOrUpdate(entity);
             /**
              * 回填了ID，此时再调用，变更数据更全面
@@ -85,7 +90,7 @@ public abstract class EntityChangeService<ID, M extends BaseMapper<T>, T extends
     @Override
     public boolean save(T entity) {
         boolean result = super.save(entity);
-        doHandleSaveOrUpdate(EntityChangeSource.ChangeType.CREATE, null, entity);
+        doHandleSaveOrUpdate(EntityChangeEvent.ChangeType.CREATE, null, entity);
         return result;
     }
 
@@ -93,7 +98,7 @@ public abstract class EntityChangeService<ID, M extends BaseMapper<T>, T extends
     public boolean saveBatch(Collection<T> entityList) {
         boolean result = super.saveBatch(entityList);
         for (T t : entityList) {
-            doHandleSaveOrUpdate(EntityChangeSource.ChangeType.CREATE, null, t);
+            doHandleSaveOrUpdate(EntityChangeEvent.ChangeType.CREATE, null, t);
         }
         return result;
     }
@@ -103,18 +108,18 @@ public abstract class EntityChangeService<ID, M extends BaseMapper<T>, T extends
     public boolean saveOrUpdateBatch(Collection<T> entityList) {
         boolean result = true;
         for (T t : entityList) {
-            EntityChangeSource.ChangeType changeType = getChangeType(t);
-            if (EntityChangeSource.ChangeType.CREATE.equals(changeType)) {
+            EntityChangeEvent.ChangeType changeType = getChangeType(t);
+            if (EntityChangeEvent.ChangeType.CREATE.equals(changeType)) {
                 if (!super.save(t)) {
                     result = false;
                 }
-                doHandleSaveOrUpdate(EntityChangeSource.ChangeType.CREATE, null, t);
+                doHandleSaveOrUpdate(EntityChangeEvent.ChangeType.CREATE, null, t);
             } else {
                 T before = getById((Serializable) getIdVal(t));
                 if (!super.saveOrUpdate(t)) {
                     result = false;
                 }
-                doHandleSaveOrUpdate(EntityChangeSource.ChangeType.UPDATE, before, getById((Serializable) getIdVal(t)));
+                doHandleSaveOrUpdate(EntityChangeEvent.ChangeType.UPDATE, before, getById((Serializable) getIdVal(t)));
             }
         }
         return result;
@@ -124,7 +129,7 @@ public abstract class EntityChangeService<ID, M extends BaseMapper<T>, T extends
     public boolean saveBatch(Collection<T> entityList, int batchSize) {
         boolean result = super.saveBatch(entityList, batchSize);
         for (T t : entityList) {
-            doHandleSaveOrUpdate(EntityChangeSource.ChangeType.CREATE, null, t);
+            doHandleSaveOrUpdate(EntityChangeEvent.ChangeType.CREATE, null, t);
         }
         return result;
     }
@@ -144,7 +149,7 @@ public abstract class EntityChangeService<ID, M extends BaseMapper<T>, T extends
             if (!updateById(t)) {
                 result = false;
             }
-            doHandleSaveOrUpdate(EntityChangeSource.ChangeType.UPDATE, before, getById((Serializable) idVal));
+            doHandleSaveOrUpdate(EntityChangeEvent.ChangeType.UPDATE, before, getById((Serializable) idVal));
         }
         return result;
     }
@@ -211,7 +216,7 @@ public abstract class EntityChangeService<ID, M extends BaseMapper<T>, T extends
     public boolean updateById(T entity) {
         T before = getById(entity);
         boolean ret = super.updateById(entity);
-        doHandleSaveOrUpdate(EntityChangeSource.ChangeType.UPDATE, before, getById(entity));
+        doHandleSaveOrUpdate(EntityChangeEvent.ChangeType.UPDATE, before, getById(entity));
         return ret;
     }
 
