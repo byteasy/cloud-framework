@@ -3,11 +3,13 @@ package com.byteasy.platform.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.util.CastUtil;
-import com.byteasy.common.util.FieldDefineUtil;
+import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.exception.BizException;
+import com.byteasy.mq.IProducer;
 import com.byteasy.platform.entity.DictionaryItem;
 import com.byteasy.platform.entity.User;
 import com.byteasy.platform.entity.UserStatus;
@@ -44,6 +46,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     private PasswordEncoder passwordEncoder;
     @Autowired
     private IDictionaryService dictionaryService;
+    @Autowired
+    private IProducer producer;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -170,6 +174,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             dbUser.setStatus(entity.getStatus());
             dbUser.setUserType(entity.getUserType());
             dbUser.setRemark(entity.getRemark());
+            /**
+             * 同步其它进程中的用户与角色的缓存信息
+             */
+            producer.publishMessage(Constant.TOPIC_PLATFORM_ENTITY_CHANGE, User.class.getName(), EntityChangeEvent.of(EntityChangeEvent.ChangeType.UPDATE, dbUser, dbUser, User.class.getName()));
             return super.saveOrUpdate(dbUser);
         }
     }
