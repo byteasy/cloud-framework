@@ -37,10 +37,24 @@ public class RestfullProducer implements IProducer {
     @Autowired(required = false)
     @Qualifier("asyncExecutor")
     private Executor executor;
+    @Autowired
+    private ConsumerFactory consumerFactory;
 
     @Override
     public void publish(String topic, String key, String message) {
         Runnable saveTask = () -> {
+            PubCmd pubCmd = null;
+            try {
+                pubCmd = doLocalPublish(topic, key, message);
+                log.info("doLocalPublish message topic: {}, key: {}, message: {}", topic, key, message);
+            } catch (Exception e) {
+                log.error("doLocalPublish message err, topic: {}, key: {}, message: {}, err: {}", topic, key, message, e);
+            }
+
+            if (PubCmd.TERMINATE.equals(pubCmd)) {
+                return;
+            }
+
             try {
                 doPublish(topic, key, message);
                 log.info("publish message topic: {}, key: {}, message: {}", topic, key, message);
@@ -90,5 +104,9 @@ public class RestfullProducer implements IProducer {
                 }
             }
         }
+    }
+
+    private PubCmd doLocalPublish(String topic, String key, String message) {
+        return consumerFactory.receive(topic, key, message);
     }
 }
