@@ -64,7 +64,7 @@ public class UserRoleLoadingCache implements IEntityChangeHandler, ICacheLoader<
                     for (Map.Entry<String, Set<Long>> entry : cache.asMap().entrySet()) {
                         if (entry.getValue().contains(roleId)) {
                             cache.invalidate(entry.getKey());
-                            log.info("UserRoleLoadingCache update. invalid roleId: {}, roleId: {}", roleId, entry.getKey());
+                            log.info("UserRoleLoadingCache update. invalid roleId: {}, user: {}", roleId, entry.getKey());
                         }
                     }
                 } else if (event.getClassName().equals(User.class.getName())) {

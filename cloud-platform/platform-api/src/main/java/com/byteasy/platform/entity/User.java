@@ -2,13 +2,13 @@ package com.byteasy.platform.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.byteasy.annotations.FieldMeta;
 import com.byteasy.entity.LogicDeleteEntity;
 import com.byteasy.enums.Gender;
 import com.byteasy.enums.YesNo;
 import com.byteasy.typehandler.PgJsonbTypeHandler;
 import com.byteasy.typehandler.StringToUuidTypeHandler;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -85,7 +85,7 @@ public class User extends LogicDeleteEntity<Long> {
 
     @Schema(description = "出生日期")
     @TableField("birthday")
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd", shape = JsonFormat.Shape.STRING)
     @FieldMeta(showOrder = 106)
     private LocalDate birthday;
 
