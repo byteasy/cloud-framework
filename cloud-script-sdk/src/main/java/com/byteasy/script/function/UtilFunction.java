@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 @Component
@@ -75,7 +76,9 @@ public class UtilFunction implements JsFunctions {
                 if (args == null || args.length != 3) {
                     throw new BizException("参数输入不合法");
                 }
-                producer.publish((String) args[0], (String) args[1], (String) args[2]);
+                String json = (String) args[2];
+                json = json.replace("com.oracle.truffle.polyglot.PolyglotMap", HashMap.class.getName());
+                producer.publish((String) args[0], (String) args[1], json);
                 return null;
             }
         });
