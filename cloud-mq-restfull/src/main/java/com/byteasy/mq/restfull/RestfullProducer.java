@@ -3,6 +3,7 @@ package com.byteasy.mq.restfull;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.Constant;
+import com.byteasy.Result;
 import com.byteasy.common.component.ServiceInstanceLoadingCache;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
@@ -11,6 +12,9 @@ import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.mq.IProducer;
 import com.byteasy.mq.Message;
+import com.byteasy.mq.restfull.dto.PubCmd;
+import com.byteasy.mq.restfull.dto.PublishResult;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -68,7 +72,12 @@ public class RestfullProducer implements IProducer {
 
                 for (ServiceInstance instance : instances) {
                     try {
-                        OkHttpUtil.postJson(instance.getUri().toString() + serviceInstanceLoadingCache.load(serviceId).getContextPath() + Constant.SAPI + "/consumers/" + topic, JacksonUtil.toJson(new Message(key, message)), header, null);
+                        String json = OkHttpUtil.postJson(instance.getUri().toString() + serviceInstanceLoadingCache.load(serviceId).getContextPath() + Constant.SAPI + "/consumers/" + topic, JacksonUtil.toJson(new Message(key, message)), header, null);
+                        PublishResult publishResult = JacksonUtil.nativeRead(json, new TypeReference<Result<PublishResult>>() {}).getIfPresent();
+                        // SubscribeType 是shared的，投递成功一次，即结束
+                        if (PubCmd.TERMINATE.equals(publishResult.getCmd())) {
+                            return;
+                        }
                     } catch (Exception e) {
                         log.error("publish event err", e);
                     }

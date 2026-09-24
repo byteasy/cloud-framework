@@ -1,8 +1,10 @@
 package com.byteasy.mq.restfull;
 
 import cn.hutool.extra.spring.SpringUtil;
-import com.byteasy.mq.ConsumerInstance;
 import com.byteasy.mq.IConsumer;
+import com.byteasy.mq.SubscriptionType;
+import com.byteasy.mq.restfull.dto.ConsumerInstance;
+import com.byteasy.mq.restfull.dto.PubCmd;
 import com.google.common.collect.Maps;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
@@ -36,17 +38,22 @@ public class ConsumerFactory {
         }
     }
 
-    public void receive(String topic, String key, String message) {
+    public PubCmd receive(String topic, String key, String message) {
         if (cache.containsKey(topic)) {
             List<IConsumer> list = cache.get(topic);
             for (IConsumer iConsumer : list) {
                 try {
                     iConsumer.receive(key, message);
+                    if (SubscriptionType.SHARED.equals(iConsumer.subscribeType())) {
+                        return PubCmd.TERMINATE;
+                    }
+                    return PubCmd.CONTINUE;
                 } catch (Exception e) {
                     log.error("consumer receive error, groupId: {}, topic: {}, error: {}", iConsumer.groupId(), iConsumer.topic(), e);
                 }
             }
         }
+        return PubCmd.CONTINUE;
     }
 
     public Collection<ConsumerInstance> getConsumers() {
