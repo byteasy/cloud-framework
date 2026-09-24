@@ -1,21 +1,23 @@
 CREATE TABLE platform_eb_page
 (
-    id              BIGSERIAL PRIMARY KEY,
-    name            VARCHAR(512) NOT NULL,
-    uri             VARCHAR(256)          DEFAULT NULL,
-    status          SMALLINT     NOT NULL DEFAULT 1,
-    creator_id      VARCHAR(64)  NOT NULL,
-    created_by      VARCHAR(64)  NOT NULL,
-    created_time    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updater_id      VARCHAR(64)           DEFAULT NULL,
-    updated_by      VARCHAR(64)           DEFAULT NULL,
-    updated_time    TIMESTAMP             DEFAULT NULL,
-    version         INTEGER               DEFAULT 1
+    id           BIGSERIAL PRIMARY KEY,
+    resource_id  bigint       not null,
+    name         VARCHAR(512) NOT NULL,
+    form_define  TEXT                  DEFAULT NULL,
+    status       SMALLINT     NOT NULL DEFAULT 1,
+    creator_id   VARCHAR(64)  NOT NULL,
+    created_by   VARCHAR(64)  NOT NULL,
+    created_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updater_id   VARCHAR(64)           DEFAULT NULL,
+    updated_by   VARCHAR(64)           DEFAULT NULL,
+    updated_time TIMESTAMP             DEFAULT NULL,
+    version      INTEGER               DEFAULT 1
 );
 
 COMMENT ON COLUMN platform_eb_page.id IS '编号';
+COMMENT ON COLUMN platform_eb_page.resource_id IS '资源编号';
 COMMENT ON COLUMN platform_eb_page.name IS '名称';
-COMMENT ON COLUMN platform_eb_page.uri IS 'URI';
+COMMENT ON COLUMN platform_eb_page.form_define IS '页面定义';
 COMMENT ON COLUMN platform_eb_page.status IS '状态';
 COMMENT ON COLUMN platform_eb_page.creator_id IS '创建人编号';
 COMMENT ON COLUMN platform_eb_page.created_by IS '创建人';
@@ -27,3 +29,7 @@ COMMENT ON COLUMN platform_eb_page.version IS '版本';
 
 COMMENT ON TABLE platform_eb_page IS '低代码页面';
 
+alter table platform_eb_page
+    add constraint fk_platform_eb_page_resource_id
+        foreign key (resource_id)
+            references platform_resource(id) on delete cascade;
