@@ -1,7 +1,10 @@
 package com.byteasy.platform.service.impl;
 
+import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.platform.entity.User;
 import com.byteasy.platform.service.impl.PlatformUserDetails;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 
 public class PlatformUserDetailsTest {
@@ -20,5 +23,10 @@ public class PlatformUserDetailsTest {
 
         // 能获取到值，说明是相同Key
         System.out.println(map.get(user2)); // 输出：value1
+
+        User user = new User();
+        user.setBirthday(LocalDate.now());
+        System.out.println(JacksonUtil.toJson(user));
     }
+
 }
