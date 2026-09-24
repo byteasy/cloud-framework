@@ -1,5 +1,6 @@
-package com.byteasy.mq;
+package com.byteasy.mq.restfull.dto;
 
+import com.byteasy.mq.SubscriptionType;
 import lombok.Data;
 
 @Data

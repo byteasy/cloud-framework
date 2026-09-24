@@ -28,7 +28,7 @@ public class ServiceInstanceLoadingCache implements IEntityChangeHandler, ICache
     @Autowired
     private IServiceInstanceService serviceInstanceService;
 
-    private LoadingCache<String, ServiceInstance> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
+    private LoadingCache<String, ServiceInstance> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(1)).maximumSize(5000).build(new CacheLoader<>() {
         @Override
         public @Nullable ServiceInstance load(String key) {
             Map<String, Object> params = Maps.newHashMapWithExpectedSize(2);
