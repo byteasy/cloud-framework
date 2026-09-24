@@ -51,6 +51,11 @@ public class RestfullProducer implements IProducer {
         CompletableFuture.runAsync(saveTask, executor);
     }
 
+    @Override
+    public void publishMessage(String topic, String key, Object message) {
+        publish(topic, key, JacksonUtil.toJson(message, true));
+    }
+
 
     private void doPublish(String topic, String key, String message) {
         DiscoveryClient discoveryClient = SpringUtil.getBean(DiscoveryClient.class);
@@ -73,7 +78,8 @@ public class RestfullProducer implements IProducer {
                 for (ServiceInstance instance : instances) {
                     try {
                         String json = OkHttpUtil.postJson(instance.getUri().toString() + serviceInstanceLoadingCache.load(serviceId).getContextPath() + Constant.SAPI + "/consumers/" + topic, JacksonUtil.toJson(new Message(key, message)), header, null);
-                        PublishResult publishResult = JacksonUtil.nativeRead(json, new TypeReference<Result<PublishResult>>() {}).getIfPresent();
+                        PublishResult publishResult = JacksonUtil.nativeRead(json, new TypeReference<Result<PublishResult>>() {
+                        }).getIfPresent();
                         // SubscribeType 是shared的，投递成功一次，即结束
                         if (PubCmd.TERMINATE.equals(publishResult.getCmd())) {
                             return;
