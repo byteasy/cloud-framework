@@ -30,7 +30,7 @@ esac
 # 2. 如果系统已定义 JAVA_HOME 则复用，否则兜底指定 /data/tools/jdk-25.0.2
 export JAVA_HOME="${JAVA_HOME:-/data/tools/jdk-25.0.2}"
 # 3. 环境变量与目录容错处理 (若未定义 LOG_HOME 则默认当前目录或 /data/logs)
-LOG_HOME="${LOG_HOME:-/data/logs}"
+LOG_HOME="${LOG_HOME:-/data/app/logs}"
 mkdir -p "$LOG_HOME/platform-service"
 
 echo "=========================================="
@@ -56,7 +56,6 @@ nohup $JAVA_HOME/bin/java \
     --add-opens java.base/java.nio=ALL-UNNAMED \
     --add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
     --add-opens java.base/jdk.internal.platform=ALL-UNNAMED \
-    -Dspring.cloud.nacos.discovery.ip=192.168.56.102 \
     -Dnacos.logging.config=classpath:nacos-log4j2-prod.xml \
     -Duser.timezone=Asia/Shanghai \
     -jar /data/app/platform/platform-service-1.0.0.jar \
