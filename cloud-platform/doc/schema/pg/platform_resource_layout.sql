@@ -7,6 +7,7 @@ CREATE TABLE platform_resource_layout
     is_public            BOOL                   DEFAULT FALSE,
     type                 SMALLINT      NOT NULL,
     std_layout_params_id BIGINT                 DEFAULT NULL,
+    eb_page_id           BIGINT                 DEFAULT NULL,
     component_path       VARCHAR(128)           DEFAULT NULL,
     component_param      VARCHAR(128)           DEFAULT NULL,
     creator_id           VARCHAR(64)   NOT NULL,
@@ -25,6 +26,8 @@ COMMENT ON COLUMN platform_resource_layout.name IS '名称';
 COMMENT ON COLUMN platform_resource_layout.is_default IS '默认布局';
 COMMENT ON COLUMN platform_resource_layout.is_public IS '公开访问';
 COMMENT ON COLUMN platform_resource_layout.type IS '类型';
+COMMENT ON COLUMN platform_resource_layout.std_layout_params_id IS '标准布局参数';
+COMMENT ON COLUMN platform_resource_layout.eb_page_id IS '低代码页面';
 COMMENT ON COLUMN platform_resource_layout.component_path IS '组件路径';
 COMMENT ON COLUMN platform_resource_layout.component_param IS '组件参数';
 COMMENT ON COLUMN platform_resource_layout.creator_id IS '创建人编号';
