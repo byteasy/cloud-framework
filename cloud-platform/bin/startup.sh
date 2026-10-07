@@ -39,6 +39,8 @@ echo "使用 JDK: $JAVA_HOME"
 echo "日志目录: $LOG_HOME/platform-service"
 echo "=========================================="
 
+# -Dspring.cloud.nacos.discovery.ip=192.168.56.102 如果nacos注册的ip有问题，可以手工指定
+
 nohup $JAVA_HOME/bin/java \
     -Xms512m -Xmx512m \
     -DJM.LOG.PATH=$LOG_HOME/platform-service \
