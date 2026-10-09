@@ -15,7 +15,9 @@ CREATE TABLE platform_std_layout_params
     title_column_name                    VARCHAR(255)         default 'name',
     query_params                         VARCHAR(1024),
     form_width                           VARCHAR(64)          DEFAULT NULL,
+    form_type                            SMALLINT    NOT NULL DEFAULT 0,
     form_component                       VARCHAR(255)         DEFAULT NULL,
+    eb_page_id                           BIGINT               DEFAULT NULL,
 
     operation_column_width               VARCHAR(64)          DEFAULT NULL,
     pagination_visible                   BOOLEAN              DEFAULT TRUE,
@@ -65,7 +67,9 @@ COMMENT ON COLUMN platform_std_layout_params.form_width IS '表单页面宽度';
 COMMENT ON COLUMN platform_std_layout_params.operation_column_width IS '操作列宽度';
 COMMENT ON COLUMN platform_std_layout_params.pagination_visible IS '是否启用分页';
 COMMENT ON COLUMN platform_std_layout_params.query_form_visible IS '是否显示查询表单';
+COMMENT ON COLUMN platform_std_layout_params.form_type IS '表单类型 0：定开 1：低代码';
 COMMENT ON COLUMN platform_std_layout_params.form_component IS '自定义表单组件';
+COMMENT ON COLUMN platform_std_layout_params.eb_page_id IS '低代码页面编号';
 COMMENT ON COLUMN platform_std_layout_params.excel_import_component IS '自定义表格导入组件';
 COMMENT ON COLUMN platform_std_layout_params.excel_export_component IS '自定义表格导出组件';
 COMMENT ON COLUMN platform_std_layout_params.query_form_extra_component IS '查询栏组件';
