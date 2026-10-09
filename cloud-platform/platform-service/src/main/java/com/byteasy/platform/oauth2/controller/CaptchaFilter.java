@@ -22,6 +22,7 @@ public class CaptchaFilter extends OncePerRequestFilter {
                 response.sendRedirect(request.getContextPath() + "/login?error=captcha");
                 return;
             }
+            request.getSession().removeAttribute("captcha_key");
         }
         filterChain.doFilter(request, response);
     }

@@ -126,8 +126,8 @@ public class OpenapiLogAspect {
             logEntity.setOpenapiName(openApi.getName());
             logEntity.setUserInfo(userInfo);
             logEntity.setCostTime(costTime);
-            logEntity.setCreatedBy(userInfo.getName());
-            logEntity.setCreatorId(userInfo.getUsername());
+            logEntity.setCreatedBy(userInfo != null ? userInfo.getName() : null);
+            logEntity.setCreatorId(userInfo != null ? userInfo.getUsername() : null);
             logEntity.setCreatedTime(LocalDateTime.now());
 
             // 🔥 核心点：识别是否为重放调用，并提取来源日志 ID

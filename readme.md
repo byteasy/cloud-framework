@@ -80,7 +80,7 @@
 
 7.1 环境依赖
 - 前端：nodejs v24.12.0、Vue3
-- 后端：java 21 spring boot：3.5.9 spring cloud alibaba：2025.0.0.0 mybatis plus：3.5.16
+- 后端：java 25 spring boot：3.5.9 spring cloud alibaba：2025.0.0.0 mybatis plus：3.5.16
 - 中间件：Maven、Postgres、Apisix:3.14.1、Nacos:3.1.1
 
 7.2 项目克隆
