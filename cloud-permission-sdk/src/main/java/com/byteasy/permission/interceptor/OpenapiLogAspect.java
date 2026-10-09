@@ -126,6 +126,8 @@ public class OpenapiLogAspect {
             logEntity.setOpenapiName(openApi.getName());
             logEntity.setUserInfo(userInfo);
             logEntity.setCostTime(costTime);
+            logEntity.setCreatedBy(userInfo.getName());
+            logEntity.setCreatorId(userInfo.getUsername());
             logEntity.setCreatedBy(userInfo != null ? userInfo.getName() : null);
             logEntity.setCreatorId(userInfo != null ? userInfo.getUsername() : null);
             logEntity.setCreatedTime(LocalDateTime.now());
