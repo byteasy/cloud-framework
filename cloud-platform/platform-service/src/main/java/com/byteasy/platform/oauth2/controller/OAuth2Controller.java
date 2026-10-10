@@ -21,7 +21,7 @@ public class OAuth2Controller {
         mav.addObject(DIC_SETTING_FAVICON, dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_FAVICON, "/platformSvr/assets/favicon.ico"));
         mav.addObject(DIC_SETTING_LOGO_IMG, dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_LOGO_IMG, "/platformSvr/assets/logo.png"));
         mav.addObject(DIC_SETTING_BACKGROUND_IMG, dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_BACKGROUND_IMG, "/platformSvr/assets/login-background.svg"));
-        mav.addObject(DIC_SETTING_TITLE, dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_TITLE, I18nUtil.getLanguageValue("login.pageTitle")));
+        mav.addObject(DIC_SETTING_TITLE, dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_TITLE, I18nUtil.getMessage("login.pageTitle")));
         return mav;
     }
 }
