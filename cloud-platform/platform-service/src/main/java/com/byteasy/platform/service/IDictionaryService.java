@@ -17,6 +17,8 @@ public interface IDictionaryService extends IService<Dictionary> {
 
     DictionaryVO selectByCode(String code);
 
+    Dictionary selectByCodeFromDb(String code);
+
     DictionaryItem selectByCodeAndItemCode(String code, String itemCode);
 
     void invalidateCache();

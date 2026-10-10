@@ -2,9 +2,6 @@ package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.enums.Enable;
 import com.byteasy.platform.entity.Dictionary;
@@ -13,6 +10,9 @@ import com.byteasy.platform.mapper.DictionaryMapper;
 import com.byteasy.platform.service.IDictionaryItemService;
 import com.byteasy.platform.service.IDictionaryService;
 import com.byteasy.platform.vo.DictionaryVO;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -48,6 +48,15 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public Dictionary selectByCodeFromDb(String code) {
+        LambdaQueryWrapper<Dictionary> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Dictionary::getCode, code);
+        queryWrapper.eq(Dictionary::getStatus, Enable.ENABLE);
+        queryWrapper.last("limit 1");
+        return getOne(queryWrapper, false);
     }
 
     protected DictionaryVO loadFromDbByCode(String code) {

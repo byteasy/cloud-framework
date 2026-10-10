@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <!-- 国际化：标题 -->
-    <title th:text="#{login.pageTitle}"></title>
-    <link rel="icon" href="/platformSvr/assets/favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="/platformSvr/assets/favicon.ico" type="image/x-icon">
-    <link rel="icon" sizes="16x16 32x32 48x48" href="/platformSvr/assets/favicon.ico">
+    <title th:text="${title}"></title>
+    <link rel="icon" th:href="${favicon}" type="image/x-icon">
+    <link rel="shortcut icon" th:href="${favicon}" type="image/x-icon">
+    <link rel="icon" sizes="16x16 32x32 48x48" th:href="${favicon}">
     <script src="/platformSvr/assets/tailwind.js"></script>
     <style>
         body {
             margin: 0;
-            background: url("/platformSvr/assets/login-background.svg") center center / cover no-repeat;
             overflow: hidden;
             display: flex;
             align-items: center;
@@ -147,13 +146,12 @@
         }
     </style>
 </head>
-<body>
+<body th:style="'background: url(\'' + ${backgroundImg} + '\') center center / cover no-repeat;'">
 <div class="matrix-bg"></div>
 
 <div class="glass-card p-8 rounded-2xl w-full max-w-sm">
     <div class="text-center mb-10">
-        <img src="/platformSvr/assets/logo.png" alt="logo"
-             class="w-auto h-[80px] max-w-[280px] mx-auto mb-2">
+        <img th:src="${logoImg}" alt="logo" class="w-auto h-[80px] max-w-[280px] mx-auto mb-2">
 <!--        Current Locale: <span th:text="${#locale}"></span><br/>-->
     </div>
 
