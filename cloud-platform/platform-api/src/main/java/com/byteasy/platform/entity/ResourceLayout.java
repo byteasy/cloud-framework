@@ -54,6 +54,10 @@ public class ResourceLayout extends AuditEntity<Long> {
     @TableField("is_public")
     private Boolean isPublic;
 
+    @FieldMeta(name = "低代码页面", showOrder = 9)
+    @TableField("eb_page_id")
+    private Long ebPageId;
+
     public enum Type implements IBaseEnum<Integer> {
 
         STAND(0, "标准布局"), EB(1, "EB布局"), DEVELOP(2, "定开布局");
