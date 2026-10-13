@@ -152,4 +152,12 @@ public class StdLayoutParams extends AuditEntity<Long> {
     @FieldMeta(name = "表单字段联动api", showOrder = 132)
     @TableField("api_cascade")
     private String apiCascade;
+
+    @FieldMeta(name = "表单类型", showOrder = 133)
+    @TableField("form_type")
+    private Integer formType;
+
+    @FieldMeta(name = "页面编号", showOrder = 133)
+    @TableField("eb_page_id")
+    private Long ebPageId;
 }
