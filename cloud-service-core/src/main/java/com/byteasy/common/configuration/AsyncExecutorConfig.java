@@ -12,7 +12,7 @@ import java.util.concurrent.Executor;
 public class AsyncExecutorConfig {
 
     @Bean("asyncExecutor")
-    public Executor openapiLogExecutor() {
+    public Executor commonExecutor() {
         // 1. 动态感知系统/容器的有效 CPU 核心数
         int cpuCores = Runtime.getRuntime().availableProcessors();
         // 2. I/O 密集型线程池自适应计算法则
