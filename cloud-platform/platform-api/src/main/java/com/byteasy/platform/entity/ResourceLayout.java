@@ -58,6 +58,10 @@ public class ResourceLayout extends AuditEntity<Long> {
     @TableField("eb_page_id")
     private Long ebPageId;
 
+    @FieldMeta(name = "低代码初始数据查询接口", showOrder = 108)
+    @TableField("eb_page_query_api")
+    private String ebPageQueryApi;
+
     public enum Type implements IBaseEnum<Integer> {
 
         STAND(0, "标准布局"), EB(1, "EB布局"), DEVELOP(2, "定开布局");

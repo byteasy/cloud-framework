@@ -190,6 +190,63 @@ public final class OkHttpUtil {
         return execute(request, client);
     }
 
+    public static String postJson(String url, Map<String, String> params, Map<String, String> headers, String json, OkHttpClient client) throws IOException {
+        // 添加查询参数
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(url).newBuilder();
+        // 添加查询参数
+        if (params != null) {
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                urlBuilder.addQueryParameter(entry.getKey(), entry.getValue());
+            }
+        }
+
+        RequestBody body = RequestBody.create(json, JSON);
+        Request.Builder builder = new Request.Builder().url(urlBuilder.build()).post(body);
+
+        addHeaders(builder, headers);
+        Request request = builder.build();
+
+        return execute(request, client);
+    }
+
+    public static String putJson(String url, Map<String, String> params, Map<String, String> headers, String json, OkHttpClient client) throws IOException {
+        // 添加查询参数
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(url).newBuilder();
+        // 添加查询参数
+        if (params != null) {
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                urlBuilder.addQueryParameter(entry.getKey(), entry.getValue());
+            }
+        }
+
+        RequestBody body = RequestBody.create(json, JSON);
+        Request.Builder builder = new Request.Builder().url(urlBuilder.build()).put(body);
+
+        addHeaders(builder, headers);
+        Request request = builder.build();
+
+        return execute(request, client);
+    }
+
+
+    public static String deleteJson(String url, Map<String, String> params, Map<String, String> headers, String json, OkHttpClient client) throws IOException {
+        // 添加查询参数
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(url).newBuilder();
+        // 添加查询参数
+        if (params != null) {
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                urlBuilder.addQueryParameter(entry.getKey(), entry.getValue());
+            }
+        }
+
+        RequestBody body = RequestBody.create(json, JSON);
+        Request.Builder builder = new Request.Builder().url(urlBuilder.build()).delete(body);
+
+        addHeaders(builder, headers);
+        Request request = builder.build();
+
+        return execute(request, client);
+    }
     /**
      * 复杂对象反序列化
      *
