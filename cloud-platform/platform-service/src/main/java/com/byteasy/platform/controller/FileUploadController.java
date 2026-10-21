@@ -3,7 +3,6 @@ package com.byteasy.platform.controller;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
-import io.swagger.v3.oas.annotations.Operation;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,17 +26,29 @@ public class FileUploadController {
     @Value("${server.servlet.context-path}")
     private String contextPath;
 
-    private static final String BASE_PATH = "upload" + File.separator + "files" + File.separator + "public";
-
-    @PostMapping
-    @Openapi(summary = "上传文件")
-    public Result<String> uploadFiles(@RequestPart(value = "file", required = false) MultipartFile img) throws IOException {
+    @PostMapping("/public")
+    @Openapi(summary = "上传公开访问文件", entityName = "com.byteasy.platform.entity.File")
+    public Result<String> uploadPublicFile(@RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
         LocalDateTime now = LocalDateTime.now();
-        String path1 = BASE_PATH + File.separator
-                + now.getYear() + File.separator + now.getMonthValue() + File.separator + now.format(DateTimeFormatter.ofPattern("ddHHmmss")) +
-                "." + FilenameUtils.getExtension(img.getOriginalFilename());
-        FileUtils.copyInputStreamToFile(img.getInputStream(), new File(dataRootDir, path1));
 
-        return Result.success((contextPath + File.separator + path1).replace("\\", "/"));
+        String path = now.getYear() + File.separator + now.getMonthValue() + File.separator + now.format(DateTimeFormatter.ofPattern("ddHHmmss")) +
+                "." + FilenameUtils.getExtension(file.getOriginalFilename());
+        FileUtils.copyInputStreamToFile(file.getInputStream(), new File(dataRootDir + File.separator + com.byteasy.platform.Constant.UPLOAD_DIR_PUBLIC, path));
+
+        String accessPath = contextPath + File.separator + path;
+        return Result.success(accessPath.replace("\\", "/"));
+    }
+
+    @PostMapping("/private")
+    @Openapi(summary = "上传授权访问文件", entityName = "com.byteasy.platform.entity.File")
+    public Result<String> uploadPrivateFile(@RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+        LocalDateTime now = LocalDateTime.now();
+
+        String path = now.getYear() + File.separator + now.getMonthValue() + File.separator + now.format(DateTimeFormatter.ofPattern("ddHHmmss")) +
+                "." + FilenameUtils.getExtension(file.getOriginalFilename());
+        FileUtils.copyInputStreamToFile(file.getInputStream(), new File(dataRootDir + File.separator + com.byteasy.platform.Constant.UPLOAD_DIR_PRIVATE, path));
+
+        String accessPath = contextPath + File.separator + path;
+        return Result.success(accessPath.replace("\\", "/"));
     }
 }
