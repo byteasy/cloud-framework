@@ -8,7 +8,7 @@ import com.byteasy.common.component.OpenApiLoadingCache;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.JacksonUtilOld;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.exception.BizException;
 import com.byteasy.platform.entity.Openapi;
@@ -70,7 +70,7 @@ public class ExecuteOpenapiFunction implements JsFunction {
                 Map<String, String> header = new HashMap<>();
                 UserInfo token = TokenUtil.getUserinfo();
                 if (token != null) {
-                    header.put(Constant.USER_INFO, Base64.encode(JacksonUtil.toJson(token)));
+                    header.put(Constant.USER_INFO, Base64.encode(JacksonUtilOld.toJson(token)));
                 } else {
                     header.put(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
                 }

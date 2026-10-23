@@ -1,8 +1,7 @@
 package com.byteasy.platform.service.impl;
 
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.JacksonUtilOld;
 import com.byteasy.platform.entity.User;
-import com.byteasy.platform.service.impl.PlatformUserDetails;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -26,7 +25,7 @@ public class PlatformUserDetailsTest {
 
         User user = new User();
         user.setBirthday(LocalDate.now());
-        System.out.println(JacksonUtil.toJson(user));
+        System.out.println(JacksonUtilOld.toJson(user));
     }
 
 }

@@ -1,7 +1,7 @@
 package com.byteasy.common.controller;
 
 import cn.hutool.core.util.ReflectUtil;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.spring.service.IService;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.token.TokenUtil;

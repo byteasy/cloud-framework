@@ -1,11 +1,11 @@
 package com.byteasy.common.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.spring.service.IService;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.JacksonUtilOld;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.entity.Relation;
 import com.byteasy.exception.BizException;
@@ -36,7 +36,7 @@ public abstract class RelationController<SERVICE extends IService<ENTITY>, ENTIT
     @Openapi(summary = "存在更新记录，否则插入记录（批量）")
     public Result<List<ENTITY>> saveOrUpdateBatch(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("saveOrUpdateBatch: {}", JacksonUtil.toJson(entities));
+            log.info("saveOrUpdateBatch: {}", JacksonUtilOld.toJson(entities));
         }
         if (!baseService.saveOrUpdateBatch(entities)) {
             throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
@@ -48,7 +48,7 @@ public abstract class RelationController<SERVICE extends IService<ENTITY>, ENTIT
     @Openapi(summary = "根据主键批量删除记录")
     public Result<Boolean> removeByIds(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("removeByIds: {}", JacksonUtil.toJson(entities));
+            log.info("removeByIds: {}", JacksonUtilOld.toJson(entities));
         }
         return Result.success(baseService.removeByIds(entities));
     }
@@ -57,7 +57,7 @@ public abstract class RelationController<SERVICE extends IService<ENTITY>, ENTIT
     @Openapi(summary = "根据条件批量删除记录（慎重）")
     public Result<Boolean> removeByWrapper(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("removeByWrapper: {}", JacksonUtil.toJson(entity));
+            log.info("removeByWrapper: {}", JacksonUtilOld.toJson(entity));
         }
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         String contentType = request.getHeader("content-type");

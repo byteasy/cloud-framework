@@ -3,7 +3,7 @@ package com.byteasy.script.component;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
-import com.byteasy.platform.api.IJsScriptService;
+import com.byteasy.platform.api.JsScriptClient;
 import com.byteasy.platform.entity.JsScript;
 import com.byteasy.util.FieldValueUtil;
 import com.google.common.cache.Cache;
@@ -24,14 +24,14 @@ import java.util.concurrent.TimeUnit;
 public class JsScriptFactory implements IEntityChangeHandler, ICacheLoader<Long, JsScript> {
 
     @Autowired
-    private IJsScriptService jsScriptService;
+    private JsScriptClient jsScriptClient;
 
     private static Cache<String, Source> SCRIPT_CACHE = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(12, TimeUnit.HOURS).build();
 
     private LoadingCache<Long, JsScript> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(24)).maximumSize(10000).build(new CacheLoader<>() {
         @Override
         public JsScript load(Long scriptId) {
-            return jsScriptService.getById(scriptId).getIfPresent();
+            return jsScriptClient.getById(scriptId).getIfPresent();
         }
     });
 

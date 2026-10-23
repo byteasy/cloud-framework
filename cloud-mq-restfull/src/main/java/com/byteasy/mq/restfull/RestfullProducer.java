@@ -8,7 +8,7 @@ import com.byteasy.common.component.ServiceInstanceLoadingCache;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.JacksonUtilOld;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.mq.IProducer;
 import com.byteasy.mq.Message;
@@ -67,7 +67,7 @@ public class RestfullProducer implements IProducer {
 
     @Override
     public void publishMessage(String topic, String key, Object message) {
-        publish(topic, key, JacksonUtil.toJson(message, true));
+        publish(topic, key, JacksonUtilOld.toJson(message, true));
     }
 
 
@@ -83,7 +83,7 @@ public class RestfullProducer implements IProducer {
                 Map<String, String> header = new HashMap<>();
                 UserInfo token = TokenUtil.getUserinfo();
                 if (token != null) {
-                    header.put(Constant.USER_INFO, Base64.encode(JacksonUtil.toJson(token)));
+                    header.put(Constant.USER_INFO, Base64.encode(JacksonUtilOld.toJson(token)));
                 } else {
                     header.put(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
                 }
@@ -91,8 +91,8 @@ public class RestfullProducer implements IProducer {
 
                 for (ServiceInstance instance : instances) {
                     try {
-                        String json = OkHttpUtil.postJson(instance.getUri().toString() + serviceInstanceLoadingCache.load(serviceId).getContextPath() + Constant.SAPI + "/consumers/" + topic, JacksonUtil.toJson(new Message(key, message)), header, null);
-                        PublishResult publishResult = JacksonUtil.nativeRead(json, new TypeReference<Result<PublishResult>>() {
+                        String json = OkHttpUtil.postJson(instance.getUri().toString() + serviceInstanceLoadingCache.load(serviceId).getContextPath() + Constant.SAPI + "/consumers/" + topic, JacksonUtilOld.toJson(new Message(key, message)), header, null);
+                        PublishResult publishResult = JacksonUtilOld.nativeRead(json, new TypeReference<Result<PublishResult>>() {
                         }).getIfPresent();
                         // SubscribeType 是shared的，投递成功一次，即结束
                         if (PubCmd.TERMINATE.equals(publishResult.getCmd())) {

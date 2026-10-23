@@ -15,28 +15,22 @@ import com.baomidou.mybatisplus.extension.plugins.inner.DynamicTableNameInnerInt
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.byteasy.Constant;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.token.UserInfoBuilder;
+import com.byteasy.common.util.JacksonUtilOld;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.google.common.net.HttpHeaders;
-import feign.RequestInterceptor;
-import feign.codec.Decoder;
-import feign.codec.Encoder;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
-import org.springframework.cloud.openfeign.support.ResponseEntityDecoder;
-import org.springframework.cloud.openfeign.support.SpringDecoder;
-import org.springframework.cloud.openfeign.support.SpringEncoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.util.StringUtils;
@@ -81,7 +75,7 @@ public class FrameworkConfig {
         } catch (Exception e) {
             log.warn("DataPermissionHandler not define! the DataPermissionInterceptor not enable.");
         }
-        JacksonTypeHandler.setObjectMapper(JacksonUtil.copyMapperWithClass());
+        JacksonTypeHandler.setObjectMapper(JacksonUtilOld.copy());
         return interceptor;
     }
 
@@ -113,20 +107,10 @@ public class FrameworkConfig {
         return new OracleKeyGenerator();
     }
 
-//    @Bean
-//    public Jackson2ObjectMapperBuilderCustomizer customizer() {
-//        return builder -> {
-//            builder.configure(JacksonUtil.copy());
-//            builder.featuresToEnable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING, DeserializationFeature.READ_ENUMS_USING_TO_STRING);
-//            builder.serializerByType(Long.class, ToStringSerializer.instance);
-//            builder.serializerByType(Long.TYPE, ToStringSerializer.instance);
-//        };
-//    }
-
     @Bean
     @Primary
     public ObjectMapper objectMapper() {
-        ObjectMapper mapper = JacksonUtil.copy();
+        ObjectMapper mapper = JacksonUtilOld.copy();
         mapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
         mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
         SimpleModule longModule = new SimpleModule();
@@ -134,18 +118,6 @@ public class FrameworkConfig {
         longModule.addSerializer(long.class, ToStringSerializer.instance);
         mapper.registerModule(longModule);
         return mapper;
-    }
-
-    @Bean
-    public Decoder feignDecoder() {
-        return new ResponseEntityDecoder(new SpringDecoder(() -> new HttpMessageConverters(new MappingJackson2HttpMessageConverter(JacksonUtil.copy()))));
-    }
-
-    @Bean
-    public Encoder feignEncoder() {
-        return new SpringEncoder(() -> new HttpMessageConverters(
-                new MappingJackson2HttpMessageConverter(JacksonUtil.copy())
-        ));
     }
 
 
@@ -157,32 +129,41 @@ public class FrameworkConfig {
     }
 
     @Bean
-    public RequestInterceptor localeRequestInterceptor() {
-        return template -> {
-            // 从 RequestContextHolder 获取当前请求的 Header
+    public ClientHttpRequestInterceptor localeClientRequestInterceptor() {
+        return (httpRequest, body, execution) -> {
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attributes != null) {
                 HttpServletRequest request = attributes.getRequest();
 
+                // 1. 语言传递
                 String locale = request.getParameter(Constant.PARAM_LANG);
                 if (!StringUtils.hasText(locale)) {
                     locale = request.getHeader(HttpHeaders.ACCEPT_LANGUAGE);
                 }
                 if (!StringUtils.hasText(locale)) {
-                    locale = LocaleContextHolder.getLocale().getLanguage();
+                    Locale current = LocaleContextHolder.getLocale();
+                    locale = (current != null) ? current.getLanguage() : null;
                 }
-                template.header(HttpHeaders.ACCEPT_LANGUAGE, locale);
-                // 传递其他业务 Header
-                String traceId = request.getHeader(Constant.TRACE_ID);
-                if (StringUtils.hasText(traceId)) {
-                    template.header(Constant.TRACE_ID, traceId);
+                if (StringUtils.hasText(locale)) {
+                    httpRequest.getHeaders().set(HttpHeaders.ACCEPT_LANGUAGE, locale);
                 }
 
+                // 2. TraceId 传递
+                String traceId = request.getHeader(Constant.TRACE_ID);
+                if (StringUtils.hasText(traceId)) {
+                    httpRequest.getHeaders().set(Constant.TRACE_ID, traceId);
+                }
+
+                // 3. UserInfo 传递
                 String authorization = request.getHeader(Constant.USER_INFO);
                 if (StringUtils.hasText(authorization)) {
-                    template.header(Constant.USER_INFO, authorization);
+                    httpRequest.getHeaders().set(Constant.USER_INFO, authorization);
+                } else {
+                    httpRequest.getHeaders().set(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
                 }
             }
+
+            return execution.execute(httpRequest, body);
         };
     }
 

@@ -3,7 +3,7 @@ package com.byteasy.mq.restfull.controller;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.JacksonUtilOld;
 import com.byteasy.mq.Message;
 import com.byteasy.mq.restfull.ConsumerFactory;
 import com.byteasy.mq.restfull.dto.PubCmd;
@@ -26,7 +26,7 @@ public class ConsumerController {
     @Openapi(title = "接收事件", uri = "/{svrCode}" + Constant.SAPI + "/consumers/{topic}")
     public Result<PublishResult> consumer(@PathVariable("topic") String topic, @RequestBody Message message) {
         if (log.isInfoEnabled()) {
-            log.info("Restfull consumer topic: {}, message: {}", topic, JacksonUtil.toJson(message));
+            log.info("Restfull consumer topic: {}, message: {}", topic, JacksonUtilOld.toJson(message));
         }
         PubCmd pubCmd = consumerFactory.receive(topic, message.getKey(), message.getMessage());
         PublishResult result = new PublishResult();

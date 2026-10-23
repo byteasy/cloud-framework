@@ -22,7 +22,7 @@ public class RequestCachingFilter extends OncePerRequestFilter {
 
         // 如果不是包装类，则用 ContentCachingRequestWrapper 包一层
         if (!(request instanceof ContentCachingRequestWrapper)) {
-            request = new ContentCachingRequestWrapper(request);
+            request = new ContentCachingRequestWrapper(request, 0);
         }
         filterChain.doFilter(request, response);
     }

@@ -6,12 +6,12 @@ import com.byteasy.Constant;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.JacksonUtilOld;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.common.component.ServiceInstanceLoadingCache;
 import com.byteasy.event.IPlatformReady;
 import com.byteasy.exception.BizException;
-import com.byteasy.platform.api.IScriptFunctionService;
+import com.byteasy.platform.api.ScriptFunctionClient;
 import com.byteasy.platform.dto.ScriptFunctionDTO;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
@@ -34,7 +34,7 @@ public class JsFunctionFactory implements IPlatformReady {
     private Map<String, ScriptFunctionDTO> jsFunctionMap = new HashMap<>();
 
     @Autowired
-    private IScriptFunctionService scriptFunctionService;
+    private ScriptFunctionClient scriptFunctionService;
 
     @PostConstruct
     public void init() {
@@ -105,14 +105,14 @@ public class JsFunctionFactory implements IPlatformReady {
                     Map<String, String> header = new HashMap<>();
                     UserInfo token = TokenUtil.getUserinfo();
                     if (token != null) {
-                        header.put(Constant.USER_INFO, Base64.encode(JacksonUtil.toJson(token)));
+                        header.put(Constant.USER_INFO, Base64.encode(JacksonUtilOld.toJson(token)));
                     } else {
                         header.put(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
                     }
                     ServiceInstance randomService = random(instances);
                     try {
-                        String result = OkHttpUtil.postJson(randomService.getUri().toString() + serviceInstanceLoadingCache.load(scriptFunction.getServiceCode()).getContextPath() + Constant.SAPI + "/scriptFunctionRunner/run/" + scriptFunction.getName(), JacksonUtil.toJson(args, true), header, null);
-                        return JacksonUtil.parseObj(result);
+                        String result = OkHttpUtil.postJson(randomService.getUri().toString() + serviceInstanceLoadingCache.load(scriptFunction.getServiceCode()).getContextPath() + Constant.SAPI + "/scriptFunctionRunner/run/" + scriptFunction.getName(), JacksonUtilOld.toJson(args, true), header, null);
+                        return JacksonUtilOld.parseObj(result);
                     } catch (Exception e) {
                         log.error(scriptFunction.getName() + " remote call err", e);
                         throw new BizException(e.getMessage());

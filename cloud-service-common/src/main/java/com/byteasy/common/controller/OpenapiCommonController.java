@@ -12,7 +12,7 @@ import com.byteasy.Result;
 import com.byteasy.Status;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.util.CastUtil;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.JacksonUtilOld;
 import com.byteasy.common.component.EntityDefineLoadingCache;
 import com.byteasy.common.component.FieldDefineLoadingCache;
 import com.byteasy.common.util.FieldDefineUtil;
@@ -25,7 +25,6 @@ import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.util.I18nUtil;
 import com.byteasy.util.XlsxUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import jakarta.servlet.http.HttpServletResponse;
@@ -82,7 +81,7 @@ public class OpenapiCommonController {
         if (log.isInfoEnabled()) {
             log.info("className: {}, saveOrUpdate: {}", className, body);
         }
-        return Result.success(commonService.saveOrUpdate(className, JacksonUtil.nativeRead(body, new TypeReference<Map<String, Object>>() {
+        return Result.success(commonService.saveOrUpdate(className, JacksonUtilOld.nativeRead(body, new TypeReference<Map<String, Object>>() {
         })));
     }
 
@@ -99,7 +98,7 @@ public class OpenapiCommonController {
         if (log.isInfoEnabled()) {
             log.info("className: {}, removeByEntity: {}", className, body);
         }
-        return Result.success(commonService.removeByPrimaryKey(className, JacksonUtil.nativeRead(body, new TypeReference<Map<String, Object>>() {
+        return Result.success(commonService.removeByPrimaryKey(className, JacksonUtilOld.nativeRead(body, new TypeReference<Map<String, Object>>() {
         })));
     }
 
@@ -118,7 +117,7 @@ public class OpenapiCommonController {
         if (log.isInfoEnabled()) {
             log.info("className: {}, batchRemove: {}", className, body);
         }
-        commonService.batchDelete(className, JacksonUtil.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
+        commonService.batchDelete(className, JacksonUtilOld.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
         }));
         return Result.success();
     }
@@ -311,7 +310,7 @@ public class OpenapiCommonController {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdateBatch: {}", body);
         }
-        List<Map<String, Object>> entities = JacksonUtil.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
+        List<Map<String, Object>> entities = JacksonUtilOld.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
         });
         List<FieldDefine> columns = fieldDefineLoadingCache.load(className);
         for (Map<String, Object> entity : entities) {

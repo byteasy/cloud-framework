@@ -2,11 +2,11 @@ package com.byteasy.common.component;
 
 import cn.hutool.core.util.ArrayUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
-import com.byteasy.platform.api.IFieldDefineService;
+import com.byteasy.platform.api.FieldDefineClient;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.platform.entity.FieldGroup;
 import com.byteasy.util.FieldValueUtil;
@@ -25,7 +25,7 @@ import java.util.List;
 public class FieldDefineLoadingCache implements IEntityChangeHandler, ICacheLoader<String, List<FieldDefine>> {
 
     @Autowired
-    private IFieldDefineService fieldDefineService;
+    private FieldDefineClient fieldDefineService;
 
     private LoadingCache<String, List<FieldDefine>> columnsCacheLoader = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
         @Override

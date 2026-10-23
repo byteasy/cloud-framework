@@ -5,10 +5,10 @@ import cn.hutool.core.util.NumberUtil;
 import com.byteasy.common.component.OpenApiLoadingCache;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.JacksonUtilOld;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.enums.YesNo;
-import com.byteasy.platform.api.IOpenapiLogService;
+import com.byteasy.platform.api.OpenapiLogClient;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.platform.entity.OpenapiLog;
 import com.byteasy.util.RequestMappingResolver;
@@ -44,7 +44,7 @@ public class OpenapiLogAspect {
     private OpenApiLoadingCache openApiLoadingCache;
 
     @Autowired
-    private IOpenapiLogService openapiLogService;
+    private OpenapiLogClient openapiLogClient;
 
     @Autowired(required = false)
     @Qualifier("asyncExecutor")
@@ -155,7 +155,7 @@ public class OpenapiLogAspect {
                 logEntity.setErrorMessage(null);
                 if (result != null) {
                     try {
-                        logEntity.setHttpResponse(JacksonUtil.toJson(result));
+                        logEntity.setHttpResponse(JacksonUtilOld.toJson(result));
                     } catch (Exception e) {
                         logEntity.setHttpResponse(result.toString());
                     }
@@ -164,7 +164,7 @@ public class OpenapiLogAspect {
 
             Runnable saveTask = () -> {
                 try {
-                    openapiLogService.saveOrUpdate(logEntity);
+                    openapiLogClient.saveOrUpdate(logEntity);
                 } catch (Exception e) {
                     log.error("保存 OpenAPI 执行日志异常: uri={}, error={}", logEntity.getUri(), e.getMessage());
                 }

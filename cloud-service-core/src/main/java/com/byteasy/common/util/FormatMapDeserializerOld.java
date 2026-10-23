@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 
-public class FormatMapDeserializer extends JsonDeserializer<FormatMap> {
+public class FormatMapDeserializerOld extends JsonDeserializer<FormatMap> {
 
     @Override
     public FormatMap deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {

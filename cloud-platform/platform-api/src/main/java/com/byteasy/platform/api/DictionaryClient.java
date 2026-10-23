@@ -4,19 +4,16 @@ import com.byteasy.Result;
 import com.byteasy.platform.Constant;
 import com.byteasy.platform.entity.DictionaryItem;
 import com.byteasy.platform.vo.DictionaryVO;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
 
-@FeignClient(name = Constant.SERVICE_NAME,
-        contextId = "IDictionaryService",
-        path = Constant.SAPI + "/dictionarys",
-        fallback = IDictionaryServiceFallback.class)
-public interface IDictionaryService {
+@HttpExchange(Constant.SAPI + "/dictionarys")
+public interface DictionaryClient {
 
-    @GetMapping("/rpc/codes/{code}")
+    @GetExchange("/rpc/codes/{code}")
     Result<DictionaryVO> getByCode(@PathVariable("code") String code);
 
-    @GetMapping("/rpc/codes/{code}/items/{itemCode}")
+    @GetExchange("/rpc/codes/{code}/items/{itemCode}")
     Result<DictionaryItem> getItemByCode(@PathVariable("code") String code, @PathVariable("itemCode") String itemCode);
 }

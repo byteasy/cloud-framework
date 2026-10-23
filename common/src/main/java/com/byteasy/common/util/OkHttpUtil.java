@@ -1,13 +1,13 @@
 package com.byteasy.common.util;
 
 import cn.hutool.core.io.FileUtil;
-import com.fasterxml.jackson.core.type.TypeReference;
 import okhttp3.*;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
+import tools.jackson.core.type.TypeReference;
 
 import java.io.File;
 import java.io.IOException;

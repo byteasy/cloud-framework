@@ -3,7 +3,7 @@ package com.byteasy.permission.component;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
-import com.byteasy.platform.api.IRoleOpenapiService;
+import com.byteasy.platform.api.RoleOpenapiClient;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.platform.entity.Role;
 import com.byteasy.platform.entity.RoleOpenapi;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 public class RoleOpenapiLoadingCache implements IEntityChangeHandler, ICacheLoader<Long, Set<Long>> {
 
     @Autowired
-    private IRoleOpenapiService roleOpenapiService;
+    private RoleOpenapiClient roleOpenapiService;
 
     private LoadingCache<Long, Set<Long>> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(3)).maximumSize(5000).build(new CacheLoader<>() {
         @Override

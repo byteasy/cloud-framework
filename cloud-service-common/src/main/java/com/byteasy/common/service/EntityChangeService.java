@@ -6,10 +6,10 @@ import com.baomidou.mybatisplus.core.metadata.TableInfo;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.Constant;
 import com.byteasy.common.event.EntityChangeFactory;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.JacksonUtilOld;
 import com.byteasy.entity.Entity;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.exception.BizException;
@@ -32,7 +32,7 @@ public abstract class EntityChangeService<ID, M extends BaseMapper<T>, T extends
     private EntityChangeFactory entityChangeFactory;
 
     protected void publishEvent(EntityChangeEvent event) {
-        producer.publish(Constant.TOPIC_PLATFORM_ENTITY_CHANGE, getEntityClass().getName(), JacksonUtil.toJson(event, true));
+        producer.publish(Constant.TOPIC_PLATFORM_ENTITY_CHANGE, getEntityClass().getName(), JacksonUtilOld.toJson(event, true));
         entityChangeFactory.handle(event);
     }
 

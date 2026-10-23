@@ -1,6 +1,6 @@
 package com.byteasy.common.controller;
 
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.spring.service.IService;
 import com.byteasy.Result;
 import com.byteasy.entity.ImmutablyEntity;
 import com.byteasy.exception.BizException;

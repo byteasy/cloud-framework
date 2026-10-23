@@ -4,15 +4,15 @@ import com.byteasy.Result;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
-import com.byteasy.platform.api.IOpenapiService;
+import com.byteasy.platform.api.OpenapiClient;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.util.FieldValueUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Maps;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.pulsar.shade.com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +26,7 @@ import java.util.concurrent.ExecutionException;
 public class OpenApiLoadingCache implements IEntityChangeHandler, ICacheLoader<String, Openapi> {
 
     @Autowired
-    private IOpenapiService openapiService;
+    private OpenapiClient openapiService;
 
     private LoadingCache<String, Openapi> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(24)).maximumSize(10000).build(new CacheLoader<>() {
         @Override

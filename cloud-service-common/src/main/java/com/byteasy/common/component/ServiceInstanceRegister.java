@@ -2,10 +2,10 @@ package com.byteasy.common.component;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.Result;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.JacksonUtilOld;
 import com.byteasy.enums.Enable;
 import com.byteasy.event.IPlatformReady;
-import com.byteasy.platform.api.IServiceInstanceService;
+import com.byteasy.platform.api.ServiceInstanceClient;
 import com.byteasy.platform.entity.ServiceInstance;
 import com.byteasy.util.I18nUtil;
 import com.byteasy.util.SpringContextUtil;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class ServiceInstanceRegister implements IPlatformReady {
 
     @Autowired
-    private IServiceInstanceService serviceInstanceService;
+    private ServiceInstanceClient serviceInstanceClient;
 
     @Override
     public void ready() {
@@ -29,8 +29,8 @@ public class ServiceInstanceRegister implements IPlatformReady {
             serviceInstance.setContextPath(SpringContextUtil.getContextPath());
             serviceInstance.setStatus(Enable.ENABLE);
             serviceInstance.setName(I18nUtil.convertI18nFieldZhValue(SpringUtil.getApplicationName()));
-            Result<ServiceInstance> result = serviceInstanceService.saveOrUpdate(serviceInstance);
-            log.info("ServiceInstanceRegister result: {}", JacksonUtil.toJson(result));
+            Result<ServiceInstance> result = serviceInstanceClient.saveOrUpdate(serviceInstance);
+            log.info("ServiceInstanceRegister result: {}", JacksonUtilOld.toJson(result));
         } catch (Exception e) {
             log.error("ServiceInstanceRegister err", e);
         }

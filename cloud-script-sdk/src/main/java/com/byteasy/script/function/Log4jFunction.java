@@ -1,6 +1,6 @@
 package com.byteasy.script.function;
 
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.JacksonUtilOld;
 import com.byteasy.script.JsFunction;
 import com.byteasy.script.JsFunctions;
 import lombok.extern.log4j.Log4j2;
@@ -28,7 +28,7 @@ public class Log4jFunction implements JsFunctions {
             // 将后续参数序列化为 JSON 字符串
             Object[] formatArgs = new Object[args.length - 1];
             for (int i = 1; i < args.length; i++) {
-                formatArgs[i - 1] = JacksonUtil.toJson(args[i]);
+                formatArgs[i - 1] = JacksonUtilOld.toJson(args[i]);
             }
             // 🔥 核心关键：使用 SLF4J 原生格式化器，不仅彻底解决正则 $2 崩溃，性能还提升几十倍
             return MessageFormatter.arrayFormat(firstArg, formatArgs).getMessage();

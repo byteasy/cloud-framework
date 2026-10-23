@@ -4,7 +4,7 @@ import com.byteasy.Result;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
-import com.byteasy.platform.api.IServiceInstanceService;
+import com.byteasy.platform.api.ServiceInstanceClient;
 import com.byteasy.platform.entity.ServiceInstance;
 import com.byteasy.util.FieldValueUtil;
 import com.google.common.cache.CacheBuilder;
@@ -26,7 +26,7 @@ import java.util.concurrent.ExecutionException;
 public class ServiceInstanceLoadingCache implements IEntityChangeHandler, ICacheLoader<String, ServiceInstance> {
 
     @Autowired
-    private IServiceInstanceService serviceInstanceService;
+    private ServiceInstanceClient serviceInstanceClient;
 
     private LoadingCache<String, ServiceInstance> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(1)).maximumSize(5000).build(new CacheLoader<>() {
         @Override
@@ -34,7 +34,7 @@ public class ServiceInstanceLoadingCache implements IEntityChangeHandler, ICache
             Map<String, Object> params = Maps.newHashMapWithExpectedSize(2);
             params.put("code", key);
             params.put("codeQueryType", "eq");
-            Result<List<ServiceInstance>> list = serviceInstanceService.list(params);
+            Result<List<ServiceInstance>> list = serviceInstanceClient.list(params);
             List<ServiceInstance> serviceInstances = list.getIfPresent();
             if (serviceInstances != null && !serviceInstances.isEmpty()) {
                 return serviceInstances.getFirst();

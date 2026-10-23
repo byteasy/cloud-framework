@@ -6,7 +6,7 @@ import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.common.token.TokenUtil;
@@ -14,7 +14,7 @@ import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.FieldDefineUtil;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.JacksonUtilOld;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.component.CacheFactory;
 import com.byteasy.component.ICacheLoader;
@@ -22,12 +22,11 @@ import com.byteasy.dto.FormatMap;
 import com.byteasy.entity.Entity;
 import com.byteasy.enums.RelationType;
 import com.byteasy.event.IPlatformReady;
-import com.byteasy.platform.api.IEntityDefineService;
+import com.byteasy.platform.api.EntityDefineClient;
 import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.util.FieldValueUtil;
 import com.byteasy.util.I18nUtil;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Maps;
 import jakarta.annotation.Resource;
 import lombok.extern.log4j.Log4j2;
@@ -41,6 +40,7 @@ import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.type.TypeReference;
 
 import java.util.*;
 
@@ -55,7 +55,7 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
     @Resource
     private DiscoveryClient discoveryClient;
     @Autowired
-    private IEntityDefineService entityDefineService;
+    private EntityDefineClient entityDefineService;
 
     private static Map<Class<?>, ServiceImpl> entityServiceMap = Maps.newHashMap();
 
@@ -124,7 +124,7 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
                         Map<String, String> header = new HashMap<>();
                         UserInfo token = TokenUtil.getUserinfo();
                         if (token != null) {
-                            header.put(Constant.USER_INFO, Base64.encode(JacksonUtil.toJson(token)));
+                            header.put(Constant.USER_INFO, Base64.encode(JacksonUtilOld.toJson(token)));
                         } else {
                             header.put(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
                         }
@@ -241,7 +241,7 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
                 list.add(entityDefineDTO);
             }
             Result result = entityDefineService.saveOrUpdateBatch(list);
-            log.info("ServiceInstanceAutoRegister registerEntityDefine result: {}", JacksonUtil.toJson(result));
+            log.info("ServiceInstanceAutoRegister registerEntityDefine result: {}", JacksonUtilOld.toJson(result));
         } catch (Exception e) {
             log.error("ServiceInstanceAutoRegister err", e);
         }

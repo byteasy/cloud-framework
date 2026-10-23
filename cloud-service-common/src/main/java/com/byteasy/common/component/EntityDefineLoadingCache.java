@@ -3,7 +3,7 @@ package com.byteasy.common.component;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
-import com.byteasy.platform.api.IEntityDefineService;
+import com.byteasy.platform.api.EntityDefineClient;
 import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.util.FieldValueUtil;
 import com.google.common.cache.CacheBuilder;
@@ -20,7 +20,7 @@ import java.time.Duration;
 public class EntityDefineLoadingCache implements IEntityChangeHandler, ICacheLoader<String, EntityDefine> {
 
     @Autowired
-    private IEntityDefineService entityDefineService;
+    private EntityDefineClient entityDefineService;
 
     private LoadingCache<String, EntityDefine> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(6)).maximumSize(5000).build(new CacheLoader<>() {
         @Override

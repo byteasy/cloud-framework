@@ -2,7 +2,6 @@ package com.byteasy.common.util;
 
 import cn.hutool.core.util.NumberUtil;
 import com.byteasy.dto.FormatMap;
-import com.byteasy.typehandler.PgJsonbTypeHandler;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -22,7 +21,7 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.core.KotlinDetector;
 import org.springframework.util.ClassUtils;
 
@@ -35,8 +34,12 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-@Slf4j
-public class JacksonUtil {
+/**
+ * 主要是因为baomidou的框架没有升级
+ */
+@Log4j2
+@Deprecated
+public class JacksonUtilOld {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final ObjectMapper OBJECT_WITH_CLASS_MAPPER;
@@ -96,8 +99,8 @@ public class JacksonUtil {
 
     public static SimpleModule formatMapModule() {
         SimpleModule module = new SimpleModule();
-        module.addSerializer(FormatMap.class, new FormatMapSerializer());
-        module.addDeserializer(FormatMap.class, new FormatMapDeserializer()); // 新增
+        module.addSerializer(FormatMap.class, new FormatMapSerializerOld());
+        module.addDeserializer(FormatMap.class, new FormatMapDeserializerOld()); // 新增
         return module;
     }
 

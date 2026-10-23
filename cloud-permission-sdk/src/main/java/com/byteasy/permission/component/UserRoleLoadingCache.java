@@ -3,7 +3,7 @@ package com.byteasy.permission.component;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
-import com.byteasy.platform.api.IUserService;
+import com.byteasy.platform.api.UserClient;
 import com.byteasy.platform.dto.UserRoleDTO;
 import com.byteasy.platform.entity.Role;
 import com.byteasy.platform.entity.User;
@@ -28,7 +28,7 @@ import java.util.concurrent.ExecutionException;
 public class UserRoleLoadingCache implements IEntityChangeHandler, ICacheLoader<String, Set<Long>> {
 
     @Autowired
-    private IUserService userService;
+    private UserClient userService;
 
     private LoadingCache<String /* username */, Set<Long>> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(3)).maximumSize(5000).build(new CacheLoader<>() {
         @Override
