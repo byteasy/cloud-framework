@@ -34,9 +34,9 @@
         <!-- pulsar version -->
         <pulsar.version>4.1.2</pulsar.version>
         <!-- vertx version 保持依赖的整个netty版本一致 -->
-        <vertx.version>4.5.25</vertx.version>
-        <!-- xxl job -->
-        <xxl-job-version>3.3.2</xxl-job-version>
+        <vertx.version>5.2.2</vertx.version>
+        <!-- netty version -->
+        <netty.version>4.2.19.Final</netty.version>
         <!-- javacv -->
         <javacv.version>1.5.12</javacv.version>
         <ffmpeg.version>7.1.1-1.5.12</ffmpeg.version>
@@ -206,12 +206,6 @@
                 <groupId>com.baomidou</groupId>
                 <artifactId>dynamic-datasource-spring-boot3-starter</artifactId>
                 <version>${mybatis-dynamic-datasource-version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.xuxueli</groupId>
-                <artifactId>xxl-job-core</artifactId>
-                <version>${xxl-job-version}</version>
             </dependency>
 
             <dependency>
