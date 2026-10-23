@@ -3,7 +3,7 @@ package com.byteasy.platform.service.impl;
 import com.byteasy.platform.entity.ResourceOpenapi;
 import com.byteasy.platform.mapper.ResourceOpenapiMapper;
 import com.byteasy.platform.service.IResourceOpenapiService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
 /**

@@ -1,7 +1,7 @@
 package com.byteasy.platform.oauth2.service;
 
 import com.byteasy.platform.oauth2.entity.Oauth2RegisteredClientOpenapi;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.spring.service.IService;
 
 /**
  * <p>

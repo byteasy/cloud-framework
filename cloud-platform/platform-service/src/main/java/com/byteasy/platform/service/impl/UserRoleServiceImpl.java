@@ -3,7 +3,7 @@ package com.byteasy.platform.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.Constant;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.util.CastUtil;

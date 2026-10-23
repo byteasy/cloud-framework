@@ -2,7 +2,7 @@ package com.byteasy.platform.service.impl;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.dto.TreeNodeDTO;
 import com.byteasy.platform.entity.ResourceCategory;

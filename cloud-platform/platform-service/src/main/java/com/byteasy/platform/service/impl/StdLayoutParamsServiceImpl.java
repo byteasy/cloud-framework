@@ -1,6 +1,6 @@
 package com.byteasy.platform.service.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.platform.entity.StdLayoutParams;
 import com.byteasy.platform.mapper.StdLayoutParamsMapper;
 import com.byteasy.platform.service.IStdLayoutParamsService;

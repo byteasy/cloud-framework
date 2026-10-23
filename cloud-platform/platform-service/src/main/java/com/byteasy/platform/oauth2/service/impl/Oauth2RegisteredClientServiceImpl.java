@@ -1,7 +1,7 @@
 package com.byteasy.platform.oauth2.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.platform.oauth2.entity.Oauth2RegisteredClient;
 import com.byteasy.platform.oauth2.mapper.Oauth2RegisteredClientMapper;
 import com.byteasy.platform.oauth2.service.IOauth2RegisteredClientService;

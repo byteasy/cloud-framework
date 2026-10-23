@@ -1,6 +1,6 @@
 package com.byteasy.platform.service.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.platform.entity.JsScript;
 import com.byteasy.platform.mapper.JsScriptMapper;
 import com.byteasy.platform.service.IJsScriptService;

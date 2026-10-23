@@ -1,23 +1,22 @@
 package com.byteasy.redis;
 
-
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import tools.jackson.core.StreamWriteFeature;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.cfg.EnumFeature;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
+
+import static com.byteasy.common.util.JacksonUtil.customJavaTimeModule;
+import static com.byteasy.common.util.JacksonUtil.formatMapModule;
 
 @Configuration
 public class RedisConfiguration {
@@ -28,26 +27,24 @@ public class RedisConfiguration {
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
 
-        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer();
-        serializer.configure(objectMapper -> {
-            // 对于空的对象转json的时候不抛出错误
-            objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-            // 禁用遇到未知属性抛出异常
-            objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-            // 序列化BigDecimal时不使用科学计数法输出
-            objectMapper.configure(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN, true);
-            // null的属性不序列化
-            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-            // 定义LocalDateTime 的序列化和反序列化默认
-            JavaTimeModule javaTimeModule = new JavaTimeModule();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            javaTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(formatter));
-            javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(formatter));
-            objectMapper.setTimeZone(TimeZone.getDefault());
-            // 日期和时间格式化
-            objectMapper.registerModule(javaTimeModule);
-            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        // Spring Boot 4 推荐使用 GenericJackson3JsonRedisSerializer 配合 Jackson 3
+        GenericJacksonJsonRedisSerializer serializer = GenericJacksonJsonRedisSerializer.create(builder -> {
+            builder.customize(mapperBuilder -> {
+                mapperBuilder.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+                        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                        .enable(StreamWriteFeature.WRITE_BIGDECIMAL_AS_PLAIN)
+                        .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                        .defaultTimeZone(TimeZone.getDefault())
+                        .enable(EnumFeature.WRITE_ENUMS_USING_TO_STRING)
+                        .enable(EnumFeature.READ_ENUMS_USING_TO_STRING)
+                        .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+                // 注册模块
+                mapperBuilder.addModule(customJavaTimeModule());
+                mapperBuilder.addModule(formatMapModule());
+            });
         });
+
         redisTemplate.setValueSerializer(serializer);
         redisTemplate.setHashValueSerializer(serializer);
 

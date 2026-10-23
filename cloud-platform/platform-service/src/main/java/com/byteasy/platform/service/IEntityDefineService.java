@@ -1,7 +1,7 @@
 package com.byteasy.platform.service;
 
 import com.byteasy.platform.entity.EntityDefine;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.spring.service.IService;
 
 /**
  * <p>

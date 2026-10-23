@@ -1,6 +1,6 @@
 package com.byteasy.platform.service.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.platform.entity.RoleOpenapi;
 import com.byteasy.platform.mapper.RoleOpenapiMapper;
 import com.byteasy.platform.service.IRoleOpenapiService;

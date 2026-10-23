@@ -1,6 +1,6 @@
 package com.byteasy.platform.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.spring.service.IService;
 import com.byteasy.dto.TreeNodeDTO;
 import com.byteasy.platform.entity.ResourceCategory;
 import com.byteasy.platform.vo.ResourceCategoryVO;

@@ -1,6 +1,6 @@
 package com.byteasy.platform.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.spring.service.IService;
 import com.byteasy.platform.dto.UserRoleDTO;
 import com.byteasy.platform.entity.UserRole;
 import com.byteasy.platform.vo.LeftMenuVO;
