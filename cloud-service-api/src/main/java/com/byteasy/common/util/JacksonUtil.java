@@ -22,6 +22,7 @@ import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 import tools.jackson.databind.jsontype.impl.DefaultTypeResolverBuilder;
 import tools.jackson.databind.module.SimpleModule;
 import tools.jackson.databind.ser.FilterProvider;
+import tools.jackson.databind.ser.std.ToStringSerializer;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -53,6 +54,9 @@ public class JacksonUtil {
         // 注册模块
         builder.addModule(customJavaTimeModule());
         builder.addModule(formatMapModule());
+        SimpleModule longModule = new SimpleModule();
+        longModule.addSerializer(Long.class, ToStringSerializer.instance);
+        longModule.addSerializer(long.class, ToStringSerializer.instance);
 
         OBJECT_MAPPER = builder.build();
 

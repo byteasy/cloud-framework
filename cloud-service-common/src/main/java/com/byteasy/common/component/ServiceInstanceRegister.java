@@ -2,7 +2,7 @@ package com.byteasy.common.component;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.Result;
-import com.byteasy.common.util.JacksonUtilOld;
+import com.byteasy.common.util.JacksonUtil2;
 import com.byteasy.enums.Enable;
 import com.byteasy.event.IPlatformReady;
 import com.byteasy.platform.api.ServiceInstanceClient;
@@ -30,7 +30,7 @@ public class ServiceInstanceRegister implements IPlatformReady {
             serviceInstance.setStatus(Enable.ENABLE);
             serviceInstance.setName(I18nUtil.convertI18nFieldZhValue(SpringUtil.getApplicationName()));
             Result<ServiceInstance> result = serviceInstanceClient.saveOrUpdate(serviceInstance);
-            log.info("ServiceInstanceRegister result: {}", JacksonUtilOld.toJson(result));
+            log.info("ServiceInstanceRegister result: {}", JacksonUtil2.toJson(result));
         } catch (Exception e) {
             log.error("ServiceInstanceRegister err", e);
         }

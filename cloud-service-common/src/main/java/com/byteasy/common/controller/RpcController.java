@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.IService;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
-import com.byteasy.common.util.JacksonUtilOld;
+import com.byteasy.common.util.JacksonUtil2;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.exception.BizException;
 import com.byteasy.util.I18nUtil;
@@ -49,7 +49,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     @Parameters({@Parameter(name = "id", description = "主键")})
     public boolean removeBatchByIds(@RequestBody List<ID> ids) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("removeBatchByIds: {}", JacksonUtilOld.toJson(ids));
+            log.info("removeBatchByIds: {}", JacksonUtil2.toJson(ids));
         }
         return baseService.removeBatchByIds(ids);
     }
@@ -58,7 +58,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     @Openapi(summary = "存在更新记录，否则插入一条记录")
     public ENTITY saveOrUpdate(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("saveOrUpdate: {}", JacksonUtilOld.toJson(entity));
+            log.info("saveOrUpdate: {}", JacksonUtil2.toJson(entity));
         }
         if (!baseService.saveOrUpdate(entity)) {
             throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
@@ -70,7 +70,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     @Openapi(summary = "存在更新记录，否则插入记录（批量）")
     public List<ENTITY> saveOrUpdateBatch(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("saveOrUpdateBatch: {}", JacksonUtilOld.toJson(entities));
+            log.info("saveOrUpdateBatch: {}", JacksonUtil2.toJson(entities));
         }
         if (!baseService.saveOrUpdateBatch(entities)) {
             throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
@@ -82,7 +82,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     @Openapi(summary = "根据主键更新记录")
     public ENTITY updateById(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("updateById: {}", JacksonUtilOld.toJson(entity));
+            log.info("updateById: {}", JacksonUtil2.toJson(entity));
         }
         if (!baseService.updateById(entity)) {
             throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
@@ -94,7 +94,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     @Openapi(summary = "根据主键批量更新记录")
     public List<ENTITY> updateBatchById(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("updateBatchById: {}", JacksonUtilOld.toJson(entities));
+            log.info("updateBatchById: {}", JacksonUtil2.toJson(entities));
         }
         if (!baseService.updateBatchById(entities)) {
             throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
@@ -115,7 +115,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     @Openapi(summary = "根据主键批量删除记录")
     public Result<Boolean> removeByIds(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("removeByIds: {}", JacksonUtilOld.toJson(entities));
+            log.info("removeByIds: {}", JacksonUtil2.toJson(entities));
         }
         return Result.success(baseService.removeByIds(entities));
     }
@@ -124,7 +124,7 @@ public abstract class RpcController<SERVICE extends IService<ENTITY>, ENTITY, ID
     @Openapi(summary = "根据条件批量删除记录（慎重）")
     public Result<Boolean> removeByWrapper(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("removeByWrapper: {}", JacksonUtilOld.toJson(entity));
+            log.info("removeByWrapper: {}", JacksonUtil2.toJson(entity));
         }
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         String contentType = request.getHeader("content-type");

@@ -12,7 +12,7 @@ import com.byteasy.Result;
 import com.byteasy.Status;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.util.CastUtil;
-import com.byteasy.common.util.JacksonUtilOld;
+import com.byteasy.common.util.JacksonUtil2;
 import com.byteasy.common.component.EntityDefineLoadingCache;
 import com.byteasy.common.component.FieldDefineLoadingCache;
 import com.byteasy.common.util.FieldDefineUtil;
@@ -81,7 +81,7 @@ public class OpenapiCommonController {
         if (log.isInfoEnabled()) {
             log.info("className: {}, saveOrUpdate: {}", className, body);
         }
-        return Result.success(commonService.saveOrUpdate(className, JacksonUtilOld.nativeRead(body, new TypeReference<Map<String, Object>>() {
+        return Result.success(commonService.saveOrUpdate(className, JacksonUtil2.nativeRead(body, new TypeReference<Map<String, Object>>() {
         })));
     }
 
@@ -98,7 +98,7 @@ public class OpenapiCommonController {
         if (log.isInfoEnabled()) {
             log.info("className: {}, removeByEntity: {}", className, body);
         }
-        return Result.success(commonService.removeByPrimaryKey(className, JacksonUtilOld.nativeRead(body, new TypeReference<Map<String, Object>>() {
+        return Result.success(commonService.removeByPrimaryKey(className, JacksonUtil2.nativeRead(body, new TypeReference<Map<String, Object>>() {
         })));
     }
 
@@ -117,7 +117,7 @@ public class OpenapiCommonController {
         if (log.isInfoEnabled()) {
             log.info("className: {}, batchRemove: {}", className, body);
         }
-        commonService.batchDelete(className, JacksonUtilOld.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
+        commonService.batchDelete(className, JacksonUtil2.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
         }));
         return Result.success();
     }
@@ -310,7 +310,7 @@ public class OpenapiCommonController {
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdateBatch: {}", body);
         }
-        List<Map<String, Object>> entities = JacksonUtilOld.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
+        List<Map<String, Object>> entities = JacksonUtil2.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
         });
         List<FieldDefine> columns = fieldDefineLoadingCache.load(className);
         for (Map<String, Object> entity : entities) {

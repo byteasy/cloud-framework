@@ -2,7 +2,7 @@ package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.Result;
-import com.byteasy.common.util.JacksonUtilOld;
+import com.byteasy.common.util.JacksonUtil2;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.platform.entity.OpenapiLog;
@@ -98,7 +98,7 @@ public class OpenapiLogServiceImpl extends ServiceImpl<OpenapiLogMapper, Openapi
         try (Response response = OkHttpUtil.getDefaultClient().newCall(requestBuilder.build()).execute()) {
             String responseBody = response.body() != null ? response.body().string() : "";
             log.info("【接口重放完成】sourceLogId={}, method={}, url={}, statusCode={}, responseBody={}", logId, methodStr, fullUrl, response.code(), responseBody);
-            Result result = JacksonUtilOld.parse(responseBody, Result.class);
+            Result result = JacksonUtil2.parse(responseBody, Result.class);
             if (result.isSuccess()) {
                 return Result.success();
             } else {

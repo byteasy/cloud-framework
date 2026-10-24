@@ -315,7 +315,7 @@ public class SqlUtil {
         } else if (mapValue instanceof String) {
             return new String[]{(String) mapValue};
         } else {
-            return new String[]{JacksonUtilOld.toJson(mapValue)};
+            return new String[]{JacksonUtil2.toJson(mapValue)};
         }
     }
 

@@ -39,7 +39,7 @@ import java.util.*;
  */
 @Log4j2
 @Deprecated
-public class JacksonUtilOld {
+public class JacksonUtil2 {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final ObjectMapper OBJECT_WITH_CLASS_MAPPER;

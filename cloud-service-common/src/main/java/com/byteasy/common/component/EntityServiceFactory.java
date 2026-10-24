@@ -14,7 +14,7 @@ import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.FieldDefineUtil;
-import com.byteasy.common.util.JacksonUtilOld;
+import com.byteasy.common.util.JacksonUtil2;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.component.CacheFactory;
 import com.byteasy.component.ICacheLoader;
@@ -124,7 +124,7 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
                         Map<String, String> header = new HashMap<>();
                         UserInfo token = TokenUtil.getUserinfo();
                         if (token != null) {
-                            header.put(Constant.USER_INFO, Base64.encode(JacksonUtilOld.toJson(token)));
+                            header.put(Constant.USER_INFO, Base64.encode(JacksonUtil2.toJson(token)));
                         } else {
                             header.put(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
                         }
@@ -241,7 +241,7 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
                 list.add(entityDefineDTO);
             }
             Result result = entityDefineService.saveOrUpdateBatch(list);
-            log.info("ServiceInstanceAutoRegister registerEntityDefine result: {}", JacksonUtilOld.toJson(result));
+            log.info("ServiceInstanceAutoRegister registerEntityDefine result: {}", JacksonUtil2.toJson(result));
         } catch (Exception e) {
             log.error("ServiceInstanceAutoRegister err", e);
         }

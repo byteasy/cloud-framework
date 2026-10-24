@@ -1,6 +1,6 @@
 package com.byteasy.script.function;
 
-import com.byteasy.common.util.JacksonUtilOld;
+import com.byteasy.common.util.JacksonUtil2;
 import com.byteasy.exception.BizException;
 import com.byteasy.script.JsFunction;
 import com.byteasy.script.JsFunctions;
@@ -43,10 +43,10 @@ public class JSONFunctions implements JsFunctions {
             public Object run(Object[] args) throws Exception {
                 String json = String.valueOf(args[0]);
                 if (json.trim().startsWith("{")) {
-                    return JacksonUtilOld.nativeRead(String.valueOf(args[0]), new TypeReference<Map<String, Object>>() {
+                    return JacksonUtil2.nativeRead(String.valueOf(args[0]), new TypeReference<Map<String, Object>>() {
                     });
                 } else if (json.trim().startsWith("[")) {
-                    return JacksonUtilOld.nativeRead(String.valueOf(args[0]), new TypeReference<List<Object>>() {
+                    return JacksonUtil2.nativeRead(String.valueOf(args[0]), new TypeReference<List<Object>>() {
                     });
                 } else {
                     log.error("JSON parse error, {}", json);
@@ -78,13 +78,13 @@ public class JSONFunctions implements JsFunctions {
             @Override
             public Object run(Object[] args) throws Exception {
                 if (args.length == 1) {
-                    return JacksonUtilOld.toJson(args[0]);
+                    return JacksonUtil2.toJson(args[0]);
                 } else {
                     boolean withClass = (boolean) args[1];
                     if (withClass) {
-                        return JacksonUtilOld.toJson(args[0], true);
+                        return JacksonUtil2.toJson(args[0], true);
                     } else {
-                        return JacksonUtilOld.toJson(args[0], false);
+                        return JacksonUtil2.toJson(args[0], false);
                     }
                 }
             }

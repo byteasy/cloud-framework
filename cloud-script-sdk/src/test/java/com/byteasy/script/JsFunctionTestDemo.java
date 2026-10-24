@@ -1,6 +1,6 @@
 package com.byteasy.script;
 
-import com.byteasy.common.util.JacksonUtilOld;
+import com.byteasy.common.util.JacksonUtil2;
 import com.byteasy.platform.dto.ScriptFunctionDTO;
 import com.byteasy.script.util.JsScriptExecutor;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ public class JsFunctionTestDemo {
         ScriptFunctionDTO scriptFunction1 = new ScriptFunctionDTO();
         scriptFunction1.setName("logFromJs");
         scriptFunction1.setFunction((msg) -> {
-            System.out.println("[JS Log]: " + JacksonUtilOld.toJson(msg));
+            System.out.println("[JS Log]: " + JacksonUtil2.toJson(msg));
             return null; // JS 不需要返回值时，Java 返回 null 即可
         });
         functions.put("logFromJs", scriptFunction1);
@@ -70,7 +70,7 @@ public class JsFunctionTestDemo {
 
         // 5. 输出结果
         System.out.println("\n返回前端JSON：");
-        System.out.println(JacksonUtilOld.toJson(resultObj));
+        System.out.println(JacksonUtil2.toJson(resultObj));
     }
 }
 

@@ -2,7 +2,7 @@ package com.byteasy.common.event;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.Constant;
-import com.byteasy.common.util.JacksonUtilOld;
+import com.byteasy.common.util.JacksonUtil2;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.mq.IConsumer;
@@ -81,7 +81,7 @@ public class EntityChangeFactory implements IConsumer {
 
     @Override
     public void receive(String key, String message) {
-        EntityChangeEvent event = (EntityChangeEvent) JacksonUtilOld.parseObj(message);
+        EntityChangeEvent event = (EntityChangeEvent) JacksonUtil2.parseObj(message);
         handle(event);
     }
 }

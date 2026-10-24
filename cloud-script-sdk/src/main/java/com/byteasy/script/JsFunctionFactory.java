@@ -6,7 +6,7 @@ import com.byteasy.Constant;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
-import com.byteasy.common.util.JacksonUtilOld;
+import com.byteasy.common.util.JacksonUtil2;
 import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.common.component.ServiceInstanceLoadingCache;
 import com.byteasy.event.IPlatformReady;
@@ -105,14 +105,14 @@ public class JsFunctionFactory implements IPlatformReady {
                     Map<String, String> header = new HashMap<>();
                     UserInfo token = TokenUtil.getUserinfo();
                     if (token != null) {
-                        header.put(Constant.USER_INFO, Base64.encode(JacksonUtilOld.toJson(token)));
+                        header.put(Constant.USER_INFO, Base64.encode(JacksonUtil2.toJson(token)));
                     } else {
                         header.put(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
                     }
                     ServiceInstance randomService = random(instances);
                     try {
-                        String result = OkHttpUtil.postJson(randomService.getUri().toString() + serviceInstanceLoadingCache.load(scriptFunction.getServiceCode()).getContextPath() + Constant.SAPI + "/scriptFunctionRunner/run/" + scriptFunction.getName(), JacksonUtilOld.toJson(args, true), header, null);
-                        return JacksonUtilOld.parseObj(result);
+                        String result = OkHttpUtil.postJson(randomService.getUri().toString() + serviceInstanceLoadingCache.load(scriptFunction.getServiceCode()).getContextPath() + Constant.SAPI + "/scriptFunctionRunner/run/" + scriptFunction.getName(), JacksonUtil2.toJson(args, true), header, null);
+                        return JacksonUtil2.parseObj(result);
                     } catch (Exception e) {
                         log.error(scriptFunction.getName() + " remote call err", e);
                         throw new BizException(e.getMessage());

@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.autoconfigure.MybatisPlusProperties;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusPropertiesCustomizer;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
 import com.baomidou.mybatisplus.extension.incrementer.OracleKeyGenerator;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.handler.DataPermissionHandler;
@@ -16,7 +16,8 @@ import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInt
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.byteasy.Constant;
 import com.byteasy.common.token.UserInfoBuilder;
-import com.byteasy.common.util.JacksonUtilOld;
+import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.common.util.JacksonUtil2;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -31,6 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.util.StringUtils;
@@ -38,6 +40,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Locale;
 
@@ -75,7 +78,7 @@ public class FrameworkConfig {
         } catch (Exception e) {
             log.warn("DataPermissionHandler not define! the DataPermissionInterceptor not enable.");
         }
-        JacksonTypeHandler.setObjectMapper(JacksonUtilOld.copy());
+        Jackson3TypeHandler.setObjectMapper(JacksonUtil.getObjectMapper());
         return interceptor;
     }
 
@@ -107,10 +110,14 @@ public class FrameworkConfig {
         return new OracleKeyGenerator();
     }
 
+    /**
+     * 部分框架未完全切换至jackson3，如：springdoc，保留jackson2的配置
+     */
+    @Deprecated
     @Bean
     @Primary
     public ObjectMapper objectMapper() {
-        ObjectMapper mapper = JacksonUtilOld.copy();
+        ObjectMapper mapper = JacksonUtil2.copy();
         mapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
         mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
         SimpleModule longModule = new SimpleModule();
@@ -118,6 +125,28 @@ public class FrameworkConfig {
         longModule.addSerializer(long.class, ToStringSerializer.instance);
         mapper.registerModule(longModule);
         return mapper;
+    }
+
+    /**
+     * 注册全局默认的 JsonMapper (Jackson 3)
+     */
+    @Bean
+    @Primary
+    public JsonMapper defaultJsonMapper() {
+        // 直接复用您在 JacksonUtil 中调优好的全局单例
+        return JacksonUtil.getObjectMapper();
+    }
+
+    /**
+     * 注册 Spring 7 / Spring Boot 4 的 HttpMessageConverter
+     * 确保 @RestController 接口入参和返回统一走该 JsonMapper
+     */
+    @Bean
+    @Primary
+    public JacksonJsonHttpMessageConverter jacksonJsonHttpMessageConverter(JsonMapper jsonMapper) {
+        // 注意：Spring 7 弃用了旧的 MappingJackson2HttpMessageConverter
+        // 全面改用 org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
+        return new JacksonJsonHttpMessageConverter(jsonMapper);
     }
 
 

@@ -2,7 +2,7 @@ package com.byteasy.script.controller;
 
 import com.byteasy.Constant;
 import com.byteasy.annotations.Openapi;
-import com.byteasy.common.util.JacksonUtilOld;
+import com.byteasy.common.util.JacksonUtil2;
 import com.byteasy.platform.dto.ScriptFunctionDTO;
 import com.byteasy.script.JsFunctionFactory;
 import lombok.extern.log4j.Log4j2;
@@ -20,7 +20,7 @@ public class ScriptFunctionRunnerController {
     @PostMapping("/run/{name}")
     @Openapi
     public Object run(@PathVariable String name, @RequestBody String argsString) {
-        Object[] args = JacksonUtilOld.parseObjArray(argsString);
+        Object[] args = JacksonUtil2.parseObjArray(argsString);
         ScriptFunctionDTO scriptFunction = factory.getJsFunctionMap().get(name);
         if (scriptFunction == null) {
             log.error("function name: {} not found", name);
@@ -28,7 +28,7 @@ public class ScriptFunctionRunnerController {
         }
         try {
             Object result = scriptFunction.getFunction().apply(args);
-            return JacksonUtilOld.toJson(result, true);
+            return JacksonUtil2.toJson(result, true);
         } catch (Exception e) {
             log.error("function name: {} execute error", name, e);
         }

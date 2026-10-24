@@ -20,7 +20,7 @@ import com.byteasy.common.component.EntityServiceFactory;
 import com.byteasy.common.component.FieldDefineLoadingCache;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.FieldDefineUtil;
-import com.byteasy.common.util.JacksonUtilOld;
+import com.byteasy.common.util.JacksonUtil2;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.RelationType;
@@ -95,7 +95,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Openapi(summary = "存在更新记录，否则插入一条记录")
     public Result<ENTITY> saveOrUpdate(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("saveOrUpdate: {}", JacksonUtilOld.toJson(entity));
+            log.info("saveOrUpdate: {}", JacksonUtil2.toJson(entity));
         }
         validEntity(entity);
         if (!baseService.saveOrUpdate(entity)) {
@@ -107,7 +107,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @PostMapping("/extra")
     @Openapi(summary = "存在更新记录，否则插入一条记录")
     public Result<ENTITY> saveOrUpdate(@RequestBody String body) throws Exception {
-        ENTITY entity = JacksonUtilOld.nativeRead(body, baseService.getEntityClass());
+        ENTITY entity = JacksonUtil2.nativeRead(body, baseService.getEntityClass());
         if (log.isInfoEnabled()) {
             log.info("saveOrUpdate: {}", body);
         }
@@ -122,7 +122,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Openapi(summary = "存在更新记录，否则插入记录（批量）")
     public Result<List<ENTITY>> saveOrUpdateBatch(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("saveOrUpdateBatch: {}", JacksonUtilOld.toJson(entities));
+            log.info("saveOrUpdateBatch: {}", JacksonUtil2.toJson(entities));
         }
         List<FieldDefine> columns = fieldDefineLoadingCache.load(baseService.getEntityClass().getName());
         for (ENTITY entity : entities) {
@@ -138,7 +138,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Openapi(summary = "根据主键更新记录")
     public Result<ENTITY> updateById(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("updateById: {}", JacksonUtilOld.toJson(entity));
+            log.info("updateById: {}", JacksonUtil2.toJson(entity));
         }
         validEntity(entity);
         if (!baseService.updateById(entity)) {
@@ -151,7 +151,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Openapi(summary = "根据主键批量更新记录")
     public Result<List<ENTITY>> updateBatchById(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("updateBatchById: {}", JacksonUtilOld.toJson(entities));
+            log.info("updateBatchById: {}", JacksonUtil2.toJson(entities));
         }
         List<FieldDefine> columns = fieldDefineLoadingCache.load(baseService.getEntityClass().getName());
         for (ENTITY entity : entities) {
@@ -176,7 +176,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Openapi(summary = "根据主键批量删除记录")
     public Result<Boolean> removeByIds(@RequestBody List<ENTITY> entities) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("removeByIds: {}", JacksonUtilOld.toJson(entities));
+            log.info("removeByIds: {}", JacksonUtil2.toJson(entities));
         }
         return Result.success(baseService.removeByIds(entities));
     }
@@ -185,7 +185,7 @@ public abstract class BaseController<SERVICE extends IService<ENTITY>, ENTITY, I
     @Openapi(summary = "根据条件批量删除记录（慎重）")
     public Result<Boolean> removeByWrapper(@RequestBody ENTITY entity) throws Exception {
         if (log.isInfoEnabled()) {
-            log.info("removeByWrapper: {}", JacksonUtilOld.toJson(entity));
+            log.info("removeByWrapper: {}", JacksonUtil2.toJson(entity));
         }
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         String contentType = request.getHeader("content-type");

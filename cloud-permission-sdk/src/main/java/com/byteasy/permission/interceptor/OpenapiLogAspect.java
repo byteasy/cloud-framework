@@ -5,7 +5,7 @@ import cn.hutool.core.util.NumberUtil;
 import com.byteasy.common.component.OpenApiLoadingCache;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
-import com.byteasy.common.util.JacksonUtilOld;
+import com.byteasy.common.util.JacksonUtil2;
 import com.byteasy.common.util.RequestUtil;
 import com.byteasy.enums.YesNo;
 import com.byteasy.platform.api.OpenapiLogClient;
@@ -155,7 +155,7 @@ public class OpenapiLogAspect {
                 logEntity.setErrorMessage(null);
                 if (result != null) {
                     try {
-                        logEntity.setHttpResponse(JacksonUtilOld.toJson(result));
+                        logEntity.setHttpResponse(JacksonUtil2.toJson(result));
                     } catch (Exception e) {
                         logEntity.setHttpResponse(result.toString());
                     }

@@ -74,7 +74,7 @@ public class CommonServiceImpl implements ICommonService {
     private EntityChangeFactory entityChangeFactory;
 
     protected void publicEvent(String className, EntityChangeEvent event) {
-        producer.publish(Constant.TOPIC_PLATFORM_ENTITY_CHANGE, className, JacksonUtilOld.toJson(event, true));
+        producer.publish(Constant.TOPIC_PLATFORM_ENTITY_CHANGE, className, JacksonUtil2.toJson(event, true));
         entityChangeFactory.handle(event);
     }
 
