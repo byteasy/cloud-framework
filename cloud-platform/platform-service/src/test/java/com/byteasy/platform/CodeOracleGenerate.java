@@ -14,8 +14,6 @@ public class CodeOracleGenerate {
                         "postgres", "Xsy870712@@@")
                 .globalConfig(builder -> builder
                         .author("devops")
-                        .vueApiDir("D:\\vue")
-                        .vuePageDir("D:\\vue")
                         .outputDir(SystemUtils.getUserDir().getAbsolutePath() + File.separator + "cloud-platform" + File.separator + "platform-service" + File.separator + "src" + File.separator + "main" + File.separator + "java")
                         .commentDate("yyyy-MM-dd")
                         .enableSwagger()
