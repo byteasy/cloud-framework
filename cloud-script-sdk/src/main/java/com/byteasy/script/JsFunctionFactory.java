@@ -3,12 +3,13 @@ package com.byteasy.script;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.Constant;
+import com.byteasy.common.component.ServiceInstanceLoadingCache;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
+import com.byteasy.common.util.HttpResult;
+import com.byteasy.common.util.HttpUtil;
 import com.byteasy.common.util.JacksonUtil2;
-import com.byteasy.common.util.OkHttpUtil;
-import com.byteasy.common.component.ServiceInstanceLoadingCache;
 import com.byteasy.event.IPlatformReady;
 import com.byteasy.exception.BizException;
 import com.byteasy.platform.api.ScriptFunctionClient;
@@ -102,16 +103,13 @@ public class JsFunctionFactory implements IPlatformReady {
                     ServiceInstanceLoadingCache serviceInstanceLoadingCache = SpringUtil.getBean(ServiceInstanceLoadingCache.class);
 
                     List<ServiceInstance> instances = discoveryClient.getInstances(scriptFunction.getServiceCode());
-                    Map<String, String> header = new HashMap<>();
                     UserInfo token = TokenUtil.getUserinfo();
-                    if (token != null) {
-                        header.put(Constant.USER_INFO, Base64.encode(JacksonUtil2.toJson(token)));
-                    } else {
-                        header.put(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
-                    }
                     ServiceInstance randomService = random(instances);
                     try {
-                        String result = OkHttpUtil.postJson(randomService.getUri().toString() + serviceInstanceLoadingCache.load(scriptFunction.getServiceCode()).getContextPath() + Constant.SAPI + "/scriptFunctionRunner/run/" + scriptFunction.getName(), JacksonUtil2.toJson(args, true), header, null);
+                        HttpResult<String> httpResult = HttpUtil.post(randomService.getUri().toString() + serviceInstanceLoadingCache.load(scriptFunction.getServiceCode()).getContextPath() + Constant.SAPI + "/scriptFunctionRunner/run/" + scriptFunction.getName()).textBody(JacksonUtil2.toJson(args, true))
+                                .header(Constant.USER_INFO, token != null ? Base64.encode(JacksonUtil2.toJson(token)) : UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()))
+                                .execute(String.class);
+                        String result = httpResult.getData();
                         return JacksonUtil2.parseObj(result);
                     } catch (Exception e) {
                         log.error(scriptFunction.getName() + " remote call err", e);

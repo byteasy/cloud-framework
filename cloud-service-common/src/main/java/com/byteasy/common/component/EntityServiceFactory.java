@@ -12,9 +12,7 @@ import com.byteasy.Result;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
-import com.byteasy.common.util.CastUtil;
-import com.byteasy.common.util.FieldDefineUtil;
-import com.byteasy.common.util.JacksonUtil2;
+import com.byteasy.common.util.*;
 import com.byteasy.component.CacheFactory;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.dto.FormatMap;
@@ -29,9 +27,7 @@ import com.byteasy.util.I18nUtil;
 import com.google.common.collect.Maps;
 import jakarta.annotation.Resource;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
@@ -120,25 +116,24 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
                             return;
                         }
 
-                        Map<String, String> header = new HashMap<>();
-                        UserInfo token = TokenUtil.getUserinfo();
-                        if (token != null) {
-                            header.put(Constant.USER_INFO, Base64.encode(JacksonUtil2.toJson(token)));
-                        } else {
-                            header.put(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
-                        }
-
-                        List<Pair<String, String>> params = Lists.newArrayList();
-                        for (Object key : keys) {
-                            params.add(Pair.of(externalKey.getExternalClassPrimaryField() + "[]", key.toString()));
-                        }
-                        params.add(Pair.of(externalKey.getExternalClassPrimaryField() + "QueryType", "in"));
 
                         ServiceInstance randomService = random(instances);
-                        Result<List<JSONObject>> result = OkHttpUtil.get((randomService.isSecure() ? "https://" : "http://") + randomService.getHost() + ":" + randomService.getPort() + url, header, params, null,
-                                new TypeReference<Result<List<JSONObject>>>() {
-                                });
-                        map = CastUtil.listToMap(result.getData(), o -> FieldDefineUtil.toValue(o, externalKey.getType(), externalKey.getExternalClassPrimaryField()));
+                        HttpUtil.RequestBuilder requestBuilder = HttpUtil.get((randomService.isSecure() ? "https://" : "http://") + randomService.getHost() + ":" + randomService.getPort() + url);
+                        for (Object key : keys) {
+                            requestBuilder.header(externalKey.getExternalClassPrimaryField() + "[]", key.toString());
+                        }
+                        requestBuilder.header(externalKey.getExternalClassPrimaryField() + "QueryType", "in");
+
+                        UserInfo token = TokenUtil.getUserinfo();
+                        if (token != null) {
+                            requestBuilder.header(Constant.USER_INFO, Base64.encode(JacksonUtil.toJson(token)));
+                        } else {
+                            requestBuilder.header(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
+                        }
+
+                        HttpResult<Result<List<JSONObject>>> result = requestBuilder.execute(new TypeReference<Result<List<JSONObject>>>() {
+                        });
+                        map = CastUtil.listToMap(result.getData().getData(), o -> FieldDefineUtil.toValue(o, externalKey.getType(), externalKey.getExternalClassPrimaryField()));
                     }
 
                     String fieldName = getClassFieldName(className);

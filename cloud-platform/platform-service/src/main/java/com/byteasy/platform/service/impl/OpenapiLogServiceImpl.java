@@ -2,7 +2,9 @@ package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.Result;
-import com.byteasy.common.util.JacksonUtil2;
+import com.byteasy.common.util.HttpResult;
+import com.byteasy.common.util.HttpUtil;
+import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.platform.entity.OpenapiLog;
 import com.byteasy.platform.mapper.OpenapiLogMapper;
@@ -12,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -65,10 +68,19 @@ public class OpenapiLogServiceImpl extends ServiceImpl<OpenapiLogMapper, Openapi
         // 2. 还原 RequestBody
         Openapi.HttpMethod httpMethod = logEntity.getHttpMethod();
         String methodStr = httpMethod != null ? httpMethod.name() : "GET";
-        RequestBody requestBody = buildRequestBody(methodStr, logEntity.getContentType(), logEntity.getHttpBody());
 
-        // 3. 构建 OkHttp Request，还原 Headers
-        Request.Builder requestBuilder = new Request.Builder().url(fullUrl).method(methodStr, requestBody);
+        HttpUtil.RequestBuilder builder = null;
+        switch (httpMethod) {
+            case GET -> builder = HttpUtil.get(fullUrl);
+            case PUT -> builder = HttpUtil.put(fullUrl);
+            case DELETE -> builder = HttpUtil.delete(fullUrl);
+            case POST -> builder = HttpUtil.post(fullUrl);
+        }
+        if (StringUtils.isNotBlank(logEntity.getHttpBody())) {
+            builder.textBody(logEntity.getHttpBody());
+        }
+        builder.header(HttpHeaders.CONTENT_TYPE, logEntity.getContentType());
+
 
         Map<String, String> headers = logEntity.getHttpHeader();
         if (headers != null && !headers.isEmpty()) {
@@ -79,46 +91,23 @@ public class OpenapiLogServiceImpl extends ServiceImpl<OpenapiLogMapper, Openapi
                 }
                 String values = entry.getValue();
                 if (values != null) {
-                    requestBuilder.addHeader(headerName, values);
+                    builder.header(headerName, values);
                 }
             }
         }
 
-        // 🔥 注入重放溯源标识：传递给被调接口，日志切面会记录下来，证明是由哪条日志重放来的
-        requestBuilder.header("X-Openapi-Replay", "true");
-        requestBuilder.header("X-Replay-Source-Id", String.valueOf(logId));
+        builder.header("X-Openapi-Replay", "true");
+        builder.header("X-Replay-Source-Id", String.valueOf(logId));
 
         // 4. 发起真实请求（被调用的业务接口会自动触发 OpenapiLogAspect，写入一条全新的执行日志！）
-        try (Response response = OkHttpUtil.getDefaultClient().newCall(requestBuilder.build()).execute()) {
-            String responseBody = response.body() != null ? response.body().string() : "";
-            log.info("【接口重放完成】sourceLogId={}, method={}, url={}, statusCode={}, responseBody={}", logId, methodStr, fullUrl, response.code(), responseBody);
-            Result result = JacksonUtil2.parse(responseBody, Result.class);
-            if (result.isSuccess()) {
-                return Result.success();
-            } else {
-                return Result.error(result.getDescription());
-            }
+        HttpResult<String> response = builder.execute();
+        String responseBody = response.getData();
+        log.info("【接口重放完成】sourceLogId={}, method={}, url={}, statusCode={}, responseBody={}", logId, methodStr, fullUrl, response.getStatusCode(), responseBody);
+        Result result = JacksonUtil.parse(responseBody, Result.class);
+        if (result.isSuccess()) {
+            return Result.success();
+        } else {
+            return Result.error(result.getDescription());
         }
-    }
-
-    private RequestBody buildRequestBody(String httpMethod, String contentType, String httpBody) {
-        boolean permitsBody = HttpMethod.permitsRequestBody(httpMethod);
-        boolean requiresBody = HttpMethod.requiresRequestBody(httpMethod);
-
-        if (!permitsBody) {
-            return null;
-        }
-
-        MediaType mediaType = MediaType.parse(StringUtils.isNotBlank(contentType) ? contentType : "application/json; charset=utf-8");
-
-        if (StringUtils.isNotBlank(httpBody)) {
-            return RequestBody.create(httpBody, mediaType);
-        }
-
-        if (requiresBody) {
-            return RequestBody.create("", mediaType);
-        }
-
-        return null;
     }
 }

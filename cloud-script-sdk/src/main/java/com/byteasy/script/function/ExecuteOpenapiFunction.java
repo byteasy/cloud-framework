@@ -8,8 +8,8 @@ import com.byteasy.common.component.OpenApiLoadingCache;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
+import com.byteasy.common.util.HttpUtil;
 import com.byteasy.common.util.JacksonUtil2;
-import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.exception.BizException;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.script.JsFunction;
@@ -77,16 +77,17 @@ public class ExecuteOpenapiFunction implements JsFunction {
                 ServiceInstance randomService = random(instances);
                 String url = randomService.getUri().toString() + openapi.getUri();
                 try {
-                    String result = null;
+                    HttpUtil.RequestBuilder requestBuilder = null;
                     if (Openapi.HttpMethod.GET.equals(openapi.getHttpMethod())) {
-                        result = OkHttpUtil.get(url, header, (Map<String, String>) args[1], null);
+                        requestBuilder = HttpUtil.get(url).headers(header);
                     } else if (Openapi.HttpMethod.POST.equals(openapi.getHttpMethod())) {
-                        result = OkHttpUtil.postJson(url, (Map<String, String>) args[1], header, (String) args[2], null);
+                        requestBuilder = HttpUtil.post(url).headers(header).textBody((String) args[2]);
                     } else if (Openapi.HttpMethod.PUT.equals(openapi.getHttpMethod())) {
-                        result = OkHttpUtil.putJson(url, (Map<String, String>) args[1], header, (String) args[2], null);
+                        requestBuilder = HttpUtil.put(url).headers(header).textBody((String) args[2]);
                     } else if (Openapi.HttpMethod.DELETE.equals(openapi.getHttpMethod())) {
-                        result = OkHttpUtil.deleteJson(url, (Map<String, String>) args[1], header, (String) args[2], null);
+                        requestBuilder = HttpUtil.delete(url).headers(header).textBody((String) args[2]);
                     }
+                    String result = requestBuilder.executeForString();
                     JSONObject jsonObject = new JSONObject(result);
                     if (jsonObject.getInt("status", 0) == 200) {
                         return jsonObject.get("data");
