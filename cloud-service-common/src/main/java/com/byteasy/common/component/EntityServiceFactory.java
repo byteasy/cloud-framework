@@ -15,7 +15,6 @@ import com.byteasy.common.token.UserInfoBuilder;
 import com.byteasy.common.util.CastUtil;
 import com.byteasy.common.util.FieldDefineUtil;
 import com.byteasy.common.util.JacksonUtil2;
-import com.byteasy.common.util.OkHttpUtil;
 import com.byteasy.component.CacheFactory;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.dto.FormatMap;

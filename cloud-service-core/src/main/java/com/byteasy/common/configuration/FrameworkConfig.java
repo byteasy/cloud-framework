@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.extension.plugins.inner.DynamicTableNameInnerInt
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.byteasy.common.interceptor.TypeResolveJacksonHttpMessageConverter;
+import com.byteasy.common.util.HttpUtil;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.JacksonUtil2;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -29,6 +30,7 @@ import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -37,12 +39,12 @@ import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.time.Duration;
 import java.util.Locale;
 
 @Configuration
 @Log4j2
 public class FrameworkConfig {
-
     @Bean
     public AuditEntityHandler auditEntityHandler() {
         return new AuditEntityHandler();
@@ -158,8 +160,17 @@ public class FrameworkConfig {
     }
 
     @Bean
+    public JdkClientHttpRequestFactory jdkClientHttpRequestFactory() {
+        // 2. 包装为 Spring 客户端工厂
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(HttpUtil.getHttpClient());
+        // 单次请求数据读取超时
+        factory.setReadTimeout(Duration.ofSeconds(30));
+        return factory;
+    }
+
+    @Bean
     @LoadBalanced
-    public RestClient.Builder restClientBuilder() {
-        return RestClient.builder().configureMessageConverters(c -> c.registerDefaults().withJsonConverter(new TypeResolveJacksonHttpMessageConverter(JacksonUtil.getObjectMapper())));
+    public RestClient.Builder restClientBuilder(JdkClientHttpRequestFactory jdkClientHttpRequestFactory) {
+        return RestClient.builder().requestFactory(jdkClientHttpRequestFactory).configureMessageConverters(c -> c.registerDefaults().withJsonConverter(new TypeResolveJacksonHttpMessageConverter(JacksonUtil.getObjectMapper())));
     }
 }
