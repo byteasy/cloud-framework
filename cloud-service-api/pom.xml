@@ -10,7 +10,6 @@
     </parent>
 
     <artifactId>cloud-service-api</artifactId>
-    <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>Cloud Service Api</name>
     <description>Cloud service api, include common dependencies needed by service api, just like lombok</description>
@@ -44,8 +43,6 @@
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
-            <version>2.2.21</version>
-            <scope>compile</scope>
         </dependency>
 
         <dependency>
