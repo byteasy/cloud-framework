@@ -1,0 +1,35 @@
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns="urn:infinispan:config:15.0"
+            xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-15.0.xsd">
+
+    <jgroups>
+        <stack-file name="tcp-stack" path="jgroups-tcp.xml"/>
+    </jgroups>
+
+    <cache-container name="byteasy-container" default-cache="users" statistics="true">
+        <transport stack="tcp-stack" cluster="byteasy-embedded-cluster" node-name="${HOSTNAME:node-default}"/>
+
+        <!-- 默认分布式缓存模板 -->
+        <distributed-cache-configuration name="dist-template" mode="SYNC" owners="2" remote-timeout="5000">
+            <encoding media-type="text/plain"/>
+            <partition-handling when-split="DENY_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
+            <state-transfer timeout="60000" chunkSize="512"/>
+        </distributed-cache-configuration>
+
+        <!-- 1. 业务缓存：users（堆外内存 1GB，满了自动 LRU 淘汰） -->
+        <distributed-cache name="users" configuration="dist-template">
+<!--            <encoding media-type="application/x-protostream"/>-->
+            <encoding media-type="text/plain"/>
+            <expiration lifespan="7200000" max-idle="1800000"/>
+            <!-- 修复后的 memory 标签 -->
+            <memory storage="OFF_HEAP" max-size="1GB" when-full="REMOVE"/>
+        </distributed-cache>
+
+        <!-- 2. 广播字典缓存：dict（堆内内存，限制最多 10000 条） -->
+        <replicated-cache name="dict" mode="SYNC" statistics="true">
+            <encoding media-type="text/plain"/>
+            <memory storage="HEAP" max-count="10000" when-full="REMOVE"/>
+        </replicated-cache>
+
+    </cache-container>
+</infinispan>

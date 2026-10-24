@@ -2,6 +2,7 @@ package com.byteasy.mq.vertx;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +18,7 @@ public class VertxClusterConfiguration {
     public Vertx clusteredVertx(EmbeddedCacheManager cacheManager) {
         try {
             // 1. 初始化 Infinispan 集群管理器
-            InfinispanClusterManager mgr = new InfinispanClusterManager(cacheManager);
+            InfinispanClusterManager mgr = new InfinispanClusterManager((DefaultCacheManager) cacheManager);
 
             // 2. 异步构建集群，并转为标准 CompletableFuture 阻塞等待
             return Vertx.builder()
