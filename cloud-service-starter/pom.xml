@@ -10,11 +10,11 @@
     </parent>
 
     <artifactId>cloud-service-starter</artifactId>
-    <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>Cloud Service Starter</name>
-    <description>cloud service starter, include common dependencies needed by microservice, just like spring cloud
-        alibaba, spring boot and more.
+    <description>
+        cloud service starter, include common dependencies needed by microservice, just like spring cloud alibaba,
+        spring boot and more.
     </description>
 
     <dependencies>

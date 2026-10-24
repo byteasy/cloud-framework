@@ -1,2 +1,0 @@
-# mybatis-plus-generator-jiuyang
-
