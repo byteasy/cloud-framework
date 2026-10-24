@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.autoconfigure.MybatisPlusPropertiesCustomizer;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler;
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.baomidou.mybatisplus.extension.incrementer.OracleKeyGenerator;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.handler.DataPermissionHandler;
@@ -27,6 +28,7 @@ import com.google.common.net.HttpHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -36,6 +38,7 @@ import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.LocaleResolver;
@@ -78,6 +81,7 @@ public class FrameworkConfig {
         } catch (Exception e) {
             log.warn("DataPermissionHandler not define! the DataPermissionInterceptor not enable.");
         }
+        JacksonTypeHandler.setObjectMapper(JacksonUtil2.copyMapperWithClass());
         Jackson3TypeHandler.setObjectMapper(JacksonUtil.getObjectMapper());
         return interceptor;
     }
@@ -133,7 +137,6 @@ public class FrameworkConfig {
     @Bean
     @Primary
     public JsonMapper defaultJsonMapper() {
-        // 直接复用您在 JacksonUtil 中调优好的全局单例
         return JacksonUtil.getObjectMapper();
     }
 
@@ -158,46 +161,13 @@ public class FrameworkConfig {
     }
 
     @Bean
-    public ClientHttpRequestInterceptor localeClientRequestInterceptor() {
-        return (httpRequest, body, execution) -> {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes != null) {
-                HttpServletRequest request = attributes.getRequest();
-
-                // 1. 语言传递
-                String locale = request.getParameter(Constant.PARAM_LANG);
-                if (!StringUtils.hasText(locale)) {
-                    locale = request.getHeader(HttpHeaders.ACCEPT_LANGUAGE);
-                }
-                if (!StringUtils.hasText(locale)) {
-                    Locale current = LocaleContextHolder.getLocale();
-                    locale = (current != null) ? current.getLanguage() : null;
-                }
-                if (StringUtils.hasText(locale)) {
-                    httpRequest.getHeaders().set(HttpHeaders.ACCEPT_LANGUAGE, locale);
-                }
-
-                // 2. TraceId 传递
-                String traceId = request.getHeader(Constant.TRACE_ID);
-                if (StringUtils.hasText(traceId)) {
-                    httpRequest.getHeaders().set(Constant.TRACE_ID, traceId);
-                }
-
-                // 3. UserInfo 传递
-                String authorization = request.getHeader(Constant.USER_INFO);
-                if (StringUtils.hasText(authorization)) {
-                    httpRequest.getHeaders().set(Constant.USER_INFO, authorization);
-                } else {
-                    httpRequest.getHeaders().set(Constant.USER_INFO, UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()));
-                }
-            }
-
-            return execution.execute(httpRequest, body);
-        };
+    public NamedParameterJdbcTemplate namedParameterJdbcTemplate(JdbcTemplate jdbcTemplate) {
+        return new NamedParameterJdbcTemplate(jdbcTemplate);
     }
 
     @Bean
-    public NamedParameterJdbcTemplate namedParameterJdbcTemplate(JdbcTemplate jdbcTemplate) {
-        return new NamedParameterJdbcTemplate(jdbcTemplate);
+    @LoadBalanced
+    public RestClient.Builder restClientBuilder() {
+        return RestClient.builder().configureMessageConverters(c -> c.registerDefaults().withJsonConverter(new JacksonJsonHttpMessageConverter(JacksonUtil.getObjectMapper())));
     }
 }

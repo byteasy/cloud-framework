@@ -1,11 +1,12 @@
 package com.byteasy.platform.oauth2;
 
+import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.platform.oauth2.controller.CaptchaFilter;
+import com.byteasy.platform.oauth2.event.TunaTokenCustomizer;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
-import com.byteasy.platform.oauth2.controller.CaptchaFilter;
-import com.byteasy.platform.oauth2.event.TunaTokenCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -23,6 +24,7 @@ import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
+import org.springframework.security.jackson.SecurityJacksonModules;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
@@ -38,6 +40,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 
 import java.io.InputStream;
 import java.security.KeyFactory;
@@ -94,7 +98,20 @@ public class AuthorizationServerConfig {
     // 4. JDBC 授权管理：集群环境必须将 Token 存入数据库
     @Bean
     public OAuth2AuthorizationService authorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository clientRepository) {
-        return new JdbcOAuth2AuthorizationService(jdbcTemplate, clientRepository);
+        JdbcOAuth2AuthorizationService authorizationService = new JdbcOAuth2AuthorizationService(jdbcTemplate, clientRepository);
+        ClassLoader classLoader = getClass().getClassLoader();
+        // 1. 配置多态安全验证器：加入你的业务包及用户实体
+        BasicPolymorphicTypeValidator.Builder ptvBuilder = BasicPolymorphicTypeValidator.builder()
+                .allowIfBaseType(Object.class)
+                .allowIfSubType("org.springframework.security.")
+                .allowIfSubType("com.byteasy."); // 允许你自己的业务包
+
+        JsonMapper jsonMapper = JsonMapper.builder()
+                .addModules(SecurityJacksonModules.getModules(classLoader, ptvBuilder))
+                .build();
+        JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationRowMapper rowMapper = new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationRowMapper(clientRepository, jsonMapper);
+        authorizationService.setAuthorizationRowMapper(rowMapper);
+        return authorizationService;
     }
 
     @Bean

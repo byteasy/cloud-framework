@@ -9,39 +9,55 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import java.sql.*;
 import java.util.UUID;
 
-// 映射 Java 类型为 String，JDBC 类型为 UUID
-@MappedTypes(String.class)
-@MappedJdbcTypes(JdbcType.OTHER) // PostgreSQL 的 UUID 对应 JDBCType.OTHER
+/**
+ * 兼容处理 PostgreSQL UUID 与 Java (String / UUID) 的类型转换
+ */
+@MappedTypes({String.class, UUID.class, Object.class})
+@MappedJdbcTypes(JdbcType.OTHER)
 @ConditionalOnClass(name = "org.postgresql.Driver")
-public class StringToUuidTypeHandler extends BaseTypeHandler<String> {
+public class StringToUuidTypeHandler extends BaseTypeHandler<Object> {
 
-    // 设置参数时，将字符串转换为 UUID
     @Override
-    public void setNonNullParameter(PreparedStatement ps, int i, String parameter, JdbcType jdbcType) throws SQLException {
-        if (parameter == null || parameter.isEmpty()) {
-            ps.setNull(i, Types.OTHER);
+    public void setNonNullParameter(PreparedStatement ps, int i, Object parameter, JdbcType jdbcType) throws SQLException {
+        if (parameter instanceof UUID uuid) {
+            // 如果传入的已经是 UUID 对象，直接存入 PostgreSQL
+            ps.setObject(i, uuid, Types.OTHER);
+        } else if (parameter instanceof String str) {
+            if (str.isBlank()) {
+                ps.setNull(i, Types.OTHER);
+            } else {
+                ps.setObject(i, UUID.fromString(str.trim()), Types.OTHER);
+            }
         } else {
-            // 将字符串转为 UUID 并设置到 PreparedStatement
-            ps.setObject(i, UUID.fromString(parameter), Types.OTHER);
+            // 其他兜底转换为字符串再解析为 UUID
+            ps.setObject(i, UUID.fromString(parameter.toString()), Types.OTHER);
         }
     }
 
-    // 以下方法为查询时的转换（可选，根据需求实现）
     @Override
-    public String getNullableResult(ResultSet rs, String columnName) throws SQLException {
-        UUID uuid = (UUID) rs.getObject(columnName);
-        return uuid == null ? null : uuid.toString();
+    public Object getNullableResult(ResultSet rs, String columnName) throws SQLException {
+        return toResult(rs.getObject(columnName));
     }
 
     @Override
-    public String getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
-        UUID uuid = (UUID) rs.getObject(columnIndex);
-        return uuid == null ? null : uuid.toString();
+    public Object getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+        return toResult(rs.getObject(columnIndex));
     }
 
     @Override
-    public String getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
-        UUID uuid = (UUID) cs.getObject(columnIndex);
-        return uuid == null ? null : uuid.toString();
+    public Object getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
+        return toResult(cs.getObject(columnIndex));
+    }
+
+    private Object toResult(Object obj) {
+        if (obj == null) {
+            return null;
+        }
+        // 如果数据库驱动返回的是 UUID，转为 String（若你的 Entity 属性是 String）
+        // 若你的 Entity 属性是 UUID，直接返回 obj 也可以
+        if (obj instanceof UUID) {
+            return obj.toString();
+        }
+        return obj.toString();
     }
 }

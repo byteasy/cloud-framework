@@ -54,19 +54,28 @@ public class JacksonUtil {
         // 注册模块
         builder.addModule(customJavaTimeModule());
         builder.addModule(formatMapModule());
+
         SimpleModule longModule = new SimpleModule();
         longModule.addSerializer(Long.class, ToStringSerializer.instance);
         longModule.addSerializer(long.class, ToStringSerializer.instance);
+        builder.addModule(longModule);
 
         OBJECT_MAPPER = builder.build();
 
         JsonMapper.Builder classBuilder = OBJECT_MAPPER.rebuild();
         // 配置多态类型安全验证器：必须明确允许你的业务包名和基础集合类
         BasicPolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
-                .allowIfBaseType(Object.class)            // 允许基类为 Object
-                .allowIfSubType(Object[].class)           // 允许对象数组
-                .allowIfSubType("com.byteasy.")           // 允许你公司/工程的所有包名
-                .allowIfSubType("java.util.")             // 允许常用集合
+                // 1. 允许常用的基类/顶级接口作为反序列化目标
+                .allowIfBaseType(Object.class)
+                .allowIfBaseType("java.security.")        // 关键：放行 Principal 等安全接口
+                .allowIfBaseType("com.byteasy.")          // 关键：允许你工程内自身的所有接口和基类
+
+                // 2. 允许具体实例类型（SubType）
+                .allowIfSubType("com.byteasy.")           // 允许你的业务包下所有实现类（如 PlatformUserDetails）
+                .allowIfSubType("java.util.")             // 允许常用集合（List, Set, Map 等）
+                .allowIfSubType("java.time.")             // 允许日期时间
+                .allowIfSubType("org.springframework.security.") // 允许 Spring Security 自带的核心认证类
+                .allowIfSubType(Object[].class)
                 .build();
 
         classBuilder.polymorphicTypeValidator(ptv);
@@ -241,18 +250,23 @@ public class JacksonUtil {
     }
 
     public static Map<String, Object> obj2Map(Object object) {
-        return OBJECT_MAPPER.convertValue(object, new TypeReference<>() {
-        });
+        if (object == null) return Collections.emptyMap();
+        return OBJECT_MAPPER.convertValue(object, new TypeReference<Map<String, Object>>() {});
     }
 
     public static Map<String, String> obj2StringMap(Object object) {
-        return OBJECT_MAPPER.convertValue(object, new TypeReference<>() {
-        });
+        if (object == null) return Collections.emptyMap();
+        return OBJECT_MAPPER.convertValue(object, new TypeReference<Map<String, String>>() {});
     }
 
-    public static <T> T obj2Val(Object object) {
-        return OBJECT_MAPPER.convertValue(object, new TypeReference<T>() {
-        });
+    public static <T> T obj2Val(Object object, Class<T> clazz) {
+        if (object == null) return null;
+        return OBJECT_MAPPER.convertValue(object, clazz);
+    }
+
+    public static <T> T obj2Val(Object object, TypeReference<T> typeReference) {
+        if (object == null) return null;
+        return OBJECT_MAPPER.convertValue(object, typeReference);
     }
 
     public static JsonNode readTree(String json) {
@@ -267,6 +281,10 @@ public class JacksonUtil {
 
     public static JsonMapper getObjectMapper() {
         return OBJECT_MAPPER;
+    }
+
+    public static JsonMapper getObjectWithClassMapper() {
+        return OBJECT_WITH_CLASS_MAPPER;
     }
 
     /**

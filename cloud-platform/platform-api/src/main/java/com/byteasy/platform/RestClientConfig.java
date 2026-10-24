@@ -1,12 +1,9 @@
 package com.byteasy.platform;
 
 import com.byteasy.common.configuration.RestClientHeaderInterceptor;
-import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.platform.api.*;
-import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.support.RestClientAdapter;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
@@ -15,75 +12,66 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 public class RestClientConfig {
 
     @Bean
-    @LoadBalanced
-    public RestClient.Builder restClientBuilder() {
-        return RestClient.builder();
-    }
-
-    @Bean
-    public RestClient plateformServiceRestClient(RestClient.Builder builder, RestClientHeaderInterceptor restClientHeaderInterceptor) {
-        return builder
+    public RestClient plateformServiceRestClient(RestClient.Builder restClientBuilder, RestClientHeaderInterceptor restClientHeaderInterceptor) {
+        return restClientBuilder
                 .baseUrl("lb://" + Constant.SERVICE_NAME)
-                .configureMessageConverters(clientConverters -> {
-                    clientConverters.addCustomConverter(new JacksonJsonHttpMessageConverter(JacksonUtil.getObjectMapper()));
-                })
                 .requestInterceptor(restClientHeaderInterceptor)
                 .build();
     }
 
     @Bean
-    public HttpServiceProxyFactory platformServiceProxyFactory(RestClient platformServiceRestClient) {
-        RestClientAdapter adapter = RestClientAdapter.create(platformServiceRestClient);
+    public HttpServiceProxyFactory platformServiceProxyFactory(RestClient plateformServiceRestClient) {
+        RestClientAdapter adapter = RestClientAdapter.create(plateformServiceRestClient);
         return HttpServiceProxyFactory.builderFor(adapter).build();
     }
 
     @Bean
-    public DictionaryClient dictionaryClient(HttpServiceProxyFactory factory) {
-        return factory.createClient(DictionaryClient.class);
+    public DictionaryClient dictionaryClient(HttpServiceProxyFactory platformServiceProxyFactory) {
+        return platformServiceProxyFactory.createClient(DictionaryClient.class);
     }
 
     @Bean
-    public EntityDefineClient entityDefineClient(HttpServiceProxyFactory factory) {
-        return factory.createClient(EntityDefineClient.class);
+    public EntityDefineClient entityDefineClient(HttpServiceProxyFactory platformServiceProxyFactory) {
+        return platformServiceProxyFactory.createClient(EntityDefineClient.class);
     }
 
     @Bean
-    public FieldDefineClient fieldDefineClient(HttpServiceProxyFactory factory) {
-        return factory.createClient(FieldDefineClient.class);
+    public FieldDefineClient fieldDefineClient(HttpServiceProxyFactory platformServiceProxyFactory) {
+        return platformServiceProxyFactory.createClient(FieldDefineClient.class);
     }
 
     @Bean
-    public OpenapiClient openapiClient(HttpServiceProxyFactory factory) {
-        return factory.createClient(OpenapiClient.class);
+    public OpenapiClient openapiClient(HttpServiceProxyFactory platformServiceProxyFactory) {
+        return platformServiceProxyFactory.createClient(OpenapiClient.class);
     }
 
     @Bean
-    public RoleOpenapiClient roleOpenapiClient(HttpServiceProxyFactory factory) {
-        return factory.createClient(RoleOpenapiClient.class);
+    public RoleOpenapiClient roleOpenapiClient(HttpServiceProxyFactory platformServiceProxyFactory) {
+        return platformServiceProxyFactory.createClient(RoleOpenapiClient.class);
     }
 
     @Bean
-    public ScriptFunctionClient scriptFunctionClient(HttpServiceProxyFactory factory) {
-        return factory.createClient(ScriptFunctionClient.class);
+    public ScriptFunctionClient scriptFunctionClient(HttpServiceProxyFactory platformServiceProxyFactory) {
+        return platformServiceProxyFactory.createClient(ScriptFunctionClient.class);
     }
 
     @Bean
-    public UserClient userClient(HttpServiceProxyFactory factory) {
-        return factory.createClient(UserClient.class);
+    public UserClient userClient(HttpServiceProxyFactory platformServiceProxyFactory) {
+        return platformServiceProxyFactory.createClient(UserClient.class);
     }
 
     @Bean
-    public ServiceInstanceClient serviceInstanceClient(HttpServiceProxyFactory factory) {
-        return factory.createClient(ServiceInstanceClient.class);
+    public ServiceInstanceClient serviceInstanceClient(HttpServiceProxyFactory platformServiceProxyFactory) {
+        return platformServiceProxyFactory.createClient(ServiceInstanceClient.class);
     }
 
     @Bean
-    public OpenapiLogClient openapiLogClient(HttpServiceProxyFactory factory) {
-        return factory.createClient(OpenapiLogClient.class);
+    public OpenapiLogClient openapiLogClient(HttpServiceProxyFactory platformServiceProxyFactory) {
+        return platformServiceProxyFactory.createClient(OpenapiLogClient.class);
     }
 
     @Bean
-    public JsScriptClient jsScriptClient(HttpServiceProxyFactory factory) {
-        return factory.createClient(JsScriptClient.class);
+    public JsScriptClient jsScriptClient(HttpServiceProxyFactory platformServiceProxyFactory) {
+        return platformServiceProxyFactory.createClient(JsScriptClient.class);
     }
 }
