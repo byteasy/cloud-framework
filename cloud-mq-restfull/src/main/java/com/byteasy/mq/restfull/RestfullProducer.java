@@ -10,7 +10,6 @@ import com.byteasy.common.token.UserInfoBuilder;
 import com.byteasy.common.util.HttpResult;
 import com.byteasy.common.util.HttpUtil;
 import com.byteasy.common.util.JacksonUtil;
-import com.byteasy.common.util.JacksonUtil2;
 import com.byteasy.mq.IProducer;
 import com.byteasy.mq.Message;
 import com.byteasy.mq.restfull.dto.PubCmd;
@@ -67,7 +66,7 @@ public class RestfullProducer implements IProducer {
 
     @Override
     public void publishMessage(String topic, String key, Object message) {
-        publish(topic, key, JacksonUtil2.toJson(message, true));
+        publish(topic, key, JacksonUtil.toJson(message, true));
     }
 
 
