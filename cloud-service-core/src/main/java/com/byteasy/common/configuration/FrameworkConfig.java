@@ -15,8 +15,7 @@ import com.baomidou.mybatisplus.extension.plugins.inner.DataPermissionIntercepto
 import com.baomidou.mybatisplus.extension.plugins.inner.DynamicTableNameInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
-import com.byteasy.Constant;
-import com.byteasy.common.token.UserInfoBuilder;
+import com.byteasy.common.interceptor.TypeResolveJacksonHttpMessageConverter;
 import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.common.util.JacksonUtil2;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -24,23 +23,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.google.common.net.HttpHeaders;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 import tools.jackson.databind.json.JsonMapper;
@@ -168,6 +160,6 @@ public class FrameworkConfig {
     @Bean
     @LoadBalanced
     public RestClient.Builder restClientBuilder() {
-        return RestClient.builder().configureMessageConverters(c -> c.registerDefaults().withJsonConverter(new JacksonJsonHttpMessageConverter(JacksonUtil.getObjectMapper())));
+        return RestClient.builder().configureMessageConverters(c -> c.registerDefaults().withJsonConverter(new TypeResolveJacksonHttpMessageConverter(JacksonUtil.getObjectMapper())));
     }
 }

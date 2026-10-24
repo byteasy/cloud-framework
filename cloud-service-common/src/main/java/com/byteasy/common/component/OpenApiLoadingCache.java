@@ -10,14 +10,12 @@ import com.byteasy.util.FieldValueUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Maps;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -38,17 +36,9 @@ public class OpenApiLoadingCache implements IEntityChangeHandler, ICacheLoader<S
                 String method = parts[2];
                 return openapiService.getByUriAndMethod(actualUri, path, Openapi.HttpMethod.fromValue(method)).getIfPresent();
             }
-            Map<String, Object> params;
-            params = Maps.newHashMapWithExpectedSize(2);
-            params.put("code", apiCode);
-            params.put("codeQueryType", "eq");
-            Result<List<Openapi>> result = openapiService.list(params);
-            List<Openapi> openapiList = result.getIfPresent();
-            if (openapiList != null && openapiList.size() == 1) {
-                return openapiList.get(0);
-            } else {
-                return null;
-            }
+            Result<Openapi> result = openapiService.getByCode(apiCode);
+            Openapi openapi = result.getIfPresent();
+            return openapi;
         }
     });
 
