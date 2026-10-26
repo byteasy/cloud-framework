@@ -9,8 +9,7 @@
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>cloud-service-common</artifactId>
-    <version>1.0.0</version>
+    <artifactId>cloud-common</artifactId>
 
     <dependencies>
         <dependency>

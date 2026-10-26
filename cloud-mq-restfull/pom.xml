@@ -15,7 +15,7 @@
     <dependencies>
         <dependency>
             <groupId>com.byteasy</groupId>
-            <artifactId>cloud-service-common</artifactId>
+            <artifactId>cloud-common</artifactId>
             <version>${project.version}</version>
         </dependency>
 
