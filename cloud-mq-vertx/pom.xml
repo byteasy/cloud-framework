@@ -8,22 +8,18 @@
         <artifactId>parent</artifactId>
         <version>1.0.0</version>
     </parent>
-
     <artifactId>cloud-mq-vertx</artifactId>
-
-    <properties>
-    </properties>
 
     <dependencies>
         <dependency>
-            <groupId>com.byteasy</groupId>
-            <artifactId>cloud-cache-infinispan</artifactId>
-            <version>${project.version}</version>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-infinispan</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-infinispan</artifactId>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring-boot4-starter-embedded</artifactId>
+            <version>${infinispan.version}</version>
         </dependency>
 
         <dependency>

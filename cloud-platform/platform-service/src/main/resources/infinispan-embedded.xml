@@ -9,6 +9,12 @@
     <cache-container name="byteasy-container" default-cache="users" statistics="true">
         <transport stack="tcp-stack" cluster="byteasy-embedded-cluster" node-name="${HOSTNAME:node-default}"/>
 
+        <!-- vertx集群用的cache -->
+        <distributed-cache name="distributed-cache"/>
+        <replicated-cache name="__vertx.subs"/>
+        <replicated-cache name="__vertx.haInfo"/>
+        <replicated-cache name="__vertx.nodeInfo"/>
+        <distributed-cache-configuration name="__vertx.distributed.cache.configuration"/>
         <!-- 默认分布式缓存模板 -->
         <distributed-cache-configuration name="dist-template" mode="SYNC" owners="2" remote-timeout="5000">
             <encoding media-type="text/plain"/>
@@ -18,7 +24,7 @@
 
         <!-- 1. 业务缓存：users（堆外内存 1GB，满了自动 LRU 淘汰） -->
         <distributed-cache name="users" configuration="dist-template">
-<!--            <encoding media-type="application/x-protostream"/>-->
+            <!--            <encoding media-type="application/x-protostream"/>-->
             <encoding media-type="text/plain"/>
             <expiration lifespan="7200000" max-idle="1800000"/>
             <!-- 修复后的 memory 标签 -->

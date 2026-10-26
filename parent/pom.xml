@@ -35,6 +35,8 @@
         <pulsar.version>4.1.2</pulsar.version>
         <!-- vertx version 保持依赖的整个netty版本一致 -->
         <vertx.version>5.2.2</vertx.version>
+        <infinispan.version>16.2.1</infinispan.version>
+
         <!-- netty version -->
         <netty.version>4.2.19.Final</netty.version>
         <!-- javacv -->
@@ -54,7 +56,7 @@
         <commons-io-version>2.21.0</commons-io-version>
         <commons-lang3-version>3.20.0</commons-lang3-version>
         <commons-collections4-version>4.5.0</commons-collections4-version>
-        <hutool-version>5.8.43</hutool-version>
+        <hutool-version>5.8.48</hutool-version>
         <guava-version>33.5.0-jre</guava-version>
         <beanutils-version>1.11.0</beanutils-version>
         <junit-version>4.13.2</junit-version>
@@ -74,6 +76,20 @@
 
     <dependencyManagement>
         <dependencies>
+
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-bom</artifactId>
+                <version>${infinispan.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
@@ -109,7 +125,7 @@
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-spring-boot4-starter-embedded</artifactId>
-                <version>16.2.1</version>
+                <version>${infinispan.version}</version>
             </dependency>
 
             <dependency>
@@ -126,6 +142,11 @@
                 <scope>import</scope>
             </dependency>
 
+            <dependency>
+                <groupId>org.wildfly.common</groupId>
+                <artifactId>wildfly-common</artifactId>
+                <version>1.7.0.Final</version>
+            </dependency>
 
             <dependency>
                 <groupId>io.vertx</groupId>
@@ -133,12 +154,6 @@
                 <version>${vertx.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-all</artifactId>
-                <version>${netty.version}</version>
             </dependency>
 
             <dependency>
@@ -176,12 +191,6 @@
                 <artifactId>mybatis-plus-generator</artifactId>
                 <version>${mybatis-plus.version}</version>
             </dependency>
-
-            <!--            <dependency>-->
-            <!--                <groupId>com.baomidou</groupId>-->
-            <!--                <artifactId>mybatis-plus-generator-jiuyang</artifactId>-->
-            <!--                <version>${mybatis-plus.version}</version>-->
-            <!--            </dependency>-->
 
             <dependency>
                 <groupId>com.baomidou</groupId>

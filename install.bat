@@ -14,6 +14,10 @@ cd ../cloud-service-core
 call mvn clean install
 rem call mvn source:jar install
 
+cd ../cloud-mq-vertx
+call mvn clean install
+rem call mvn source:jar install
+
 cd ../cloud-platform/platform-api
 call mvn clean install
 rem call mvn source:jar install

@@ -11,13 +11,23 @@
 
     <artifactId>cloud-service-core</artifactId>
     <name>Cloud Service Core</name>
-    <version>1.0.0</version>
 
     <dependencies>
         <dependency>
             <groupId>com.byteasy</groupId>
             <artifactId>common</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.byteasy</groupId>
+            <artifactId>cloud-mq-vertx</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
         </dependency>
 
         <!-- spring boot -->
@@ -50,11 +60,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aspectj</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-cache</artifactId>
         </dependency>
 
         <dependency>
