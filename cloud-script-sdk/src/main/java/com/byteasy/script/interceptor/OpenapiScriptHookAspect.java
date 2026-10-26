@@ -106,7 +106,7 @@ public class OpenapiScriptHookAspect {
         Long scriptId = openapi.getPreScriptId();
         if (scriptId == null || scriptId <= 0) return;
 
-        JsScript jsScriptObj = jsScriptFactory.getScript(scriptId);
+        JsScript jsScriptObj = jsScriptFactory.load(scriptId);
         String script = jsScriptObj.getScript();
         if (StringUtils.isBlank(script)) return;
 
@@ -118,7 +118,7 @@ public class OpenapiScriptHookAspect {
         Long scriptId = openapi.getPostScriptId();
         if (scriptId == null || scriptId <= 0) return;
 
-        JsScript jsScriptObj = jsScriptFactory.getScript(scriptId);
+        JsScript jsScriptObj = jsScriptFactory.load(scriptId);
         String script = jsScriptObj.getScript();
         if (StringUtils.isBlank(script)) return;
 

@@ -1,47 +1,33 @@
 package com.byteasy.script.component;
 
+import cn.hutool.crypto.digest.DigestUtil;
 import com.byteasy.component.ICacheLoader;
-import com.byteasy.event.EntityChangeEvent;
-import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.api.JsScriptClient;
 import com.byteasy.platform.entity.JsScript;
-import com.byteasy.util.ObjectValueUtil;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import lombok.extern.log4j.Log4j2;
 import org.graalvm.polyglot.Source;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-import java.util.concurrent.ExecutionException;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 @Component
 @Log4j2
-public class JsScriptFactory implements IEntityChangeHandler, ICacheLoader<Long, JsScript> {
+public class JsScriptFactory implements ICacheLoader<Long, JsScript> {
 
     @Autowired
     private JsScriptClient jsScriptClient;
 
-    private static Cache<String, Source> SCRIPT_CACHE = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(12, TimeUnit.HOURS).build();
-
-    private LoadingCache<Long, JsScript> cache = CacheBuilder.newBuilder().expireAfterAccess(Duration.ofHours(24)).maximumSize(10000).build(new CacheLoader<>() {
-        @Override
-        public JsScript load(Long scriptId) {
-            return jsScriptClient.getById(scriptId).getIfPresent();
-        }
-    });
-
-    public JsScript getScript(Long scriptId) throws ExecutionException {
-        return cache.get(scriptId);
-    }
+    private static Cache<String, Source> SCRIPT_CACHE = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(2, TimeUnit.HOURS).build();
 
     @Override
-    public JsScript load(Long key) throws ExecutionException {
-        return getScript(key);
+    @Cacheable(cacheNames = "dict", key = "'JsScript:' + #key")
+    public JsScript load(Long key) {
+        return jsScriptClient.getById(key).getIfPresent();
     }
 
     @Override
@@ -49,29 +35,16 @@ public class JsScriptFactory implements IEntityChangeHandler, ICacheLoader<Long,
         return JsScript.class.getName();
     }
 
-    @Override
-    public void handle(EntityChangeEvent event) {
-        switch (event.getChangeType()) {
-            case DELETE: {
-                Long id = ObjectValueUtil.getFieldValue(event.getBefore(), "id", Long.class);
-                log.info("JsScriptFactory cache delete id:{}", id);
-                cache.invalidate((Long) id);
-                SCRIPT_CACHE.invalidate(String.valueOf(id));
-                break;
-            }
-            case UPDATE: {
-                Long id = ObjectValueUtil.getFieldValue(event.getAfter(), "id", Long.class);
-                log.info("JsScriptFactory cache update id:{}", id);
-                cache.invalidate((Long) id);
-                SCRIPT_CACHE.invalidate(String.valueOf(id));
-                break;
-            }
-            default:
+    public static Source getScriptSource(String jsName, String jsScript) throws IOException {
+        String id = DigestUtil.md5Hex(jsScript);
+        Source cachedScript = SCRIPT_CACHE.getIfPresent(id);
+        if (cachedScript == null) {
+            cachedScript = Source.newBuilder("js", jsScript, jsName + ".js")
+                    .cached(true)
+                    .build();
+            setScriptSource(id, cachedScript);
         }
-    }
-
-    public static Source getScriptSource(String id) {
-        return SCRIPT_CACHE.getIfPresent(id);
+        return cachedScript;
     }
 
     public static void setScriptSource(String id, Source source) {

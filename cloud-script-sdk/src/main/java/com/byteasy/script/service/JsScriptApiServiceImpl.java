@@ -42,7 +42,7 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
             return Result.error("scriptId is null, apiCode: {}" + apiCode);
         }
 
-        JsScript jsScriptObj = jsScriptFactory.getScript(scriptId);
+        JsScript jsScriptObj = jsScriptFactory.load(scriptId);
         if (StringUtils.isEmpty(jsScriptObj.getScript())) {
             log.error("script is null, apiCode: {}, scriptId: {}", apiCode, scriptId);
             return Result.error("script is null, apiCode: " + apiCode);
@@ -84,7 +84,7 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
     private void exePreScript(Openapi openapi, Map<String, Object> input) throws ExecutionException {
         if (openapi.getPreScriptId() != null) {
             Long scriptId = openapi.getPreScriptId();
-            JsScript jsScriptObj = jsScriptFactory.getScript(scriptId);
+            JsScript jsScriptObj = jsScriptFactory.load(scriptId);
             if (StringUtils.isEmpty(jsScriptObj.getScript())) {
                 return;
             }
@@ -95,7 +95,7 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
     private void exePostScript(Openapi openapi, Map<String, Object> input) throws ExecutionException {
         if (openapi.getPostScriptId() != null) {
             Long scriptId = openapi.getPostScriptId();
-            JsScript jsScriptObj = jsScriptFactory.getScript(scriptId);
+            JsScript jsScriptObj = jsScriptFactory.load(scriptId);
             if (StringUtils.isEmpty(jsScriptObj.getScript())) {
                 return;
             }

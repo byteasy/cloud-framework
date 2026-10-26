@@ -106,14 +106,7 @@ public class JsScriptExecutor {
             // 4. 执行脚本
             Value resultValue;
             try {
-                Source cachedScript = JsScriptFactory.getScriptSource(jsName);
-                if (cachedScript == null) {
-                    cachedScript = Source.newBuilder("js", jsScript, jsName + ".js")
-                            .cached(true)
-                            .build();
-                    JsScriptFactory.setScriptSource(jsName, cachedScript);
-                }
-
+                Source cachedScript = JsScriptFactory.getScriptSource(jsName, jsScript);
                 resultValue = context.eval(cachedScript);
             } catch (Exception e) {
                 if (e instanceof PolyglotException) {
