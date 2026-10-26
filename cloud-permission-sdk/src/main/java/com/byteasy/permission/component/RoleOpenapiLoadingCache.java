@@ -7,7 +7,7 @@ import com.byteasy.platform.api.RoleOpenapiClient;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.platform.entity.Role;
 import com.byteasy.platform.entity.RoleOpenapi;
-import com.byteasy.util.FieldValueUtil;
+import com.byteasy.util.ObjectValueUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -58,11 +58,11 @@ public class RoleOpenapiLoadingCache implements IEntityChangeHandler, ICacheLoad
         switch (changeType) {
             case UPDATE -> {
                 if (event.getClassName().equals(Role.class.getName())) {
-                    Long roleId = FieldValueUtil.getFieldValue(event.getAfter(), "id", Long.class);
+                    Long roleId = ObjectValueUtil.getFieldValue(event.getAfter(), "id", Long.class);
                     cache.invalidate(roleId);
                     log.info("RoleOpenapiLoadingCache update. invalid roleId: {}", roleId);
                 } else if (event.getClassName().equals(Openapi.class.getName())) {
-                    Long apiId = FieldValueUtil.getFieldValue(event.getAfter(), "id", Long.class);
+                    Long apiId = ObjectValueUtil.getFieldValue(event.getAfter(), "id", Long.class);
                     for (Map.Entry<Long, Set<Long>> entry : cache.asMap().entrySet()) {
                         if (entry.getValue().contains(apiId)) {
                             cache.invalidate(entry.getKey());
@@ -73,11 +73,11 @@ public class RoleOpenapiLoadingCache implements IEntityChangeHandler, ICacheLoad
             }
             case DELETE -> {
                 if (event.getClassName().equals(Role.class.getName())) {
-                    Long roleId = FieldValueUtil.getFieldValue(event.getBefore(), "id", Long.class);
+                    Long roleId = ObjectValueUtil.getFieldValue(event.getBefore(), "id", Long.class);
                     cache.invalidate(roleId);
                     log.info("RoleOpenapiLoadingCache delete. invalid roleId: {}", roleId);
                 } else if (event.getClassName().equals(Openapi.class.getName())) {
-                    Long apiId = FieldValueUtil.getFieldValue(event.getBefore(), "id", Long.class);
+                    Long apiId = ObjectValueUtil.getFieldValue(event.getBefore(), "id", Long.class);
                     for (Map.Entry<Long, Set<Long>> entry : cache.asMap().entrySet()) {
                         if (entry.getValue().contains(apiId)) {
                             cache.invalidate(entry.getKey());

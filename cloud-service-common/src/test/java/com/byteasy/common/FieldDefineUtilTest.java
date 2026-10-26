@@ -1,8 +1,8 @@
 package com.byteasy.common;
 
 
-import com.byteasy.common.util.FieldDefineUtil;
-import com.byteasy.common.util.JacksonUtil2;
+import com.byteasy.util.FieldDefineUtil;
+import com.byteasy.util.JacksonUtil2;
 import com.byteasy.enums.YesNo;
 import com.byteasy.platform.entity.FieldDefine;
 import org.junit.jupiter.api.Test;

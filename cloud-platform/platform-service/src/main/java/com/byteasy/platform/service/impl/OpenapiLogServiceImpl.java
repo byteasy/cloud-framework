@@ -2,9 +2,9 @@ package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.Result;
-import com.byteasy.common.util.HttpResult;
-import com.byteasy.common.util.HttpUtil;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.util.HttpResult;
+import com.byteasy.util.HttpUtil;
+import com.byteasy.util.JacksonUtil;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.platform.entity.OpenapiLog;
 import com.byteasy.platform.mapper.OpenapiLogMapper;

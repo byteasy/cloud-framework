@@ -2,7 +2,7 @@ package com.byteasy.script.controller;
 
 import com.byteasy.Constant;
 import com.byteasy.annotations.Openapi;
-import com.byteasy.common.util.JacksonUtil2;
+import com.byteasy.util.JacksonUtil2;
 import com.byteasy.platform.dto.ScriptFunctionDTO;
 import com.byteasy.script.JsFunctionFactory;
 import lombok.extern.log4j.Log4j2;

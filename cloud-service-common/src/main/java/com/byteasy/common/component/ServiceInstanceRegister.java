@@ -2,7 +2,7 @@ package com.byteasy.common.component;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.Result;
-import com.byteasy.common.util.JacksonUtil2;
+import com.byteasy.util.JacksonUtil2;
 import com.byteasy.enums.Enable;
 import com.byteasy.event.IPlatformReady;
 import com.byteasy.platform.api.ServiceInstanceClient;

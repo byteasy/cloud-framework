@@ -2,7 +2,7 @@ package com.byteasy.platform.oauth2.event;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.byteasy.common.util.IpUtil;
+import com.byteasy.util.IpUtil;
 import com.byteasy.platform.entity.LoginLog;
 import com.byteasy.platform.entity.User;
 import com.byteasy.platform.entity.UserStatus;

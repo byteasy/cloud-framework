@@ -1,6 +1,6 @@
 package com.byteasy.script.function;
 
-import com.byteasy.common.util.CastUtil;
+import com.byteasy.util.CastUtil;
 import com.byteasy.script.JsFunction;
 import com.byteasy.script.JsFunctions;
 import org.springframework.beans.factory.annotation.Autowired;

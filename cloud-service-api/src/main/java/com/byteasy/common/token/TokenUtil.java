@@ -2,7 +2,7 @@ package com.byteasy.common.token;
 
 import cn.hutool.core.codec.Base64;
 import com.byteasy.Constant;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.util.JacksonUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;

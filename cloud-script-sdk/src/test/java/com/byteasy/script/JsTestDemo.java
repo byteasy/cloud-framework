@@ -1,6 +1,6 @@
 package com.byteasy.script;
 
-import com.byteasy.common.util.JacksonUtil2;
+import com.byteasy.util.JacksonUtil2;
 import com.byteasy.script.util.JsScriptExecutor;
 import org.junit.jupiter.api.Test;
 

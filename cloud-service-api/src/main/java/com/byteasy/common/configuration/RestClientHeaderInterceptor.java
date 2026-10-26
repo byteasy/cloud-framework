@@ -6,7 +6,7 @@ import com.byteasy.Constant;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.util.JacksonUtil;
 import com.google.common.net.HttpHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.i18n.LocaleContextHolder;

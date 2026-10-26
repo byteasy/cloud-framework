@@ -1,7 +1,7 @@
 package com.byteasy.common.token;
 
 import cn.hutool.core.codec.Base64;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.util.JacksonUtil;
 
 public final class UserInfoBuilder {
 

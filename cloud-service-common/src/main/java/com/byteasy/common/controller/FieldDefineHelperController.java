@@ -4,7 +4,7 @@ import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.service.ICommonService;
-import com.byteasy.common.util.FieldDefineUtil;
+import com.byteasy.util.FieldDefineUtil;
 import com.byteasy.platform.entity.FieldDefine;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;

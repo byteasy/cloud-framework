@@ -7,7 +7,7 @@ import com.byteasy.platform.api.UserClient;
 import com.byteasy.platform.dto.UserRoleDTO;
 import com.byteasy.platform.entity.Role;
 import com.byteasy.platform.entity.User;
-import com.byteasy.util.FieldValueUtil;
+import com.byteasy.util.ObjectValueUtil;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -60,7 +60,7 @@ public class UserRoleLoadingCache implements IEntityChangeHandler, ICacheLoader<
         switch (changeType) {
             case UPDATE -> {
                 if (event.getClassName().equals(Role.class.getName())) {
-                    Long roleId = FieldValueUtil.getFieldValue(event.getAfter(), "id", Long.class);
+                    Long roleId = ObjectValueUtil.getFieldValue(event.getAfter(), "id", Long.class);
                     for (Map.Entry<String, Set<Long>> entry : cache.asMap().entrySet()) {
                         if (entry.getValue().contains(roleId)) {
                             cache.invalidate(entry.getKey());
@@ -68,14 +68,14 @@ public class UserRoleLoadingCache implements IEntityChangeHandler, ICacheLoader<
                         }
                     }
                 } else if (event.getClassName().equals(User.class.getName())) {
-                    String username = FieldValueUtil.getFieldValue(event.getAfter(), "username", String.class);
+                    String username = ObjectValueUtil.getFieldValue(event.getAfter(), "username", String.class);
                     cache.invalidate(username);
                     log.info("UserRoleLoadingCache update. invalid username: {}", username);
                 }
             }
             case DELETE -> {
                 if (event.getClassName().equals(Role.class.getName())) {
-                    Long roleId = FieldValueUtil.getFieldValue(event.getBefore(), "id", Long.class);
+                    Long roleId = ObjectValueUtil.getFieldValue(event.getBefore(), "id", Long.class);
                     for (Map.Entry<String, Set<Long>> entry : cache.asMap().entrySet()) {
                         if (entry.getValue().contains(roleId)) {
                             cache.invalidate(entry.getKey());
@@ -83,7 +83,7 @@ public class UserRoleLoadingCache implements IEntityChangeHandler, ICacheLoader<
                         }
                     }
                 } else if (event.getClassName().equals(User.class.getName())) {
-                    String username = FieldValueUtil.getFieldValue(event.getBefore(), "username", String.class);
+                    String username = ObjectValueUtil.getFieldValue(event.getBefore(), "username", String.class);
                     cache.invalidate(username);
                     log.info("UserRoleLoadingCache delete. invalid username: {}", username);
                 }

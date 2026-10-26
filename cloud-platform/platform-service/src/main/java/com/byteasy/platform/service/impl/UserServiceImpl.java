@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.common.token.TokenUtil;
-import com.byteasy.common.util.CastUtil;
+import com.byteasy.util.CastUtil;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.exception.BizException;
 import com.byteasy.mq.IProducer;

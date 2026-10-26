@@ -2,7 +2,7 @@ package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
-import com.byteasy.common.util.CastUtil;
+import com.byteasy.util.CastUtil;
 import com.byteasy.platform.entity.ResourceGroup;
 import com.byteasy.platform.mapper.ResourceGroupMapper;
 import com.byteasy.platform.service.IResourceGroupService;

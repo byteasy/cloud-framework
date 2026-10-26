@@ -1,6 +1,5 @@
 package com.byteasy.platform.oauth2;
 
-import com.byteasy.common.util.JacksonUtil;
 import com.byteasy.platform.oauth2.controller.CaptchaFilter;
 import com.byteasy.platform.oauth2.event.TunaTokenCustomizer;
 import com.nimbusds.jose.jwk.JWKSet;

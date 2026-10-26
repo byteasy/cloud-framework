@@ -3,7 +3,7 @@ package com.byteasy.mq.restfull.controller;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.util.JacksonUtil;
 import com.byteasy.mq.Message;
 import com.byteasy.mq.restfull.ConsumerFactory;
 import com.byteasy.mq.restfull.dto.PubCmd;

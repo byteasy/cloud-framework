@@ -1,6 +1,6 @@
 package com.byteasy.platform.service.impl;
 
-import com.byteasy.common.util.JacksonUtil2;
+import com.byteasy.util.JacksonUtil2;
 import com.byteasy.platform.entity.User;
 
 import java.time.LocalDate;

@@ -16,9 +16,9 @@ import com.baomidou.mybatisplus.extension.plugins.inner.DynamicTableNameInnerInt
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.byteasy.common.interceptor.TypeResolveJacksonHttpMessageConverter;
-import com.byteasy.common.util.HttpUtil;
-import com.byteasy.common.util.JacksonUtil;
-import com.byteasy.common.util.JacksonUtil2;
+import com.byteasy.util.HttpUtil;
+import com.byteasy.util.JacksonUtil;
+import com.byteasy.util.JacksonUtil2;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

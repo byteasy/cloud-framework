@@ -2,7 +2,7 @@ package com.byteasy.common.service.impl;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.byteasy.common.util.NameConvertUtil;
+import com.byteasy.util.NameConvertUtil;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;

@@ -3,7 +3,7 @@ package com.byteasy.script.interceptor;
 import com.byteasy.Result;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
-import com.byteasy.common.util.RequestUtil;
+import com.byteasy.util.RequestUtil;
 import com.byteasy.common.component.OpenApiLoadingCache;
 import com.byteasy.platform.entity.JsScript;
 import com.byteasy.platform.entity.Openapi;

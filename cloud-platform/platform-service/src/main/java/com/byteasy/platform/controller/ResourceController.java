@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
-import com.byteasy.common.util.RequestUtil;
+import com.byteasy.util.RequestUtil;
 import com.byteasy.common.controller.AuditController;
 import com.byteasy.platform.entity.Resource;
 import com.byteasy.platform.service.IResourceService;

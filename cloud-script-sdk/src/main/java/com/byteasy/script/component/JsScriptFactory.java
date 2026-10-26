@@ -5,7 +5,7 @@ import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.api.JsScriptClient;
 import com.byteasy.platform.entity.JsScript;
-import com.byteasy.util.FieldValueUtil;
+import com.byteasy.util.ObjectValueUtil;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -53,14 +53,14 @@ public class JsScriptFactory implements IEntityChangeHandler, ICacheLoader<Long,
     public void handle(EntityChangeEvent event) {
         switch (event.getChangeType()) {
             case DELETE: {
-                Long id = FieldValueUtil.getFieldValue(event.getBefore(), "id", Long.class);
+                Long id = ObjectValueUtil.getFieldValue(event.getBefore(), "id", Long.class);
                 log.info("JsScriptFactory cache delete id:{}", id);
                 cache.invalidate((Long) id);
                 SCRIPT_CACHE.invalidate(String.valueOf(id));
                 break;
             }
             case UPDATE: {
-                Long id = FieldValueUtil.getFieldValue(event.getAfter(), "id", Long.class);
+                Long id = ObjectValueUtil.getFieldValue(event.getAfter(), "id", Long.class);
                 log.info("JsScriptFactory cache update id:{}", id);
                 cache.invalidate((Long) id);
                 SCRIPT_CACHE.invalidate(String.valueOf(id));

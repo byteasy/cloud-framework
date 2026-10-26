@@ -2,7 +2,7 @@ package com.byteasy.common.event;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.Constant;
-import com.byteasy.common.util.JacksonUtil2;
+import com.byteasy.util.JacksonUtil2;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.mq.IConsumer;

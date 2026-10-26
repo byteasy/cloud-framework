@@ -2,7 +2,7 @@ package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
-import com.byteasy.common.util.CastUtil;
+import com.byteasy.util.CastUtil;
 import com.byteasy.platform.entity.ScriptFunction;
 import com.byteasy.platform.mapper.ScriptFunctionMapper;
 import com.byteasy.platform.service.IScriptFunctionService;

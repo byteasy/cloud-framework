@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.Constant;
 import com.byteasy.common.event.EntityChangeFactory;
-import com.byteasy.common.util.JacksonUtil2;
+import com.byteasy.util.JacksonUtil2;
 import com.byteasy.entity.Entity;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.exception.BizException;

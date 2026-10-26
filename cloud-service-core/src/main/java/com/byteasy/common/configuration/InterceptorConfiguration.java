@@ -1,7 +1,7 @@
 package com.byteasy.common.configuration;
 
 import com.byteasy.common.interceptor.I18nLocaleInterceptor;
-import com.byteasy.common.util.JacksonUtil;
+import com.byteasy.util.JacksonUtil;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverters;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;

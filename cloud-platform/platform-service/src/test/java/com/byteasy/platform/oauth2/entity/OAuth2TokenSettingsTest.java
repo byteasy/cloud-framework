@@ -1,7 +1,7 @@
 package com.byteasy.platform.oauth2.entity;
 
 
-import com.byteasy.common.util.JacksonUtil2;
+import com.byteasy.util.JacksonUtil2;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;

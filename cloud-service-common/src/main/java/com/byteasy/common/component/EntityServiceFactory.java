@@ -12,18 +12,16 @@ import com.byteasy.Result;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
-import com.byteasy.common.util.*;
 import com.byteasy.component.CacheFactory;
 import com.byteasy.component.ICacheLoader;
-import com.byteasy.dto.FormatMap;
+import com.byteasy.util.FormatMap;
 import com.byteasy.entity.Entity;
 import com.byteasy.enums.RelationType;
 import com.byteasy.event.IPlatformReady;
 import com.byteasy.platform.api.EntityDefineClient;
 import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.platform.entity.FieldDefine;
-import com.byteasy.util.FieldValueUtil;
-import com.byteasy.util.I18nUtil;
+import com.byteasy.util.*;
 import com.google.common.collect.Maps;
 import jakarta.annotation.Resource;
 import lombok.extern.log4j.Log4j2;
@@ -68,11 +66,11 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
 
         QueryWrapper wrapper = new QueryWrapper();
         wrapper.in(externalKey.getExternalClassPrimaryField(), keys);
-        Map<String, Object> map = CastUtil.listToMap(service.list(wrapper), e -> String.valueOf(FieldValueUtil.getFieldValue(e, externalKey.getExternalClassPrimaryField())));
+        Map<String, Object> map = CastUtil.listToMap(service.list(wrapper), e -> String.valueOf(ObjectValueUtil.getFieldValue(e, externalKey.getExternalClassPrimaryField())));
         entities.forEach(entity -> {
-            Object key = FieldValueUtil.getFieldValue(entity, externalKey.getName());
+            Object key = ObjectValueUtil.getFieldValue(entity, externalKey.getName());
             String fieldName = getClassFieldName(externalKey.getExternalClass());
-            FieldValueUtil.setFieldValue(entity, fieldName, map.get(String.valueOf(key)));
+            ObjectValueUtil.setFieldValue(entity, fieldName, map.get(String.valueOf(key)));
         });
     }
 
@@ -106,7 +104,7 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
                         map = Maps.newHashMap();
                         for (Object key : keys) {
                             Object externalEntity = loader.load(key);
-                            map.put(FieldValueUtil.getFieldValue(externalEntity, externalKey.getExternalClassPrimaryField()), externalEntity);
+                            map.put(ObjectValueUtil.getFieldValue(externalEntity, externalKey.getExternalClassPrimaryField()), externalEntity);
                         }
                     } else {
                         String url = ((Map) entityDefine.getExtendField().get("serviceInstance")).get("contextPath").toString() + Constant.SAPI + "/common/" + className + "/all";
@@ -173,7 +171,7 @@ public class EntityServiceFactory implements ApplicationContextAware, IPlatformR
     private static Set getPrimaryKeys(String fieldName, List entities) {
         Set set = new HashSet();
         for (Object entity : entities) {
-            Object value = FieldValueUtil.getFieldValue(entity, fieldName);
+            Object value = ObjectValueUtil.getFieldValue(entity, fieldName);
             if (value != null) {
                 set.add(value);
             }

@@ -1,7 +1,7 @@
 package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.byteasy.common.util.CastUtil;
+import com.byteasy.util.CastUtil;
 import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.platform.entity.ServiceInstance;
 import com.byteasy.platform.mapper.EntityDefineMapper;

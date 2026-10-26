@@ -1,6 +1,6 @@
 package com.byteasy.script.function;
 
-import com.byteasy.common.util.JacksonUtil2;
+import com.byteasy.util.JacksonUtil2;
 import com.byteasy.script.JsFunction;
 import com.byteasy.script.JsFunctions;
 import lombok.extern.log4j.Log4j2;
