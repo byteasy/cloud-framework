@@ -2,11 +2,19 @@ cd parent
 call mvn clean install
 rem call mvn source:jar install
 
+cd ../cloud-util
+call mvn clean install
+rem call mvn source:jar install
+
 cd ../cloud-service-api
 call mvn clean install
 rem call mvn source:jar install
 
-cd ../common
+cd ../cloud-framework-vertx
+call mvn clean install
+rem call mvn source:jar install
+
+cd ../cloud-framework-service
 call mvn clean install
 rem call mvn source:jar install
 
@@ -14,15 +22,11 @@ cd ../cloud-service-core
 call mvn clean install
 rem call mvn source:jar install
 
-cd ../cloud-mq-vertx
-call mvn clean install
-rem call mvn source:jar install
-
 cd ../cloud-platform/platform-api
 call mvn clean install
 rem call mvn source:jar install
 
-cd ../../cloud-service-common
+cd ../../cloud-common
 call mvn clean install
 rem call mvn source:jar install
 
@@ -40,10 +44,3 @@ call mvn clean install
 cd ../cloud-service-starter
 call mvn clean install
 rem call mvn source:jar install
-
-cd ../cloud-redis-service
-call mvn clean install
-rem call mvn source:jar install
-
-cd ../mybatis-plus-generator-byteasy
-call mvn clean install

@@ -34,7 +34,9 @@
         <!-- 2. 广播字典缓存：dict（堆内内存，限制最多 10000 条） -->
         <replicated-cache name="dict" mode="SYNC" statistics="true">
             <encoding media-type="application/x-java-object"/>
-            <memory storage="HEAP" max-count="10000" when-full="REMOVE"/>
+            <!-- 最多存活2天，一天不读取则缓存失效 -->
+            <expiration lifespan="172800000" max-idle="86400000"/>
+            <memory storage="HEAP" max-count="100000" when-full="REMOVE"/>
         </replicated-cache>
 
     </cache-container>
