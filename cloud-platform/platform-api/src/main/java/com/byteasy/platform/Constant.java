@@ -15,4 +15,9 @@ public interface Constant {
     String DIC_SETTING_LOGO_IMG = "logoImg";
     String DIC_SETTING_BACKGROUND_IMG = "backgroundImg";
     String DIC_SETTING_TITLE = "title";
+
+    /**
+     * 平台常驻缓存
+     */
+    String PLATFORM_REP_CACHE = "platformRepCache";
 }

@@ -10,6 +10,10 @@ cd ../cloud-service-api
 mvn clean install
 # mvn source:jar install
 
+cd ../cloud-framework-infinispan
+mvn clean install
+#call mvn source:jar install
+
 cd ../cloud-framework-vertx
 mvn clean install
 # mvn source:jar install

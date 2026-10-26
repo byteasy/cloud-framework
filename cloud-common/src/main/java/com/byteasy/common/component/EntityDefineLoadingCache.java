@@ -1,6 +1,7 @@
 package com.byteasy.common.component;
 
 import com.byteasy.component.ICacheLoader;
+import com.byteasy.platform.Constant;
 import com.byteasy.platform.api.EntityDefineClient;
 import com.byteasy.platform.entity.EntityDefine;
 import lombok.extern.log4j.Log4j2;
@@ -29,7 +30,7 @@ public class EntityDefineLoadingCache implements ICacheLoader<String, EntityDefi
     }
 
     @Override
-    @Cacheable(cacheNames = "dict", key = "'EntityDefine:' + #code")
+    @Cacheable(cacheNames = Constant.PLATFORM_REP_CACHE, key = "'EntityDefine:' + #code")
     public EntityDefine load(String code) {
         return entityDefineClient.getEntityDefine(code).getIfPresent();
     }

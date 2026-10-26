@@ -15,6 +15,14 @@
         <replicated-cache name="__vertx.haInfo"/>
         <replicated-cache name="__vertx.nodeInfo"/>
         <distributed-cache-configuration name="__vertx.distributed.cache.configuration"/>
+        <!-- 平台级常驻缓存 -->
+        <replicated-cache name="platformRepCache" mode="SYNC" statistics="true">
+            <encoding media-type="application/x-java-object"/>
+            <!-- 最多存活2天，一天不读取则缓存失效 -->
+            <expiration lifespan="172800000" max-idle="86400000"/>
+            <memory storage="HEAP" max-count="100000" when-full="REMOVE"/>
+        </replicated-cache>
+
         <!-- 默认分布式缓存模板 -->
         <distributed-cache-configuration name="dist-template" mode="SYNC" owners="2" remote-timeout="5000">
             <encoding media-type="text/plain"/>
@@ -30,14 +38,6 @@
             <!-- 修复后的 memory 标签 -->
             <memory storage="OFF_HEAP" max-size="1GB" when-full="REMOVE"/>
         </distributed-cache>
-
-        <!-- 2. 广播字典缓存：dict（堆内内存，限制最多 10000 条） -->
-        <replicated-cache name="dict" mode="SYNC" statistics="true">
-            <encoding media-type="application/x-java-object"/>
-            <!-- 最多存活2天，一天不读取则缓存失效 -->
-            <expiration lifespan="172800000" max-idle="86400000"/>
-            <memory storage="HEAP" max-count="100000" when-full="REMOVE"/>
-        </replicated-cache>
 
     </cache-container>
 </infinispan>

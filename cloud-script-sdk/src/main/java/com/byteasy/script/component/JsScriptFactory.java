@@ -2,6 +2,7 @@ package com.byteasy.script.component;
 
 import cn.hutool.crypto.digest.DigestUtil;
 import com.byteasy.component.ICacheLoader;
+import com.byteasy.platform.Constant;
 import com.byteasy.platform.api.JsScriptClient;
 import com.byteasy.platform.entity.JsScript;
 import com.google.common.cache.Cache;
@@ -25,7 +26,7 @@ public class JsScriptFactory implements ICacheLoader<Long, JsScript> {
     private static Cache<String, Source> SCRIPT_CACHE = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(2, TimeUnit.HOURS).build();
 
     @Override
-    @Cacheable(cacheNames = "dict", key = "'JsScript:' + #key")
+    @Cacheable(cacheNames = Constant.PLATFORM_REP_CACHE, key = "'JsScript:' + #key")
     public JsScript load(Long key) {
         return jsScriptClient.getById(key).getIfPresent();
     }

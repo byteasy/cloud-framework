@@ -2,6 +2,7 @@ package com.byteasy.common.component;
 
 import cn.hutool.core.util.ArrayUtil;
 import com.byteasy.component.ICacheLoader;
+import com.byteasy.platform.Constant;
 import com.byteasy.platform.api.FieldDefineClient;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.platform.entity.FieldGroup;
@@ -21,7 +22,7 @@ public class FieldDefineLoadingCache implements ICacheLoader<String, List<FieldD
 
 
     @Override
-    @Cacheable(cacheNames = "dict", key = "'FieldDefine:' + #className")
+    @Cacheable(cacheNames = Constant.PLATFORM_REP_CACHE, key = "'FieldDefine:' + #className")
     public List<FieldDefine> load(String className) {
         List<FieldDefine> list = fieldDefineService.listEntityFieldDefines(className).getIfPresent();
         if (list != null && !list.isEmpty()) {

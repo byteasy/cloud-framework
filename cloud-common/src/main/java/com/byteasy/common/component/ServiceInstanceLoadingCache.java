@@ -2,6 +2,7 @@ package com.byteasy.common.component;
 
 import com.byteasy.Result;
 import com.byteasy.component.ICacheLoader;
+import com.byteasy.platform.Constant;
 import com.byteasy.platform.api.ServiceInstanceClient;
 import com.byteasy.platform.entity.ServiceInstance;
 import com.google.common.collect.Maps;
@@ -23,7 +24,7 @@ public class ServiceInstanceLoadingCache implements ICacheLoader<String, Service
 
 
     @Override
-    @Cacheable(cacheNames = "dict", key = "'ServiceInstance:' + #code")
+    @Cacheable(cacheNames = Constant.PLATFORM_REP_CACHE, key = "'ServiceInstance:' + #code")
     public ServiceInstance load(String code) throws ExecutionException {
         Map<String, Object> params = Maps.newHashMapWithExpectedSize(2);
         params.put("code", code);

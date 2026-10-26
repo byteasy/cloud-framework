@@ -10,6 +10,10 @@ cd ../cloud-service-api
 call mvn clean install
 rem call mvn source:jar install
 
+cd ../cloud-framework-infinispan
+call mvn clean install
+rem call mvn source:jar install
+
 cd ../cloud-framework-vertx
 call mvn clean install
 rem call mvn source:jar install

@@ -2,6 +2,7 @@ package com.byteasy.common.component;
 
 import com.byteasy.Result;
 import com.byteasy.component.ICacheLoader;
+import com.byteasy.platform.Constant;
 import com.byteasy.platform.api.OpenapiClient;
 import com.byteasy.platform.entity.Openapi;
 import lombok.extern.log4j.Log4j2;
@@ -24,7 +25,7 @@ public class OpenApiLoadingCache implements ICacheLoader<String, Openapi> {
     }
 
     @Override
-    @Cacheable(cacheNames = "dict", key = "'Openapi:' + #apiCode")
+    @Cacheable(cacheNames = Constant.PLATFORM_REP_CACHE, key = "'Openapi:' + #apiCode")
     public Openapi load(String apiCode) throws ExecutionException {
         if (apiCode.contains("###")) {
             String[] parts = apiCode.split("###", 3);
