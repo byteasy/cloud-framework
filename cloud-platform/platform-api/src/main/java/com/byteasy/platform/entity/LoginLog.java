@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 登录日志
@@ -22,6 +24,8 @@ import lombok.Setter;
 @TableName("platform_login_log")
 @Schema(name = "LoginLog", description = "{\"zh_CN\":\"登录日志\",\"en\":\"Login log\"}")
 public class LoginLog extends ImmutablyEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = 4645889033598189904L;
 
     @Schema(description = "类型")
     @TableField("type")

@@ -7,6 +7,8 @@ import com.byteasy.entity.AuditEntity;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * JS脚本
@@ -20,6 +22,8 @@ import lombok.Setter;
 @TableName("platform_js_script")
 @FieldMeta(name = "JsScript", description = "JS脚本")
 public class JsScript extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = -6902825954802144215L;
 
     @FieldMeta(name = "名称", showOrder = 100)
     @TableField("name")

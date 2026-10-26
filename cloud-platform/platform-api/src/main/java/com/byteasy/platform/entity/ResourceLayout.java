@@ -8,6 +8,8 @@ import com.byteasy.enums.IBaseEnum;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 页面布局
@@ -21,6 +23,8 @@ import lombok.Setter;
 @TableName("platform_resource_layout")
 @FieldMeta(name = "ResourceLayout", description = "页面布局")
 public class ResourceLayout extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = 2805427249491934418L;
 
     @FieldMeta(name = "菜单", showOrder = 100)
     @TableField("resource_id")

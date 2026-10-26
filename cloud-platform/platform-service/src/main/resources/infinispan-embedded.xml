@@ -33,7 +33,7 @@
 
         <!-- 2. 广播字典缓存：dict（堆内内存，限制最多 10000 条） -->
         <replicated-cache name="dict" mode="SYNC" statistics="true">
-            <encoding media-type="text/plain"/>
+            <encoding media-type="application/x-java-object"/>
             <memory storage="HEAP" max-count="10000" when-full="REMOVE"/>
         </replicated-cache>
 

@@ -7,12 +7,15 @@ import com.byteasy.platform.entity.UserStatus;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.io.Serial;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY)
 public class PlatformUserDetails extends User implements UserDetails {
+    @Serial
+    private static final long serialVersionUID = -411825321318649897L;
 
     @Override
     @JsonIgnore

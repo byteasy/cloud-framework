@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 字段定义表
@@ -22,6 +24,8 @@ import lombok.Setter;
 @TableName("platform_field_define")
 @FieldMeta(name = "FieldDefine", description = "字段定义")
 public class FieldDefine extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = 5784589258639194740L;
 
     @TableField("class_name")
     @FieldMeta(name = "类", isSearch = true, showOrder = 102, width = 240, isRequire = true)

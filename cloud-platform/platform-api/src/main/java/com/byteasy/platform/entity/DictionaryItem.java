@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 字典项目定义表
@@ -23,6 +25,8 @@ import lombok.Setter;
 @TableName("platform_dictionary_item")
 @Schema(name = "DictionaryItem", description = "字典项目定义表")
 public class DictionaryItem extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = 4127487576857702354L;
 
     @Schema(description = "字典")
     @TableField("dictionary_id")

@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 平台角色定义表
@@ -22,6 +24,8 @@ import lombok.Setter;
 @TableName("platform_role")
 @Schema(name = "Role", description = "{\"zh_CN\":\"系统角色\",\"en\":\"System Role\"}")
 public class Role extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = -4900655795271826985L;
 
     @Schema(description = "编码")
     @TableField("code")

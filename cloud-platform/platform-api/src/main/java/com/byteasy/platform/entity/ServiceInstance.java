@@ -8,6 +8,8 @@ import com.byteasy.enums.Enable;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 平台服务定义表
@@ -21,6 +23,8 @@ import lombok.Setter;
 @TableName("platform_service_instance")
 @FieldMeta(name = "ServiceInstance", description = "平台服务定义表")
 public class ServiceInstance extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = 5022182471975121962L;
 
     @TableField("code")
     @FieldMeta(showOrder = 100, name = "编码", isSearch = true, isRequire = true)

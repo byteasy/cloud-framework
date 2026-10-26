@@ -9,6 +9,8 @@ import com.byteasy.enums.IBaseEnum;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 平台接口定义
@@ -22,6 +24,8 @@ import lombok.Setter;
 @TableName("platform_openapi")
 @FieldMeta(name = "Openapi", description = "平台接口定义")
 public class Openapi extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = -3635206241812044302L;
 
     @FieldMeta(name = "编码", showOrder = 100)
     @TableField("code")

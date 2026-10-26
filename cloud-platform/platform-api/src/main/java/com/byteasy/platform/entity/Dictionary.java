@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 字典定义表
@@ -22,6 +24,8 @@ import lombok.Setter;
 @TableName("platform_dictionary")
 @Schema(name = "Dictionary", description = "字典定义表")
 public class Dictionary extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = -4090393359325112732L;
 
     @Schema(description = "资源分组")
     @TableField("group_id")

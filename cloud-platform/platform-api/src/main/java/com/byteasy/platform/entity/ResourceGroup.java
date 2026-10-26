@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 平台资源分组定义表（用于对资源进行分类管理，如：系统管理、业务管理、报表管理等）
@@ -22,6 +24,8 @@ import lombok.Setter;
 @TableName("platform_resource_group")
 @Schema(name = "ResourceGroup", description = "{\"zh_CN\":\"菜单分组\",\"en\":\"Menu Group\"}")
 public class ResourceGroup extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = -8144169639017835069L;
 
     @Schema(description = "领域分类")
     @TableField("category_id")

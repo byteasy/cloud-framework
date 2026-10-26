@@ -9,11 +9,14 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.ibatis.type.JdbcType;
 
+import java.io.Serial;
 import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 public abstract class ImmutablyEntity<ID> extends Entity<ID> {
+    @Serial
+    private static final long serialVersionUID = -4022376070880543755L;
 
     /**
      * 创建人ID(用户ID)

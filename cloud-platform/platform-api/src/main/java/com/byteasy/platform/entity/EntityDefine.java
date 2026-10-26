@@ -7,6 +7,8 @@ import com.byteasy.entity.AuditEntity;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 平台模型定义
@@ -20,6 +22,8 @@ import lombok.Setter;
 @TableName("platform_entity_define")
 @FieldMeta(name = "EntityDefine", description = "平台模型定义")
 public class EntityDefine extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = 1184135931960492856L;
 
     @FieldMeta(name = "编码", showOrder = 100, maxLength = 512, isSearch = true)
     @TableField("code")

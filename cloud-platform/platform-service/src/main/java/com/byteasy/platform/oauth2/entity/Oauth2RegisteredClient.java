@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.io.Serial;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -24,6 +25,9 @@ import java.util.Set;
 @Data
 @Schema(name = "Oauth2RegisteredClient", description = "{\"zh_CN\":\"应用认证\",\"en\":\"OAuth2 application\"}")
 public class Oauth2RegisteredClient extends AuditEntity<String> {
+    @Serial
+    private static final long serialVersionUID = 105006343381051208L;
+
     /**
      * 客户端唯一标识符
      */

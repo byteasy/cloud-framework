@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 平台资源分类表
@@ -21,6 +23,8 @@ import lombok.Setter;
 @TableName("platform_resource_category")
 @Schema(name = "ResourceCategory", description = "{\"zh_CN\":\"菜单分类\",\"en\":\"Menu Category\"}")
 public class ResourceCategory extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = 3548550726660895712L;
 
     @Schema(description = "资源分类")
     @TableField("parent_id")

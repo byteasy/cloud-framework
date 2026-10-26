@@ -21,7 +21,7 @@
 
         <dependency>
             <groupId>com.byteasy</groupId>
-            <artifactId>cloud-mq-vertx</artifactId>
+            <artifactId>cloud-service-vertx</artifactId>
             <version>${project.version}</version>
         </dependency>
 

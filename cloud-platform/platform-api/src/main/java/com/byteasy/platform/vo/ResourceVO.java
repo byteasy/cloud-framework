@@ -5,10 +5,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 @Getter
 @Setter
 @Schema(name = "ResourceVO", description = "平台资源定义展示")
 public class ResourceVO extends Resource {
+    @Serial
+    private static final long serialVersionUID = -49404389936945026L;
 
     @Schema(description = "资源分组")
     private String groupName;

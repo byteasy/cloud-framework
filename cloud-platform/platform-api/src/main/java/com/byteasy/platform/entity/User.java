@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -30,6 +31,8 @@ import java.util.Map;
 @TableName(value = "platform_user", autoResultMap = true)
 @Schema(name = "User", description = "{\"zh_CN\":\"系统账号\",\"en\":\"System Account\"}")
 public class User extends LogicDeleteEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = 4297930495871302634L;
 
     @Schema(description = "头像")
     @TableField("avatar")

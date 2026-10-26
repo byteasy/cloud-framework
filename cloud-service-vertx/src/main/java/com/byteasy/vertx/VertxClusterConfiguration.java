@@ -1,4 +1,4 @@
-package com.byteasy.mq.vertx;
+package com.byteasy.vertx;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;

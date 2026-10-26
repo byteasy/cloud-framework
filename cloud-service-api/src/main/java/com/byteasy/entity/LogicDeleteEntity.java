@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.ibatis.type.JdbcType;
 
+import java.io.Serial;
 import java.time.LocalDateTime;
 
 /**
@@ -18,6 +19,8 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public abstract class LogicDeleteEntity<ID> extends AuditEntity<ID> {
+    @Serial
+    private static final long serialVersionUID = -8688774287770934494L;
 
     @Schema(description = "是否删除")
     @TableField(value = "IS_DELETED")

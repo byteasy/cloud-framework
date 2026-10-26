@@ -11,6 +11,7 @@ import com.byteasy.typehandler.PgJsonbTypeHandler;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
 import java.util.Map;
 
 /**
@@ -26,6 +27,8 @@ import java.util.Map;
 @TableName(value = "platform_openapi_log", autoResultMap = true)
 @FieldMeta(name = "OpenapiLog", description = "接口执行日志记录表")
 public class OpenapiLog extends ImmutablyEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = -4910012409087152384L;
 
     @FieldMeta(name = "微服务编码", showOrder = 100)
     @TableField("service_code")

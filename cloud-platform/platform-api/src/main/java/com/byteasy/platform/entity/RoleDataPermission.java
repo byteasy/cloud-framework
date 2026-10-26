@@ -8,11 +8,15 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.io.Serial;
+
 @Getter
 @Setter
 @Accessors(chain = true)
 @TableName("COM_ROLE_DATA_PERMISSION")
 public class RoleDataPermission extends Entity<Long> {
+    @Serial
+    private static final long serialVersionUID = 8145898142251245139L;
 
     @Schema(description = "角色外键")
     @TableField("ROLE_ID")

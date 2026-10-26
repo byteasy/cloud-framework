@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.ibatis.type.JdbcType;
 
+import java.io.Serial;
 import java.time.LocalDateTime;
 
 /**
@@ -18,6 +19,8 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public abstract class AuditEntity<ID> extends ImmutablyEntity<ID> {
+    @Serial
+    private static final long serialVersionUID = -87635369816876054L;
 
     /**
      * 更新人ID(用户ID)

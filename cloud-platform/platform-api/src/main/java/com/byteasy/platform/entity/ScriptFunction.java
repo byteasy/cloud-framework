@@ -7,6 +7,8 @@ import com.byteasy.entity.AuditEntity;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 脚本函数定义
@@ -20,6 +22,8 @@ import lombok.Setter;
 @TableName("platform_script_function")
 @FieldMeta(name = "ScriptFunction", description = "脚本函数定义")
 public class ScriptFunction extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = 1022260473037330843L;
 
     @FieldMeta(name = "服务编码", showOrder = 100)
     @TableField("service_code")

@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 平台资源定义表（菜单/目录/按钮权限）
@@ -23,6 +25,8 @@ import lombok.Setter;
 @TableName("platform_resource")
 @Schema(name = "Resource", description = "{\"zh_CN\":\"系统菜单\",\"en\":\"System Menu\"}")
 public class Resource extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = 2955094246225423508L;
 
     @Schema(description = "编码")
     @TableField("code")

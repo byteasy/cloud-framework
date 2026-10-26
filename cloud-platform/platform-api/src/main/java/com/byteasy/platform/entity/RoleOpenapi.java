@@ -7,6 +7,8 @@ import com.byteasy.entity.ImmutablyEntity;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 角色接口授权表
@@ -20,6 +22,8 @@ import lombok.Setter;
 @TableName("platform_role_openapi")
 @FieldMeta(name = "RoleOpenapi", description = "角色接口授权表")
 public class RoleOpenapi extends ImmutablyEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = 3200602901455695384L;
 
     @FieldMeta(name = "平台资源关联的角色ID", showOrder = 100)
     @TableField("role_id")

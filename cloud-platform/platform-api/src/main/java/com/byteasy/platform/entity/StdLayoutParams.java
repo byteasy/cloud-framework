@@ -7,6 +7,8 @@ import com.byteasy.entity.AuditEntity;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 /**
  * <p>
  * 标准布局参数
@@ -20,6 +22,8 @@ import lombok.Setter;
 @TableName("platform_std_layout_params")
 @FieldMeta(name = "StdLayoutParams", description = "标准布局参数")
 public class StdLayoutParams extends AuditEntity<Long> {
+    @Serial
+    private static final long serialVersionUID = -3140046379847112734L;
 
     @FieldMeta(name = "类名", showOrder = 100)
     @TableField("class_name")
