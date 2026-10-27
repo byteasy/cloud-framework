@@ -22,6 +22,7 @@ public class EntityChangeHandlerFactory {
     }
 
     public void handle(String src, EntityChangeEvent event) {
+        log.info("src: {} entity change: {}", src, JacksonUtil.toPrettyJson(event));
         if (map != null) {
             for (IEntityChangeHandler value : map.values()) {
                 try {

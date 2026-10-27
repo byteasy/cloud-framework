@@ -35,22 +35,16 @@ public class EntityChangeEvent {
     private String entityClass;
 
     /**
-     * 影响的主键列表
-     */
-    @Builder.Default
-    private List<Serializable> ids = Collections.emptyList();
-
-    /**
      * 变更前的实体数据列表 (UPDATE / DELETE 时可能存在)
      */
     @Builder.Default
-    private List<? extends Object> beforeEntities = Collections.emptyList();
+    private List<?> beforeEntities = Collections.emptyList();
 
     /**
      * 变更后的实体数据列表 (INSERT / UPDATE 时存在)
      */
     @Builder.Default
-    private List<? extends Object> afterEntities = Collections.emptyList();
+    private List<?> afterEntities = Collections.emptyList();
 
     /**
      * 是否是基于 Wrapper 条件触发的批量操作

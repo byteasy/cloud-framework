@@ -95,19 +95,26 @@ public class CommonServiceImpl implements ICommonService {
         Object primaryKeyValue = entity.get(primaryColumn.getName());
         if (ObjectUtils.isEmpty(primaryKeyValue)) {
             insert(entityDefine, entity, columnMap, primaryColumn);
-            primaryKeyValue = entity.get(primaryColumn.getName());
-            publicEvent(EntityChangeEvent.builder()
-                    .changeType(EntityChangeEvent.ChangeType.INSERT)
-                    .entityClass(className)
-                    .afterEntities(List.of(entity))
-                    .build());
+            if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
+                publicEvent(EntityChangeEvent.builder()
+                        .changeType(EntityChangeEvent.ChangeType.INSERT)
+                        .entityClass(className)
+                        .afterEntities(List.of(entity))
+                        .build());
+            }
+            return entity;
         } else {
-            Map<String, Object> oldEntity = getByPrimaryKey(className, primaryKeyValue);
+            Map<String, Object> oldEntity = null;
+            if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
+                oldEntity = getByPrimaryKey(className, primaryKeyValue);
+            }
             update(entityDefine, entity, columnMap, primaryColumn);
-            publicEvent(EntityChangeEvent.builder().changeType(EntityChangeEvent.ChangeType.UPDATE)
-                    .beforeEntities(List.of(oldEntity))
-                    .afterEntities(List.of(entity))
-                    .entityClass(className).build());
+            if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
+                publicEvent(EntityChangeEvent.builder().changeType(EntityChangeEvent.ChangeType.UPDATE)
+                        .beforeEntities(List.of(oldEntity))
+                        .afterEntities(List.of(entity))
+                        .entityClass(className).build());
+            }
         }
         return getByPrimaryKey(entityDefine, primaryKeyValue, columnMap, primaryColumn);
     }

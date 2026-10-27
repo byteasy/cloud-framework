@@ -201,7 +201,6 @@ public class RepositoryMutationAspect {
         // ==================== 1. DELETE 操作 ====================
         if (methodName.startsWith("remove")) {
             builder.changeType(EntityChangeEvent.ChangeType.DELETE)
-                    .ids(ctx.ids)
                     .beforeEntities(ctx.beforeEntities);
 
             // remove(Wrapper) 或 removeByMap
@@ -215,24 +214,16 @@ public class RepositoryMutationAspect {
         // save(T entity)
         if ("save".equals(methodName) && entityClass.isInstance(args[0])) {
             Object entity = args[0];
-            // 此时自增主键已由 MyBatis 回填进 entity 属性
-            Serializable id = extractId(entity, tableInfo);
-            List<Serializable> ids = id != null ? Collections.singletonList(id) : Collections.emptyList();
-
             return builder.changeType(EntityChangeEvent.ChangeType.INSERT)
                     .afterEntities(Collections.singletonList(entity))
-                    .ids(ids)
                     .build();
         }
 
         // saveBatch(Collection<T> entityList, int batchSize)
         if ("saveBatch".equals(methodName) && args[0] instanceof Collection) {
             Collection<?> entities = (Collection<?>) args[0];
-            List<Serializable> ids = extractIdsFromCollection(entities, tableInfo);
-
             return builder.changeType(EntityChangeEvent.ChangeType.INSERT)
                     .afterEntities(new ArrayList<>(entities))
-                    .ids(ids)
                     .build();
         }
 
@@ -246,7 +237,6 @@ public class RepositoryMutationAspect {
             return builder.changeType(EntityChangeEvent.ChangeType.UPDATE)
                     .beforeEntities(ctx.beforeEntities)
                     .afterEntities(Collections.singletonList(entity))
-                    .ids(ids)
                     .build();
         }
 
@@ -257,7 +247,6 @@ public class RepositoryMutationAspect {
 
             return builder.changeType(EntityChangeEvent.ChangeType.UPDATE)
                     .afterEntities(new ArrayList<>(entities))
-                    .ids(ids)
                     .build();
         }
 
@@ -268,8 +257,6 @@ public class RepositoryMutationAspect {
             // update(T entity, Wrapper)
             if (args.length >= 1 && entityClass.isInstance(args[0])) {
                 builder.afterEntities(Collections.singletonList(args[0]));
-                Serializable id = extractId(args[0], tableInfo);
-                if (id != null) builder.ids(Collections.singletonList(id));
             }
             return builder.build();
         }
@@ -278,28 +265,20 @@ public class RepositoryMutationAspect {
         // saveOrUpdate(T entity)
         if ("saveOrUpdate".equals(methodName) && entityClass.isInstance(args[0])) {
             Object entity = args[0];
-            Serializable id = extractId(entity, tableInfo);
-            List<Serializable> ids = id != null ? Collections.singletonList(id) : ctx.ids;
-
             EntityChangeEvent.ChangeType type = ctx.isUpdate
                     ? EntityChangeEvent.ChangeType.UPDATE
                     : EntityChangeEvent.ChangeType.INSERT;
-
             return builder.changeType(type)
                     .beforeEntities(ctx.beforeEntities)
                     .afterEntities(Collections.singletonList(entity))
-                    .ids(ids)
                     .build();
         }
 
         // saveOrUpdateBatch(Collection<T> entityList, int batchSize)
         if ("saveOrUpdateBatch".equals(methodName) && args[0] instanceof Collection) {
             Collection<?> entities = (Collection<?>) args[0];
-            List<Serializable> ids = extractIdsFromCollection(entities, tableInfo);
-
             return builder.changeType(EntityChangeEvent.ChangeType.UPDATE)
                     .afterEntities(new ArrayList<>(entities))
-                    .ids(ids)
                     .build();
         }
 
