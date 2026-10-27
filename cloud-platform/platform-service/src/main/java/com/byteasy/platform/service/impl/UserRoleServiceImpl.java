@@ -4,14 +4,9 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
-import com.byteasy.Constant;
 import com.byteasy.common.token.TokenUtil;
-import com.byteasy.util.CastUtil;
-import com.byteasy.util.RequestUtil;
 import com.byteasy.enums.YesNo;
-import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.exception.BizException;
-import com.byteasy.mq.IProducer;
 import com.byteasy.platform.dto.UserRoleDTO;
 import com.byteasy.platform.entity.*;
 import com.byteasy.platform.mapper.UserRoleMapper;
@@ -20,6 +15,8 @@ import com.byteasy.platform.util.UserValidUtil;
 import com.byteasy.platform.vo.LeftMenuVO;
 import com.byteasy.platform.vo.ResourceCategoryVO;
 import com.byteasy.platform.vo.UserRoleVO;
+import com.byteasy.util.CastUtil;
+import com.byteasy.util.RequestUtil;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +44,6 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRole> i
     private IResourceCategoryService resourceCategoryService;
     @Autowired
     private IResourceService resourceService;
-    @Autowired
-    private IProducer producer;
 
     @Override
     public Set<Long> getUserRoleIds(Long userId) {
@@ -101,7 +96,8 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRole> i
         removeByUserId(userRoleVO.getUserId());
         saveUserRole(userRoleVO.getUserId(), userRoleVO.getRoleIds());
         User user = userService.getById(userRoleVO.getUserId());
-        producer.publishMessage(Constant.TOPIC_PLATFORM_ENTITY_CHANGE, User.class.getName(), EntityChangeEvent.of(EntityChangeEvent.ChangeType.UPDATE, user, user, User.class.getName()));
+        // TODO
+//        producer.publishMessage(Constant.TOPIC_PLATFORM_ENTITY_CHANGE, User.class.getName(), EntityChangeEvent.of(EntityChangeEvent.ChangeType.UPDATE, user, user, User.class.getName()));
     }
 
     @Override

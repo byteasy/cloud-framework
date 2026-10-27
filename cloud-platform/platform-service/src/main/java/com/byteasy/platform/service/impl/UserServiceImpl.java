@@ -3,13 +3,9 @@ package com.byteasy.platform.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
-import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.common.token.TokenUtil;
-import com.byteasy.util.CastUtil;
-import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.exception.BizException;
-import com.byteasy.mq.IProducer;
 import com.byteasy.platform.entity.DictionaryItem;
 import com.byteasy.platform.entity.User;
 import com.byteasy.platform.entity.UserStatus;
@@ -18,6 +14,7 @@ import com.byteasy.platform.service.IDictionaryService;
 import com.byteasy.platform.service.IUserService;
 import com.byteasy.platform.util.UserUtil;
 import com.byteasy.platform.vo.PersonalSettingsVO;
+import com.byteasy.util.CastUtil;
 import com.byteasy.util.I18nUtil;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -46,8 +43,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     private PasswordEncoder passwordEncoder;
     @Autowired
     private IDictionaryService dictionaryService;
-    @Autowired
-    private IProducer producer;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -177,7 +172,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             /**
              * 同步其它进程中的用户与角色的缓存信息
              */
-            producer.publishMessage(Constant.TOPIC_PLATFORM_ENTITY_CHANGE, User.class.getName(), EntityChangeEvent.of(EntityChangeEvent.ChangeType.UPDATE, dbUser, dbUser, User.class.getName()));
+            // TODO
+//            producer.publishMessage(Constant.TOPIC_PLATFORM_ENTITY_CHANGE, User.class.getName(), EntityChangeEvent.of(EntityChangeEvent.ChangeType.UPDATE, dbUser, dbUser, User.class.getName()));
             return super.saveOrUpdate(dbUser);
         }
     }

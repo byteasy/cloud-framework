@@ -1,12 +1,12 @@
 package com.byteasy.script.function;
 
-import com.byteasy.util.JacksonUtil2;
+import com.byteasy.util.JacksonUtil;
 import com.byteasy.exception.BizException;
 import com.byteasy.script.JsFunction;
 import com.byteasy.script.JsFunctions;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.type.TypeReference;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,10 +43,10 @@ public class JSONFunctions implements JsFunctions {
             public Object run(Object[] args) throws Exception {
                 String json = String.valueOf(args[0]);
                 if (json.trim().startsWith("{")) {
-                    return JacksonUtil2.nativeRead(String.valueOf(args[0]), new TypeReference<Map<String, Object>>() {
+                    return JacksonUtil.nativeRead(String.valueOf(args[0]), new TypeReference<Map<String, Object>>() {
                     });
                 } else if (json.trim().startsWith("[")) {
-                    return JacksonUtil2.nativeRead(String.valueOf(args[0]), new TypeReference<List<Object>>() {
+                    return JacksonUtil.nativeRead(String.valueOf(args[0]), new TypeReference<List<Object>>() {
                     });
                 } else {
                     log.error("JSON parse error, {}", json);
@@ -78,13 +78,13 @@ public class JSONFunctions implements JsFunctions {
             @Override
             public Object run(Object[] args) throws Exception {
                 if (args.length == 1) {
-                    return JacksonUtil2.toJson(args[0]);
+                    return JacksonUtil.toJson(args[0]);
                 } else {
                     boolean withClass = (boolean) args[1];
                     if (withClass) {
-                        return JacksonUtil2.toJson(args[0], true);
+                        return JacksonUtil.toJson(args[0], true);
                     } else {
-                        return JacksonUtil2.toJson(args[0], false);
+                        return JacksonUtil.toJson(args[0], false);
                     }
                 }
             }

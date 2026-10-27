@@ -1,6 +1,6 @@
 package com.byteasy.script;
 
-import com.byteasy.util.JacksonUtil2;
+import com.byteasy.util.JacksonUtil;
 import com.byteasy.script.util.JsScriptExecutor;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +14,7 @@ public class JsTestDemo {
         String frontJson = "{\"name\":\"测试用户\",\"age\":25,\"birth\":\"2000-01-01\"}";
         Map<String, Object> frontParams;
         try {
-            frontParams = JacksonUtil2.parse(frontJson, Map.class);
+            frontParams = JacksonUtil.parse(frontJson, Map.class);
         } catch (Exception e) {
             throw new RuntimeException("前端参数解析失败", e);
         }
@@ -42,7 +42,7 @@ public class JsTestDemo {
         // 4. 序列化为JSON返回前端
         String resultJson;
         try {
-            resultJson = JacksonUtil2.toJson(resultObj);
+            resultJson = JacksonUtil.toJson(resultObj);
         } catch (Exception e) {
             throw new RuntimeException("结果序列化失败", e);
         }

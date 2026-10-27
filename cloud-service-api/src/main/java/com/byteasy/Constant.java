@@ -46,8 +46,4 @@ public interface Constant {
 
     String I_18_N_FORBIDDEN_OP = "ForbiddenOp";
 
-    /**
-     * TOPIC
-     */
-    String TOPIC_PLATFORM_ENTITY_CHANGE = "platform_entity_change";
 }

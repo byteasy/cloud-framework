@@ -30,12 +30,6 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.byteasy</groupId>
-            <artifactId>cloud-mq-restfull</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
         <!-- spring cloud -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>

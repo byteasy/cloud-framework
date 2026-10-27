@@ -1,6 +1,6 @@
 package com.byteasy.script;
 
-import com.byteasy.util.JacksonUtil2;
+import com.byteasy.util.JacksonUtil;
 import com.byteasy.script.util.JsScriptExecutor;
 import org.junit.jupiter.api.Test;
 
@@ -39,7 +39,7 @@ public class JsTestDemoExtended {
                 """;
 
         Object result = JsScriptExecutor.runScript(params, jsScript, "test");
-        System.out.println(JacksonUtil2.toJson(result));
+        System.out.println(JacksonUtil.toJson(result));
         // 预期输出: {"jsNull":null,"jsUndefined":null,"calculatedNaN":null,"calculatedInfinite":null,"inputNull":null}
         System.out.println("测试用例 1 通过\n");
     }
@@ -64,7 +64,7 @@ public class JsTestDemoExtended {
                 """;
 
         Object result = JsScriptExecutor.runScript(params, jsScript, "test");
-        System.out.println(JacksonUtil2.toJson(result));
+        System.out.println(JacksonUtil.toJson(result));
         // 预期关注点: floatCalculation 应该是 13.0 而不是整型 13 (防止破坏前端某些强类型字段的定义)
         System.out.println("测试用例 2 通过\n");
     }

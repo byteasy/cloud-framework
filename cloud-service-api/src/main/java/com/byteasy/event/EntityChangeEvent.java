@@ -1,88 +1,59 @@
 package com.byteasy.event;
 
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.ToString;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * 实体变更事件类，用于描述数据实体的变更操作
- *
+ * 实体变更事件，可用于清空 Infinispan 缓存、发送 MQ 或记录审计日志
  */
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
-@ToString
-public class EntityChangeEvent implements Serializable {
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class EntityChangeEvent {
 
     public enum ChangeType {
-        CREATE, UPDATE, DELETE, BATCH_CREATE, BATCH_UPDATE, BATCH_DELETE
+        INSERT,
+        UPDATE,
+        DELETE
     }
 
-    private String eventId;
+    /**
+     * 变更类型
+     */
     private ChangeType changeType;
-    /**
-     * 变更前
-     */
-    private Object before;
-    /**
-     * 变更后
-     */
-    private Object after;
 
     /**
-     * 变更实体类
+     * 实体类型 (如 User.class)
      */
-    private String className;
+    private Class<?> entityClass;
 
     /**
-     * 变更服务
+     * 影响的主键列表
      */
-    private String srcApplicationName;
+    @Builder.Default
+    private List<Serializable> ids = Collections.emptyList();
 
     /**
-     * 拓展字段
+     * 变更前的实体数据列表 (UPDATE / DELETE 时可能存在)
      */
-    private Map<String, Object> extendedFields;
+    @Builder.Default
+    private List<Object> beforeEntities = Collections.emptyList();
 
-    // 无参构造方法（Jackson反序列化需要）
-    public EntityChangeEvent() {
-        this.eventId = UUID.randomUUID().toString();
-        this.extendedFields = new HashMap<>();
-    }
+    /**
+     * 变更后的实体数据列表 (INSERT / UPDATE 时存在)
+     */
+    @Builder.Default
+    private List<Object> afterEntities = Collections.emptyList();
 
-    // 全参数构造方法
-    public EntityChangeEvent(ChangeType changeType, Object before, Object after) {
-        this();
-        this.changeType = changeType;
-        this.before = before;
-        this.after = after;
-    }
-
-    public EntityChangeEvent(ChangeType changeType, Object before, Object after, String className) {
-        this.changeType = changeType;
-        this.before = before;
-        this.after = after;
-        this.className = className;
-    }
-
-    public static EntityChangeEvent of(ChangeType changeType, Object before, Object after) {
-        return new EntityChangeEvent(changeType, before, after);
-    }
-
-    public static EntityChangeEvent of(ChangeType changeType, Object before, Object after, String className) {
-        return new EntityChangeEvent(changeType, before, after, className);
-    }
-
-    @JsonAnySetter
-    public void addExtendedField(String key, Object value) {
-        this.extendedFields.put(key, value);
-    }
-
+    /**
+     * 是否是基于 Wrapper 条件触发的批量操作
+     */
+    private boolean wrapperOperation;
 }

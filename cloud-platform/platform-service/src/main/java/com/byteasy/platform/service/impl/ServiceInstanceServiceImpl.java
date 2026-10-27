@@ -1,7 +1,7 @@
 package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.byteasy.common.service.EntityChangeService;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.platform.entity.ServiceInstance;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
  * @since 2026-03-03
  */
 @Service
-public class ServiceInstanceServiceImpl extends EntityChangeService<Long, ServiceInstanceMapper, ServiceInstance> implements IServiceInstanceService {
+public class ServiceInstanceServiceImpl extends ServiceImpl<ServiceInstanceMapper, ServiceInstance> implements IServiceInstanceService {
 
     @Override
     public ServiceInstance findServiceInstanceByCode(String code) {

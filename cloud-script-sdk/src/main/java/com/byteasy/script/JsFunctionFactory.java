@@ -9,7 +9,7 @@ import com.byteasy.common.token.UserInfo;
 import com.byteasy.common.token.UserInfoBuilder;
 import com.byteasy.util.HttpResult;
 import com.byteasy.util.HttpUtil;
-import com.byteasy.util.JacksonUtil2;
+import com.byteasy.util.JacksonUtil;
 import com.byteasy.event.IPlatformReady;
 import com.byteasy.exception.BizException;
 import com.byteasy.platform.api.ScriptFunctionClient;
@@ -106,11 +106,11 @@ public class JsFunctionFactory implements IPlatformReady {
                     UserInfo token = TokenUtil.getUserinfo();
                     ServiceInstance randomService = random(instances);
                     try {
-                        HttpResult<String> httpResult = HttpUtil.post(randomService.getUri().toString() + serviceInstanceLoadingCache.load(scriptFunction.getServiceCode()).getContextPath() + Constant.SAPI + "/scriptFunctionRunner/run/" + scriptFunction.getName()).textBody(JacksonUtil2.toJson(args, true))
-                                .header(Constant.USER_INFO, token != null ? Base64.encode(JacksonUtil2.toJson(token)) : UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()))
+                        HttpResult<String> httpResult = HttpUtil.post(randomService.getUri().toString() + serviceInstanceLoadingCache.load(scriptFunction.getServiceCode()).getContextPath() + Constant.SAPI + "/scriptFunctionRunner/run/" + scriptFunction.getName()).textBody(JacksonUtil.toJson(args, true))
+                                .header(Constant.USER_INFO, token != null ? Base64.encode(JacksonUtil.toJson(token)) : UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()))
                                 .execute(String.class);
                         String result = httpResult.getData();
-                        return JacksonUtil2.parseObj(result);
+                        return JacksonUtil.parseObj(result);
                     } catch (Exception e) {
                         log.error(scriptFunction.getName() + " remote call err", e);
                         throw new BizException(e.getMessage());

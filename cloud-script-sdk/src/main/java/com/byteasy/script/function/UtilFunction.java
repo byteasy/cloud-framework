@@ -1,12 +1,10 @@
 package com.byteasy.script.function;
 
 import com.byteasy.exception.BizException;
-import com.byteasy.mq.IProducer;
 import com.byteasy.script.JsFunction;
 import com.byteasy.script.JsFunctions;
 import com.byteasy.util.EntityCodeUtil;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -17,8 +15,6 @@ import java.util.List;
 @Component
 @Log4j2
 public class UtilFunction implements JsFunctions {
-    @Autowired
-    private IProducer producer;
 
     @Override
     public Collection<JsFunction> jsFunctions() {
@@ -78,7 +74,7 @@ public class UtilFunction implements JsFunctions {
                 }
                 String json = (String) args[2];
                 json = json.replace("com.oracle.truffle.polyglot.PolyglotMap", HashMap.class.getName());
-                producer.publish((String) args[0], (String) args[1], json);
+//                producer.publish((String) args[0], (String) args[1], json);
                 return null;
             }
         });

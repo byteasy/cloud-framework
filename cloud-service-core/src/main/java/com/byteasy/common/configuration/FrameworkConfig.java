@@ -82,6 +82,7 @@ public class FrameworkConfig {
         return interceptor;
     }
 
+
     @Bean
     public MybatisPlusPropertiesCustomizer mybatisPlusPropertiesCustomizer() {
         return properties -> {

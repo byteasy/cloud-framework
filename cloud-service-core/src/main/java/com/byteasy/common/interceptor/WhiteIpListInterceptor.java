@@ -5,7 +5,7 @@ import cn.hutool.http.Header;
 import cn.hutool.json.JSONUtil;
 import com.byteasy.Result;
 import com.byteasy.util.IpUtil;
-import com.byteasy.util.JacksonUtil2;
+import com.byteasy.util.JacksonUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.log4j.Log4j2;
@@ -28,7 +28,7 @@ public class WhiteIpListInterceptor implements HandlerInterceptor {
         List<String> ips = IpUtil.getClientIp(request);
 
         if (!isMatch(ips)) {
-            log.warn("WhiteIpListInterceptor request ip: {} reject", JacksonUtil2.toJson(ips));
+            log.warn("WhiteIpListInterceptor request ip: {} reject", JacksonUtil.toJson(ips));
             response.addHeader(Header.CONTENT_TYPE.getValue(), MediaType.APPLICATION_JSON_VALUE);
             response.setStatus(403);
             response.getWriter().write(JSONUtil.toJsonStr(Result.error("认证失败，未授权的操作")));

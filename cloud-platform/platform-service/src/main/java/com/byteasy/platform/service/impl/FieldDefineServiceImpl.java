@@ -1,10 +1,10 @@
 package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.platform.mapper.FieldDefineMapper;
 import com.byteasy.platform.service.IFieldDefineService;
-import com.byteasy.common.service.EntityChangeService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.List;
  * @since 2026-03-13
  */
 @Service
-public class FieldDefineServiceImpl extends EntityChangeService<Long, FieldDefineMapper, FieldDefine> implements IFieldDefineService {
+public class FieldDefineServiceImpl extends ServiceImpl<FieldDefineMapper, FieldDefine> implements IFieldDefineService {
 
     @Override
     public List<FieldDefine> queryByClassName(String className) {

@@ -7,7 +7,6 @@ import com.byteasy.Constant;
 import com.byteasy.common.component.EntityDefineLoadingCache;
 import com.byteasy.common.component.EntityServiceFactory;
 import com.byteasy.common.component.FieldDefineLoadingCache;
-import com.byteasy.common.event.EntityChangeFactory;
 import com.byteasy.common.service.ICommonService;
 import com.byteasy.common.service.IDatabaseMetaService;
 import com.byteasy.common.token.TokenUtil;
@@ -17,7 +16,6 @@ import com.byteasy.enums.Delete;
 import com.byteasy.enums.RelationType;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.exception.BizException;
-import com.byteasy.mq.IProducer;
 import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.util.*;
@@ -67,14 +65,8 @@ public class CommonServiceImpl implements ICommonService {
     private EntityServiceFactory entityServiceFactory;
     @Autowired
     private IDatabaseMetaService databaseMetaService;
-    @Autowired
-    private IProducer producer;
-    @Autowired
-    private EntityChangeFactory entityChangeFactory;
 
     protected void publicEvent(String className, EntityChangeEvent event) {
-        producer.publish(Constant.TOPIC_PLATFORM_ENTITY_CHANGE, className, JacksonUtil2.toJson(event, true));
-        entityChangeFactory.handle(event);
     }
 
 

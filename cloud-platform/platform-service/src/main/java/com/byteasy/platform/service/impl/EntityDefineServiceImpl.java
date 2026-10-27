@@ -1,13 +1,13 @@
 package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.byteasy.util.CastUtil;
+import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.platform.entity.ServiceInstance;
 import com.byteasy.platform.mapper.EntityDefineMapper;
 import com.byteasy.platform.service.IEntityDefineService;
 import com.byteasy.platform.service.IServiceInstanceService;
-import com.byteasy.common.service.EntityChangeService;
+import com.byteasy.util.CastUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +26,7 @@ import java.util.Set;
  * @since 2026-05-21
  */
 @Service
-public class EntityDefineServiceImpl extends EntityChangeService<Long, EntityDefineMapper, EntityDefine> implements IEntityDefineService {
+public class EntityDefineServiceImpl extends ServiceImpl<EntityDefineMapper, EntityDefine> implements IEntityDefineService {
 
     @Autowired
     private IServiceInstanceService serviceInstanceService;
