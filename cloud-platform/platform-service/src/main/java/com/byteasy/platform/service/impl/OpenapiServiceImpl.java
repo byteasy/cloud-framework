@@ -37,6 +37,7 @@ public class OpenapiServiceImpl extends ServiceImpl<OpenapiMapper, Openapi> impl
             queryWrapper2.and(s -> s.like(Openapi::getUri, segment));
         }
         queryWrapper2.eq(Openapi::getHttpMethod, method);
+        queryWrapper2.last("limit 1");
         openapi = getOne(queryWrapper2, false);
         return openapi;
     }

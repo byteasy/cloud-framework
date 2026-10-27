@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;
+import com.byteasy.platform.dto.RoleUserDTO;
 import com.byteasy.platform.dto.UserRoleDTO;
 import com.byteasy.platform.entity.*;
 import com.byteasy.platform.mapper.UserRoleMapper;
@@ -44,6 +45,8 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRole> i
     private IResourceCategoryService resourceCategoryService;
     @Autowired
     private IResourceService resourceService;
+    @Autowired
+    private IRoleService roleService;
 
     @Override
     public Set<Long> getUserRoleIds(Long userId) {
@@ -85,6 +88,16 @@ public class UserRoleServiceImpl extends ServiceImpl<UserRoleMapper, UserRole> i
 
         userRoleVO.setRoleIds(getUserRoleIds(user.getId()));
         return userRoleVO;
+    }
+
+    @Override
+    public RoleUserDTO getUsersByRoleId(Long roleId) {
+        Set<String> userNames = baseMapper.getUserNamesByRoleId(roleId);
+        Role role = roleService.getById(roleId);
+        RoleUserDTO dto = new RoleUserDTO();
+        dto.setUserNames(userNames);
+        dto.setRole(role);
+        return dto;
     }
 
     @Override

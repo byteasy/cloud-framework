@@ -9,17 +9,14 @@ import com.byteasy.common.controller.AbstractController;
 import com.byteasy.common.controller.OpenapiCommonController;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
-import com.byteasy.permission.util.OpenapiUtil;
-import com.byteasy.util.RequestUtil;
 import com.byteasy.enums.Enable;
 import com.byteasy.exception.BizException;
 import com.byteasy.permission.component.RoleOpenapiLoadingCache;
 import com.byteasy.permission.component.UserRoleLoadingCache;
+import com.byteasy.permission.util.OpenapiUtil;
+import com.byteasy.platform.dto.UserRoleDTO;
 import com.byteasy.platform.entity.Openapi;
-import com.byteasy.util.EntityCodeUtil;
-import com.byteasy.util.I18nUtil;
-import com.byteasy.util.RequestMappingResolver;
-import com.byteasy.util.SpringContextUtil;
+import com.byteasy.util.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -164,11 +161,11 @@ public class OpenapiAuthAspect {
                     case PUBLIC, LOGIN:
                         return joinPoint.proceed();
                     case AUTH: {
-                        Set<Long> roleIds = userRoleLoadingCache.load(userInfo.getUsername());
-                        if (roleIds == null || roleIds.isEmpty()) {
+                        UserRoleDTO userRoleDTO = userRoleLoadingCache.load(userInfo.getUsername());
+                        if (userRoleDTO == null || userRoleDTO.getRoleIds() == null || userRoleDTO.getRoleIds().isEmpty()) {
                             throw new BizException(Status.AUTHENTICATION_FAILED.getI18nKey());
                         }
-                        for (Long roleId : roleIds) {
+                        for (Long roleId : userRoleDTO.getRoleIds()) {
                             Set<Long> apiIds = roleOpenapiLoadingCache.load(roleId);
                             if (apiIds != null) {
                                 if (apiIds.contains(dbOpenapi.getId())) {

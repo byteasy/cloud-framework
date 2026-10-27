@@ -6,5 +6,9 @@ public interface ICacheLoader<K, T> {
 
     T load(K key) throws ExecutionException;
 
-    String type();
+    void invalid(Object entity);
+
+    String cacheType();
+
+    String[] invalidType();
 }

@@ -143,6 +143,10 @@ public class JacksonUtil {
         }
     }
 
+    public static String toPrettyJson(Object obj) {
+        return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+    }
+
     public static String toJson(Object obj, FilterProvider filters) {
         return toJson(obj, filters, false);
     }

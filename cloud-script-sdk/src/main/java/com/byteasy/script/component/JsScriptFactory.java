@@ -2,6 +2,7 @@ package com.byteasy.script.component;
 
 import cn.hutool.crypto.digest.DigestUtil;
 import com.byteasy.component.ICacheLoader;
+import com.byteasy.infinispan.util.CacheEvictHelper;
 import com.byteasy.platform.Constant;
 import com.byteasy.platform.api.JsScriptClient;
 import com.byteasy.platform.entity.JsScript;
@@ -22,18 +23,32 @@ public class JsScriptFactory implements ICacheLoader<Long, JsScript> {
 
     @Autowired
     private JsScriptClient jsScriptClient;
+    @Autowired
+    private CacheEvictHelper cacheEvictHelper;
 
     private static Cache<String, Source> SCRIPT_CACHE = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(2, TimeUnit.HOURS).build();
 
     @Override
-    @Cacheable(cacheNames = Constant.PLATFORM_REP_CACHE, key = "'JsScript:' + #key")
+    @Cacheable(cacheNames = Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.JsScript:' + #key")
     public JsScript load(Long key) {
         return jsScriptClient.getById(key).getIfPresent();
     }
 
     @Override
-    public String type() {
+    public void invalid(Object entity) {
+        if (entity instanceof JsScript) {
+            cacheEvictHelper.evictAfterCommit(Constant.PLATFORM_REP_CACHE, JsScript.class.getName() + ":" + ((JsScript) entity).getId());
+        }
+    }
+
+    @Override
+    public String cacheType() {
         return JsScript.class.getName();
+    }
+
+    @Override
+    public String[] invalidType() {
+        return new String[]{JsScript.class.getName()};
     }
 
     public static Source getScriptSource(String jsName, String jsScript) throws IOException {

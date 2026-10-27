@@ -49,7 +49,15 @@ public class EntityDefine extends AuditEntity<Long> {
     @TableField("table_name")
     private String tableName;
 
-    @FieldMeta(name = "说明", showOrder = 106, maxLength = 1024)
+    @FieldMeta(name = "是否缓存", showOrder = 106)
+    @TableField("cacheable")
+    private Boolean cacheable;
+
+    @FieldMeta(name = "是否跟踪变化", showOrder = 107)
+    @TableField("trackable")
+    private Boolean trackable;
+
+    @FieldMeta(name = "说明", showOrder = 108, maxLength = 1024)
     @TableField("remark")
     private String remark;
 }

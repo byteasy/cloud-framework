@@ -8,6 +8,9 @@ create table platform_entity_define
     std_layout_params_id bigint       not null,
     name                 varchar(512) not null,
     url                  varchar(512)          default null,
+    cacheable            bool                  default false,
+    trackable            bool                  default false,
+
     remark               varchar(2048)         default null,
     creator_id           varchar(64)  not null,
     created_by           varchar(64)  not null,
@@ -26,6 +29,8 @@ comment on column platform_entity_define.resource_id is '资源编号';
 comment on column platform_entity_define.std_layout_params_id is '布局参数';
 comment on column platform_entity_define.name is '名称';
 comment on column platform_entity_define.url is '请求接口地址';
+comment on column platform_entity_define.cacheable is '是否缓存';
+comment on column platform_entity_define.trackable is '是否跟踪变化';
 comment on column platform_entity_define.remark is '说明';
 comment on column platform_entity_define.creator_id is '创建人编号';
 comment on column platform_entity_define.created_by is '创建人';

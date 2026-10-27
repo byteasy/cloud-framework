@@ -9,4 +9,11 @@
         WHERE ur.user_id = #{userId}
           and ro.status = 1
     </select>
+
+    <select id="getUserNamesByRoleId" resultType="java.lang.String">
+        SELECT DISTINCT ro.username
+        FROM platform_user_role ur
+                 INNER JOIN platform_user ro ON ur.user_id = ro.id
+        WHERE ur.user_id = #{roleId} and ro.is_deleted = 0 and ro.status = 1
+    </select>
 </mapper>

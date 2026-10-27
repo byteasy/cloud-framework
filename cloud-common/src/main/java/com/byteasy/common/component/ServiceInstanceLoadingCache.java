@@ -2,6 +2,7 @@ package com.byteasy.common.component;
 
 import com.byteasy.Result;
 import com.byteasy.component.ICacheLoader;
+import com.byteasy.infinispan.util.CacheEvictHelper;
 import com.byteasy.platform.Constant;
 import com.byteasy.platform.api.ServiceInstanceClient;
 import com.byteasy.platform.entity.ServiceInstance;
@@ -21,10 +22,11 @@ public class ServiceInstanceLoadingCache implements ICacheLoader<String, Service
 
     @Autowired
     private ServiceInstanceClient serviceInstanceClient;
-
+    @Autowired
+    private CacheEvictHelper cacheEvictHelper;
 
     @Override
-    @Cacheable(cacheNames = Constant.PLATFORM_REP_CACHE, key = "'ServiceInstance:' + #code")
+    @Cacheable(cacheNames = Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.ServiceInstance:' + #code")
     public ServiceInstance load(String code) throws ExecutionException {
         Map<String, Object> params = Maps.newHashMapWithExpectedSize(2);
         params.put("code", code);
@@ -38,7 +40,19 @@ public class ServiceInstanceLoadingCache implements ICacheLoader<String, Service
     }
 
     @Override
-    public String type() {
+    public void invalid(Object entity) {
+        if (entity instanceof ServiceInstance) {
+            cacheEvictHelper.evictAfterCommit(Constant.PLATFORM_REP_CACHE, ServiceInstance.class.getName() + ":" + ((ServiceInstance) entity).getCode());
+        }
+    }
+
+    @Override
+    public String[] invalidType() {
+        return new String[]{ServiceInstance.class.getName()};
+    }
+
+    @Override
+    public String cacheType() {
         return ServiceInstance.class.getName();
     }
 

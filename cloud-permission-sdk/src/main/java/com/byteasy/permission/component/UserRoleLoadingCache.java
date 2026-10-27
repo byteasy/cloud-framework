@@ -1,43 +1,64 @@
 package com.byteasy.permission.component;
 
 import com.byteasy.component.ICacheLoader;
+import com.byteasy.infinispan.util.CacheEvictHelper;
+import com.byteasy.platform.Constant;
 import com.byteasy.platform.api.UserClient;
+import com.byteasy.platform.dto.RoleUserDTO;
 import com.byteasy.platform.dto.UserRoleDTO;
 import com.byteasy.platform.entity.Role;
 import com.byteasy.platform.entity.User;
+import com.byteasy.platform.entity.UserRole;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 @Component
 @Log4j2
-public class UserRoleLoadingCache implements ICacheLoader<String, Set<Long>> {
+public class UserRoleLoadingCache implements ICacheLoader<String, UserRoleDTO> {
 
     @Autowired
-    private UserClient userService;
+    private UserClient userClient;
+    @Autowired
+    private CacheEvictHelper cacheEvictHelper;
 
     @Override
-    public Set<Long> load(String key) throws ExecutionException {
+    @Cacheable(cacheNames = Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.UserRole:' + #key")
+    public UserRoleDTO load(String key) {
         Map<String, Object> params = new HashMap<>();
         params.put("username", key);
         params.put("usernameQueryType", "eq");
-        UserRoleDTO userRoleDTO = userService.getUserRoleInfo(params).getIfPresent();
-        if (userRoleDTO == null) {
-            return Collections.emptySet();
-        }
-        return userRoleDTO.getRoleIds();
+        return userClient.getUserRoleInfo(params).getIfPresent();
     }
 
     @Override
-    public String type() {
-        return StringUtils.joinWith(",", Role.class.getName(), User.class.getName());
+    public void invalid(Object entity) {
+        if (entity instanceof User) {
+            User user = (User) entity;
+            cacheEvictHelper.evictAfterCommit(Constant.PLATFORM_REP_CACHE, UserRole.class.getName() + ":" + user.getUsername());
+        } else if (entity instanceof Role) {
+            Role role = (Role) entity;
+            RoleUserDTO roleUserDTO = userClient.getUsersByRoleId(role.getId()).getIfPresent();
+            if (roleUserDTO != null) {
+                for (String userName : roleUserDTO.getUserNames()) {
+                    cacheEvictHelper.evictAfterCommit(Constant.PLATFORM_REP_CACHE, UserRole.class.getName() + ":" + userName);
+                }
+            }
+        }
+    }
+
+    @Override
+    public String cacheType() {
+        return UserRoleDTO.class.getName();
+    }
+
+    @Override
+    public String[] invalidType() {
+        return new String[]{User.class.getName(), Role.class.getName()};
     }
 
 }

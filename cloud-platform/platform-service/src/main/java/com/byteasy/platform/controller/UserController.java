@@ -5,6 +5,7 @@ import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.controller.AuditController;
 import com.byteasy.platform.dto.EditPasswordFormDTO;
+import com.byteasy.platform.dto.RoleUserDTO;
 import com.byteasy.platform.dto.UserRoleDTO;
 import com.byteasy.platform.entity.User;
 import com.byteasy.platform.service.IUserRoleService;
@@ -61,5 +62,11 @@ public class UserController extends AuditController<Long, IUserService, User> {
     public Result<UserRoleVO> saveUserRole(@RequestBody UserRoleVO userRoleVO) {
         userRoleService.saveUserRole(userRoleVO);
         return Result.success();
+    }
+
+    @GetMapping("/roles/{roleId}/users")
+    @Openapi(title = "根据角色反差用户信息")
+    public Result<RoleUserDTO> getUsersByRoleId(@PathVariable Long roleId) {
+        return Result.success(userRoleService.getUsersByRoleId(roleId));
     }
 }

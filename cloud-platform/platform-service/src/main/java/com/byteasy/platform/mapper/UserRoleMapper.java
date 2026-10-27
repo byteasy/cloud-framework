@@ -18,4 +18,6 @@ import java.util.Set;
 public interface UserRoleMapper extends BaseMapper<UserRole> {
 
     Set<Long> getUserRoleIdsByUserId(Long userId);
+
+    Set<String> getUserNamesByRoleId(Long roleId);
 }

@@ -32,7 +32,7 @@ public class EntityChangeEvent {
     /**
      * 实体类型 (如 User.class)
      */
-    private Class<?> entityClass;
+    private String entityClass;
 
     /**
      * 影响的主键列表
@@ -44,16 +44,16 @@ public class EntityChangeEvent {
      * 变更前的实体数据列表 (UPDATE / DELETE 时可能存在)
      */
     @Builder.Default
-    private List<Object> beforeEntities = Collections.emptyList();
+    private List<? extends Object> beforeEntities = Collections.emptyList();
 
     /**
      * 变更后的实体数据列表 (INSERT / UPDATE 时存在)
      */
     @Builder.Default
-    private List<Object> afterEntities = Collections.emptyList();
+    private List<? extends Object> afterEntities = Collections.emptyList();
 
     /**
      * 是否是基于 Wrapper 条件触发的批量操作
      */
-    private boolean wrapperOperation;
+    private boolean wrapperOperation = false;
 }

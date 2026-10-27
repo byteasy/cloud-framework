@@ -1,9 +1,10 @@
 package com.byteasy.common.component;
 
-import cn.hutool.core.util.ArrayUtil;
 import com.byteasy.component.ICacheLoader;
+import com.byteasy.infinispan.util.CacheEvictHelper;
 import com.byteasy.platform.Constant;
 import com.byteasy.platform.api.FieldDefineClient;
+import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.platform.entity.FieldGroup;
 import lombok.extern.log4j.Log4j2;
@@ -19,10 +20,11 @@ public class FieldDefineLoadingCache implements ICacheLoader<String, List<FieldD
 
     @Autowired
     private FieldDefineClient fieldDefineService;
-
+    @Autowired
+    private CacheEvictHelper cacheEvictHelper;
 
     @Override
-    @Cacheable(cacheNames = Constant.PLATFORM_REP_CACHE, key = "'FieldDefine:' + #className")
+    @Cacheable(cacheNames = Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.FieldDefine:' + #className")
     public List<FieldDefine> load(String className) {
         List<FieldDefine> list = fieldDefineService.listEntityFieldDefines(className).getIfPresent();
         if (list != null && !list.isEmpty()) {
@@ -32,7 +34,23 @@ public class FieldDefineLoadingCache implements ICacheLoader<String, List<FieldD
     }
 
     @Override
-    public String type() {
-        return ArrayUtil.join(new String[]{FieldDefine.class.getName(), FieldGroup.class.getName()}, ",");
+    public void invalid(Object entity) {
+        if (entity instanceof EntityDefine) {
+            cacheEvictHelper.evictAfterCommit(Constant.PLATFORM_REP_CACHE, FieldDefine.class.getName() + ":" + ((EntityDefine) entity).getCode());
+        } else if (entity instanceof FieldDefine) {
+            cacheEvictHelper.evictAfterCommit(Constant.PLATFORM_REP_CACHE, FieldDefine.class.getName() + ":" + ((FieldDefine) entity).getClassName());
+        } else if (entity instanceof FieldGroup) {
+            cacheEvictHelper.evictAfterCommit(Constant.PLATFORM_REP_CACHE, FieldDefine.class.getName() + ":" + ((FieldGroup) entity).getClassName());
+        }
+    }
+
+    @Override
+    public String cacheType() {
+        return null;
+    }
+
+    @Override
+    public String[] invalidType() {
+        return new String[]{FieldDefine.class.getName(), FieldGroup.class.getName(), EntityDefine.class.getName()};
     }
 }
