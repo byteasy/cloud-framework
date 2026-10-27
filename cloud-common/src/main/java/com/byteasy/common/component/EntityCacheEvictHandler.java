@@ -20,18 +20,22 @@ public class EntityCacheEvictHandler implements IEntityChangeHandler {
     }
 
     @Override
-    public void handle(EntityChangeEvent event) {
-        switch (event.getChangeType()) {
-            case DELETE -> {
-                for (Object beforeEntity : event.getBeforeEntities()) {
-                    cacheFactory.invalid(beforeEntity);
+    public void handle(String src, EntityChangeEvent event) {
+        if (RepositoryMutationAspect.class.getName().equals(src)) {
+            switch (event.getChangeType()) {
+                case DELETE -> {
+                    for (Object beforeEntity : event.getBeforeEntities()) {
+                        cacheFactory.invalid(beforeEntity);
+                    }
+                }
+                case UPDATE -> {
+                    for (Object afterEntity : event.getAfterEntities()) {
+                        cacheFactory.invalid(afterEntity);
+                    }
                 }
             }
-            case UPDATE -> {
-                for (Object afterEntity : event.getAfterEntities()) {
-                    cacheFactory.invalid(afterEntity);
-                }
-            }
+        } else {
+            // TODO
         }
     }
 }

@@ -26,7 +26,7 @@ public class EntityChangeHandlerFactory {
         if (map != null) {
             for (IEntityChangeHandler value : map.values()) {
                 try {
-                    value.handle(event);
+                    value.handle(src, event);
                 } catch (Exception e) {
                     log.error("type: {} handler: {} src: {} event: {} error: {}", value.type(), value.getClass().getName(), src, JacksonUtil.toPrettyJson(event), e);
                 }

@@ -35,6 +35,8 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -68,7 +70,16 @@ public class CommonServiceImpl implements ICommonService {
     private EntityChangeHandlerFactory entityChangeHandlerFactory;
 
     protected void publicEvent(EntityChangeEvent event) {
-        entityChangeHandlerFactory.handle(CommonServiceImpl.class.getName(), event);
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    entityChangeHandlerFactory.handle(CommonServiceImpl.class.getName(), event);
+                }
+            });
+        } else {
+            entityChangeHandlerFactory.handle(CommonServiceImpl.class.getName(), event);
+        }
     }
 
 
@@ -115,8 +126,8 @@ public class CommonServiceImpl implements ICommonService {
                         .afterEntities(List.of(entity))
                         .entityClass(className).build());
             }
+            return entity;
         }
-        return getByPrimaryKey(entityDefine, primaryKeyValue, columnMap, primaryColumn);
     }
 
     @Override
@@ -156,24 +167,30 @@ public class CommonServiceImpl implements ICommonService {
             if (rows <= 0) {
                 success = false;
             } else {
-                publicEvent(EntityChangeEvent.builder().changeType(EntityChangeEvent.ChangeType.INSERT)
-                        .afterEntities(insertList).entityClass(className).build());
+                if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
+                    publicEvent(EntityChangeEvent.builder().changeType(EntityChangeEvent.ChangeType.INSERT)
+                            .afterEntities(insertList).entityClass(className).build());
+                }
             }
         }
 
         // 2. 批量更新（使用 IN 查询消除 N+1 查询旧数据）
         if (CollectionUtil.isNotEmpty(updateList)) {
-            List<Object> ids = updateList.stream()
-                    .map(e -> e.get(primaryColumn.getName()))
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-
-            Map<Object, Map<String, Object>> oldDataMap = getEntitiesByIds(entityDefine, ids, columnMap, primaryColumn);
+            Map<Object, Map<String, Object>> oldDataMap = null;
+            if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
+                List<Object> ids = updateList.stream()
+                        .map(e -> e.get(primaryColumn.getName()))
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+                oldDataMap = getEntitiesByIds(entityDefine, ids, columnMap, primaryColumn);
+            }
 
             batchUpdate(entityDefine, updateList, columnMap, primaryColumn);
-            publicEvent(EntityChangeEvent.builder().changeType(EntityChangeEvent.ChangeType.UPDATE)
-                    .beforeEntities(oldDataMap.values().stream().toList())
-                    .afterEntities(updateList).entityClass(className).build());
+            if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
+                publicEvent(EntityChangeEvent.builder().changeType(EntityChangeEvent.ChangeType.UPDATE)
+                        .beforeEntities(oldDataMap.values().stream().toList())
+                        .afterEntities(updateList).entityClass(className).build());
+            }
         }
 
         return success;
@@ -293,11 +310,14 @@ public class CommonServiceImpl implements ICommonService {
         Map<String, FieldDefine> columnMap = CastUtil.listToMap(columnDefList, FieldDefine::getName);
         FieldDefine primaryColumn = getPrimaryColumn(columnDefList);
 
-        Map<String, Object> oldEntity = getByPrimaryKey(className, primaryKey);
-        publicEvent(EntityChangeEvent.builder()
-                .changeType(EntityChangeEvent.ChangeType.DELETE)
-                .beforeEntities(List.of(oldEntity))
-                .entityClass(className).build());
+        if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
+            Map<String, Object> oldEntity = getByPrimaryKey(className, primaryKey);
+            publicEvent(EntityChangeEvent.builder()
+                    .changeType(EntityChangeEvent.ChangeType.DELETE)
+                    .beforeEntities(List.of(oldEntity))
+                    .entityClass(className).build());
+
+        }
 
         if (SqlUtil.isLogicDeleteEntity(columnMap)) {
             StringJoiner setJoiner = new StringJoiner(",");
@@ -359,8 +379,10 @@ public class CommonServiceImpl implements ICommonService {
             entities = entities.stream().map(HashMap::new).collect(Collectors.toList());
         }
 
-        publicEvent(EntityChangeEvent.builder().changeType(EntityChangeEvent.ChangeType.DELETE)
-                .beforeEntities(entities).entityClass(className).build());
+        if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
+            publicEvent(EntityChangeEvent.builder().changeType(EntityChangeEvent.ChangeType.DELETE)
+                    .beforeEntities(entities).entityClass(className).build());
+        }
 
         MapSqlParameterSource paramSource = new MapSqlParameterSource();
         Set<Object> primaryKeys = FieldDefineUtil.getPrimaryKeys(primaryColumn, entities);

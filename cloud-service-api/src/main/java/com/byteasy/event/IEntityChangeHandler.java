@@ -4,5 +4,5 @@ public interface IEntityChangeHandler {
 
     String type();
 
-    void handle(EntityChangeEvent event);
+    void handle(String src, EntityChangeEvent event);
 }
