@@ -3,7 +3,7 @@
             xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-15.0.xsd">
 
     <jgroups>
-        <stack-file name="tcp-stack" path="jgroups-tcp.xml"/>
+        <stack-file name="tcp-stack" path="jgroups-tcp-dev.xml"/>
     </jgroups>
 
     <cache-container name="byteasy-container" default-cache="users" statistics="true">
