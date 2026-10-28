@@ -54,7 +54,7 @@ nohup $JAVA_HOME/bin/java \
     -Djgroups.bind.port=7800 \
     -Dvertx.eventBus.host=0.0.0.0 \
     -Dvertx.eventBus.port=10699 \
-    -Dnacos.logging.config=classpath:nacos-log4j2-prod.xml \
+    -Dnacos.logging.config=classpath:nacos-log4j2.xml \
     -Duser.timezone=Asia/Shanghai \
     --add-opens java.base/java.io=ALL-UNNAMED \
     --add-opens java.base/sun.net=ALL-UNNAMED \

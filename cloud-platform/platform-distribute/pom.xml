@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.byteasy</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+    <artifactId>platform-distribute</artifactId>
+
+    <properties>
+        <jpackage.name>byteasy</jpackage.name>
+        <jpackage.vendor>"byteasy"</jpackage.vendor>
+        <jpackage.version>${project.version}</jpackage.version>
+        <jpackage.arguments>byteasy</jpackage.arguments>
+
+        <!-- optional -->
+        <jvm.jmx.options>-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dvertx.metrics.options.jmxEnabled=true -Dcom.sun.management.jmxremote.port=3369</jvm.jmx.options>
+        <!-- optional -->
+        <jvm.jdpa.options>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005</jvm.jdpa.options>
+        <!-- optional -->
+        <jvm.flight.options>-XX:StartFlightRecording:filename=hw.jfr</jvm.flight.options>
+
+        <jvm.options>--enable-native-access=ALL-UNNAMED -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Xmx512M -Xms512M -Xlog:gc*:file=$APPDIR/gc.log:time,tags:filecount=10,filesize=102400</jvm.options>
+        <jvm.byteasy.options>-Duser.timezone=Asia/Shanghai -Dfile.encoding=UTF-8 -Dsun.misc.Unsafe.disableMemoryAllocationWarning=true -Djdk.unsupported.providers.disable=true -Djava.net.preferIPv4Stack=true -Dio.netty.tryReflectionSetAccessible=true -Dconsumer.enabled=false -Djgroups.bind.address=127.0.0.1 -Djgroups.bind.port=7800 -Dvertx.eventBus.host=0.0.0.0 -Dvertx.eventBus.port=10699 -Dnacos.logging.config=classpath:nacos-log4j2.xml -DLOG_HOME=$APPDIR\logs -DJM.LOG.PATH=$APPDIR/logs -DJM.SNAPSHOT.PATH=$APPDIR/logs -Dspring.profiles.active=dev</jvm.byteasy.options>
+
+        <jpackage.install.dir>byteasy</jpackage.install.dir>
+
+        <jpackage.platform.args>
+            --type exe
+            --win-dir-chooser
+            --win-shortcut
+            --win-menu
+            --win-menu-group ${jpackage.install.dir}
+        </jpackage.platform.args>
+
+        <platform.mkdir>echo</platform.mkdir>
+        <platform.mkdir.shell>windows skip create dir shell</platform.mkdir.shell>
+
+        <platform.copy>xcopy</platform.copy>
+        <platform.icon.type>ico</platform.icon.type>
+
+        <jpackage.mainClass>org.springframework.boot.loader.launch.JarLauncher</jpackage.mainClass>
+        <jpackage.mainJar>platform-service-1.0.0.jar</jpackage.mainJar>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.byteasy</groupId>
+            <artifactId>platform-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.byteasy</groupId>
+            <artifactId>second-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.8.0</version>
+                <executions>
+                    <execution>
+                        <id>create-binary</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <attach>false</attach>
+                            <!--<tarLongFileMode>posix</tarLongFileMode>-->
+                            <finalName>${project.artifactId}-${project.version}</finalName>
+                            <descriptors>
+                                <descriptor>src/assemble/assemble.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <executions>
+                    <execution>
+                        <id>package-java-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <executable>jlink</executable>
+                            <commandlineArgs>
+                                --output ${project.basedir}/target/jLinkImage
+                                --module-path "${JAVA_HOME}/jmods"
+                                --add-modules ALL-MODULE-PATH
+                                --no-header-files
+                                --no-man-pages
+                                --strip-native-commands
+                                --strip-debug
+                            </commandlineArgs>
+                        </configuration>
+                    </execution>
+<!--                    <execution>-->
+<!--                        <id>copy-sdk</id>-->
+<!--                        <phase>package</phase>-->
+<!--                        <goals><goal>exec</goal></goals>-->
+<!--                        <configuration>-->
+<!--                            <skip>false</skip>-->
+<!--                            <executable>${platform.copy}</executable>-->
+<!--                            <commandlineArgs>-->
+<!--                                ${platform.copy.hksdk}-->
+<!--                            </commandlineArgs>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+                    <execution>
+                        <id>package-binary-installer</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>true</skip>
+                            <executable>jpackage</executable>
+                            <commandlineArgs>
+                                --name ${jpackage.name}
+                                --app-version ${jpackage.version}
+                                --vendor ${jpackage.vendor}
+                                --runtime-image ${project.basedir}/target/jLinkImage
+                                --install-dir ${jpackage.install.dir}
+                                --java-options "${jvm.options}"
+                                --java-options "${jvm.byteasy.options}"
+                                --java-options --add-opens
+                                --java-options java.base/java.security=ALL-UNNAMED
+                                --java-options --add-opens
+                                --java-options java.base/sun.security.tools.keytool=ALL-UNNAMED
+                                --java-options --add-opens
+                                --java-options java.base/sun.security.x509=ALL-UNNAMED
+                                --arguments ${jpackage.arguments}
+                                --dest ${project.basedir}/target
+                                --temp ${project.basedir}/target/tempDir
+                                --icon ${project.basedir}/resource/favicon.${platform.icon.type}
+                                --input ${project.basedir}/target/${project.artifactId}-${project.version}-bin/${project.artifactId}-${project.version}/byteasy
+                                --main-jar ${jpackage.mainJar}
+                                --main-class ${jpackage.mainClass}
+                                ${jpackage.platform.args}
+                            </commandlineArgs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>package-binary-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <executable>jpackage</executable>
+                            <commandlineArgs>
+                                --name ${jpackage.name}
+                                --type app-image
+                                --app-version ${jpackage.version}
+                                --vendor ${jpackage.vendor}
+                                --runtime-image ${project.basedir}/target/jLinkImage
+                                --java-options "${jvm.options}"
+                                --java-options "${jvm.byteasy.options}"
+                                --java-options --add-opens
+                                --java-options java.base/java.security=ALL-UNNAMED
+                                --java-options --add-opens
+                                --java-options java.base/sun.security.tools.keytool=ALL-UNNAMED
+                                --java-options --add-opens
+                                --java-options java.base/sun.security.x509=ALL-UNNAMED
+                                --dest ${project.basedir}/target
+                                --temp ${project.basedir}/target/tempDirImage
+                                --icon ${project.basedir}/resource/favicon.${platform.icon.type}
+                                --input ${project.basedir}/target/${project.artifactId}-${project.version}-bin/${project.artifactId}-${project.version}/byteasy
+                                --win-console
+                                --main-jar ${jpackage.mainJar}
+                                --main-class ${jpackage.mainClass}
+                                --arguments ${jpackage.arguments}
+                            </commandlineArgs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
