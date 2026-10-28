@@ -8,6 +8,13 @@
 
     <cache-container name="byteasy-container" default-cache="users" statistics="true">
         <transport stack="tcp-stack" cluster="byteasy-embedded-cluster" node-name="${HOSTNAME:node-default}"/>
+        <!-- 序列化白名单配置 -->
+        <serialization>
+            <allow-list>
+                <regex>com\.byteasy\..*</regex>
+                <regex>java\.util\..*</regex>
+            </allow-list>
+        </serialization>
 
         <!-- vertx集群用的cache -->
         <distributed-cache name="distributed-cache"/>

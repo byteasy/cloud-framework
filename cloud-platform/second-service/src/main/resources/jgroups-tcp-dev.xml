@@ -4,7 +4,7 @@
 
     <!-- 绑定本机的真实网卡 IP，避免绑到 127.0.0.1 -->
     <TCP
-            bind_addr="${jgroups.bind.address:127.0.0.1}"
+            bind_addr="${jgroups.bind.address:192.168.56.1}"
             bind_port="${jgroups.bind.port:7800}"
             port_range="10"
             recv_buf_size="20m"
