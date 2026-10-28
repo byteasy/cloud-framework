@@ -42,9 +42,6 @@ cd ../cloud-permission-sdk
 call mvn clean install
 rem call mvn source:jar install
 
-cd ../cloud-mq-restfull
-call mvn clean install
-
 cd ../cloud-service-starter
 call mvn clean install
 rem call mvn source:jar install
