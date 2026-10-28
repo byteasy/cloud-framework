@@ -50,7 +50,7 @@ nohup $JAVA_HOME/bin/java \
     -Djava.net.preferIPv4Stack=true \
     -Dio.netty.tryReflectionSetAccessible=true \
     -Dconsumer.enabled=false \
-    -Djgroups.bind.address=127.0.0.1 \
+    -Djgroups.bind.address=192.168.56.102 \
     -Djgroups.bind.port=7800 \
     -Dvertx.eventBus.host=0.0.0.0 \
     -Dvertx.eventBus.port=10699 \
