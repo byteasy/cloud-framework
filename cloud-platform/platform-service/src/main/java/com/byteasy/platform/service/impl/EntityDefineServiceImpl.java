@@ -51,7 +51,9 @@ public class EntityDefineServiceImpl extends ServiceImpl<EntityDefineMapper, Ent
             }
         }
 
-        saveBatch(insertList);
+        if (!insertList.isEmpty()) {
+            saveBatch(insertList);
+        }
         return true;
     }
 

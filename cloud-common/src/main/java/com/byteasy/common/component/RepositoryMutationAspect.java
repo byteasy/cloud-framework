@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.extension.repository.IRepository;
 import com.byteasy.component.EntityChangeHandlerFactory;
 import com.byteasy.event.EntityChangeEvent;
+import com.byteasy.platform.entity.EntityDefine;
+import com.google.common.collect.Sets;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -33,12 +35,8 @@ public class RepositoryMutationAspect {
 
     @Autowired
     private EntityChangeHandlerFactory entityChangeHandlerFactory;
-    /**
-     * 是否在删除/更新前自动查询变更前数据 (beforeEntities)
-     * - 若只用于 Infinispan/Redis 缓存失效，建议设为 false (仅基于 ID 驱逐，性能最高)
-     * - 若用于审计日志/MQ 同步，建议设为 true
-     */
-    private final boolean captureBeforeEntities = true;
+    @Autowired
+    private EntityDefineLoadingCache entityDefineLoadingCache;
 
     /**
      * 防重入线程标记：防止 saveOrUpdateBatch / saveOrUpdate 内部自调用 save 或 updateById 时触发多余重复事件
@@ -69,24 +67,35 @@ public class RepositoryMutationAspect {
             Object[] args = joinPoint.getArgs();
 
             // 2. 执行前置提取（保存变更前状态、判断 saveOrUpdate 真实意图等）
-            PreContext preContext = preparePreContext(repository, entityClass, tableInfo, methodName, args);
+            PreContext preContext = null;
+            EntityDefine entityDefine = entityDefineLoadingCache.load(entityClass.getName());
+            if (entityDefine == null) {
+                log.warn("className: {} is not define", entityClass.getName());
+                return joinPoint.proceed();
+            } else {
+                if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
+                    preContext = preparePreContext(repository, entityClass, tableInfo, methodName, args);
+                }
 
-            // 3. 执行目标持久化操作
-            Object result = joinPoint.proceed();
+                // 3. 执行目标持久化操作
+                Object result = joinPoint.proceed();
 
-            // 若数据库操作返回 false，代表未发生实际变更，跳过事件发布
-            if (result instanceof Boolean && !((Boolean) result)) {
+                // 若数据库操作返回 false，代表未发生实际变更，跳过事件发布
+                if (result instanceof Boolean && !((Boolean) result)) {
+                    return result;
+                }
+
+                if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
+                    // 4. 执行后置处理并组装 EntityChangeEvent（获取自增主键、变更后实体等）
+                    EntityChangeEvent event = buildEvent(entityClass, methodName, args, preContext);
+                    if (event != null) {
+                        publishEventSafely(event);
+                    }
+                }
                 return result;
             }
-
-            // 4. 执行后置处理并组装 EntityChangeEvent（获取自增主键、变更后实体等）
-            EntityChangeEvent event = buildEvent(repository, entityClass, tableInfo, methodName, args, preContext);
-            if (event != null) {
-                publishEventSafely(event);
-            }
-
-            return result;
         } finally {
+            MutationContextHolder.clear();
             REENTRANT_GUARD.remove();
         }
     }
@@ -105,38 +114,32 @@ public class RepositoryMutationAspect {
             // removeById(Serializable id) / removeById(Serializable id, boolean useFill)
             if (args[0] instanceof Serializable && !entityClass.isInstance(args[0])) {
                 Serializable id = (Serializable) args[0];
-                ctx.ids.add(id);
-                if (captureBeforeEntities) {
-                    Object before = repo.getById(id);
-                    if (before != null) ctx.beforeEntities.add(before);
-                }
+                Object before = repo.getById(id);
+                if (before != null) ctx.beforeEntities.add(before);
             }
             // removeById(T entity)
             else if (entityClass.isInstance(args[0])) {
                 Object entity = args[0];
                 ctx.beforeEntities.add(entity);
-                Serializable id = extractId(entity, tableInfo);
-                if (id != null) ctx.ids.add(id);
             }
             // removeByIds(Collection<?> list) / removeByIds(Collection<?> list, boolean useFill)
             // 源码定义：list 可以是主键ID列表，也可以是实体列表！
             else if (args[0] instanceof Collection) {
                 Collection<?> collection = (Collection<?>) args[0];
+                Set<Serializable> ids = Sets.newHashSet();
                 for (Object item : collection) {
                     if (item == null) continue;
                     if (entityClass.isInstance(item)) {
+                        ids.add(extractId(item, tableInfo));
                         // 元素为实体
-                        ctx.beforeEntities.add(item);
-                        Serializable id = extractId(item, tableInfo);
-                        if (id != null) ctx.ids.add(id);
                     } else if (item instanceof Serializable) {
                         // 元素为主键 ID
-                        ctx.ids.add((Serializable) item);
+                        ids.add((Serializable) item);
                     }
                 }
                 // 若需要变更前数据且集合全为主键，则按需批量拉取一次
-                if (captureBeforeEntities && ctx.beforeEntities.isEmpty() && !ctx.ids.isEmpty()) {
-                    ctx.beforeEntities.addAll(repo.listByIds(ctx.ids));
+                if (!ids.isEmpty()) {
+                    ctx.beforeEntities.addAll(repo.listByIds(ids));
                 }
             }
         } else if ("removeByMap".equals(methodName)) {
@@ -146,13 +149,6 @@ public class RepositoryMutationAspect {
             List<?> toDeleteList = repo.listByMap(columnMap);
             if (toDeleteList != null && !toDeleteList.isEmpty()) {
                 ctx.beforeEntities.addAll(toDeleteList);
-                // 提取实体主键 ID
-                for (Object item : toDeleteList) {
-                    Serializable id = extractId(item, tableInfo);
-                    if (id != null) {
-                        ctx.ids.add(id);
-                    }
-                }
             }
         }
         // ------------------ B. saveOrUpdate 前置分析 ------------------
@@ -160,12 +156,11 @@ public class RepositoryMutationAspect {
             Object entity = args[0];
             Serializable id = extractId(entity, tableInfo);
             if (id != null) {
-                ctx.ids.add(id);
                 // 判断数据库中是否已有该记录
                 Object existing = repo.getById(id);
                 if (existing != null) {
                     ctx.isUpdate = true;
-                    if (captureBeforeEntities) ctx.beforeEntities.add(existing);
+                    ctx.beforeEntities.add(existing);
                 } else {
                     ctx.isUpdate = false;
                 }
@@ -179,11 +174,8 @@ public class RepositoryMutationAspect {
         else if ("updateById".equals(methodName) && entityClass.isInstance(args[0])) {
             Serializable id = extractId(args[0], tableInfo);
             if (id != null) {
-                ctx.ids.add(id);
-                if (captureBeforeEntities) {
-                    Object before = repo.getById(id);
-                    if (before != null) ctx.beforeEntities.add(before);
-                }
+                Object before = repo.getById(id);
+                if (before != null) ctx.beforeEntities.add(before);
             }
         }
         return ctx;
@@ -193,8 +185,7 @@ public class RepositoryMutationAspect {
      * 后置构建完整的实体变更事件
      */
     @SuppressWarnings("unchecked")
-    private EntityChangeEvent buildEvent(IRepository<?> repo, Class<?> entityClass, TableInfo tableInfo,
-                                         String methodName, Object[] args, PreContext ctx) {
+    private EntityChangeEvent buildEvent(Class<?> entityClass, String methodName, Object[] args, PreContext ctx) {
         EntityChangeEvent.EntityChangeEventBuilder builder = EntityChangeEvent.builder()
                 .entityClass(entityClass.getName());
 
@@ -231,9 +222,6 @@ public class RepositoryMutationAspect {
         // updateById(T entity)
         if ("updateById".equals(methodName) && entityClass.isInstance(args[0])) {
             Object entity = args[0];
-            Serializable id = extractId(entity, tableInfo);
-            List<Serializable> ids = id != null ? Collections.singletonList(id) : ctx.ids;
-
             return builder.changeType(EntityChangeEvent.ChangeType.UPDATE)
                     .beforeEntities(ctx.beforeEntities)
                     .afterEntities(Collections.singletonList(entity))
@@ -243,8 +231,6 @@ public class RepositoryMutationAspect {
         // updateBatchById(Collection<T> entityList, int batchSize)
         if ("updateBatchById".equals(methodName) && args[0] instanceof Collection) {
             Collection<?> entities = (Collection<?>) args[0];
-            List<Serializable> ids = extractIdsFromCollection(entities, tableInfo);
-
             return builder.changeType(EntityChangeEvent.ChangeType.UPDATE)
                     .afterEntities(new ArrayList<>(entities))
                     .build();
@@ -315,15 +301,17 @@ public class RepositoryMutationAspect {
      * 避免发生并发脏读与回滚导致的“假失效”
      */
     private void publishEventSafely(EntityChangeEvent event) {
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    entityChangeHandlerFactory.handle(RepositoryMutationAspect.class.getName(), event);
-                }
-            });
-        } else {
-            entityChangeHandlerFactory.handle(RepositoryMutationAspect.class.getName(), event);
+        if (MutationContextHolder.hasMutation()) {
+            if (TransactionSynchronizationManager.isActualTransactionActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        entityChangeHandlerFactory.handle(RepositoryMutationAspect.class.getName(), event);
+                    }
+                });
+            } else {
+                entityChangeHandlerFactory.handle(RepositoryMutationAspect.class.getName(), event);
+            }
         }
     }
 
@@ -331,7 +319,6 @@ public class RepositoryMutationAspect {
      * 临时上下文
      */
     private static class PreContext {
-        List<Serializable> ids = new ArrayList<>();
         List<Object> beforeEntities = new ArrayList<>();
         boolean isUpdate = false;
     }

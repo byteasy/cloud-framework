@@ -116,6 +116,12 @@ public class CastUtil {
         return resultList;
     }
 
+    public static <T> T mapToBean(Map<String, Object> map, Class<T> cls) {
+        T target = ReflectUtil.newInstance(cls);
+        BeanUtil.fillBeanWithMap(map, target, true);
+        return target;
+    }
+
 
     public static <T> T copyBean(Object src, Class<T> cls) {
         if (src == null) {
