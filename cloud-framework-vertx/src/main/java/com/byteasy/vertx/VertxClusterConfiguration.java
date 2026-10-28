@@ -1,14 +1,22 @@
 package com.byteasy.vertx;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.ext.cluster.infinispan.InfinispanClusterManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class VertxClusterConfiguration {
+    @Value("${vertx.eventBus.host:0.0.0.0}")
+    private String eventBusHost;
+    @Value("${vertx.eventBus.port:10699}")
+    private int eventBusPort;
 
     /**
      * 注册集成的 Clustered Vert.x Bean
@@ -19,9 +27,14 @@ public class VertxClusterConfiguration {
         try {
             // 1. 初始化 Infinispan 集群管理器
             InfinispanClusterManager mgr = new InfinispanClusterManager((DefaultCacheManager) cacheManager);
+            VertxOptions options = new VertxOptions();
+            options.setEventBusOptions(new EventBusOptions()
+                    .setClusterPublicPort(eventBusPort)
+                    .setClusterPublicHost(eventBusHost));
 
             // 2. 异步构建集群，并转为标准 CompletableFuture 阻塞等待
             return Vertx.builder()
+                    .with(options)
                     .withClusterManager(mgr)
                     .buildClustered()
                     .toCompletionStage() // 将 Vert.x Future 转为 Java 标准 CompletionStage
@@ -31,5 +44,10 @@ public class VertxClusterConfiguration {
         } catch (Exception e) {
             throw new IllegalStateException("Vert.x 集群启动失败", e);
         }
+    }
+
+    @Bean
+    public EventBus eventBus(Vertx vertx) {
+        return vertx.eventBus();
     }
 }
