@@ -50,6 +50,12 @@ nohup $JAVA_HOME/bin/java \
     -Djava.net.preferIPv4Stack=true \
     -Dio.netty.tryReflectionSetAccessible=true \
     -Dconsumer.enabled=false \
+    -Djgroups.bind.address=127.0.0.1 \
+    -Djgroups.bind.port=7800 \
+    -Dvertx.eventBus.host=0.0.0.0 \
+    -Dvertx.eventBus.port=10699 \
+    -Dnacos.logging.config=classpath:nacos-log4j2-prod.xml \
+    -Duser.timezone=Asia/Shanghai \
     --add-opens java.base/java.io=ALL-UNNAMED \
     --add-opens java.base/sun.net=ALL-UNNAMED \
     --add-opens java.base/java.util.zip=ALL-UNNAMED \
@@ -58,8 +64,6 @@ nohup $JAVA_HOME/bin/java \
     --add-opens java.base/java.nio=ALL-UNNAMED \
     --add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
     --add-opens java.base/jdk.internal.platform=ALL-UNNAMED \
-    -Dnacos.logging.config=classpath:nacos-log4j2-prod.xml \
-    -Duser.timezone=Asia/Shanghai \
     -jar /data/app/platform/platform-service-1.0.0.jar \
     --spring.profiles.active=$PROFILE \
     > $LOG_HOME/platform-service/startup.log 2>&1 &
