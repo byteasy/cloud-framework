@@ -25,7 +25,7 @@
 
         <!-- 默认分布式缓存模板 -->
         <distributed-cache-configuration name="dist-template" mode="SYNC" owners="2" remote-timeout="5000">
-            <encoding media-type="text/plain"/>
+            <encoding media-type="application/x-java-object"/>
             <partition-handling when-split="DENY_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
             <state-transfer timeout="60000" chunkSize="512"/>
         </distributed-cache-configuration>
@@ -33,7 +33,7 @@
         <!-- 1. 业务缓存：users（堆外内存 1GB，满了自动 LRU 淘汰） -->
         <distributed-cache name="users" configuration="dist-template">
             <!--            <encoding media-type="application/x-protostream"/>-->
-            <encoding media-type="text/plain"/>
+            <encoding media-type="application/x-java-object"/>
             <expiration lifespan="7200000" max-idle="1800000"/>
             <!-- 修复后的 memory 标签 -->
             <memory storage="OFF_HEAP" max-size="1GB" when-full="REMOVE"/>

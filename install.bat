@@ -48,3 +48,11 @@ call mvn clean install
 cd ../cloud-service-starter
 call mvn clean install
 rem call mvn source:jar install
+
+cd ../cloud-platform/platform-service
+call mvn clean install
+rem call mvn source:jar install
+
+cd ../second-service
+call mvn clean install
+rem call mvn source:jar install

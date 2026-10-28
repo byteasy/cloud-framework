@@ -1,0 +1,48 @@
+<config xmlns="urn:org:jgroups"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.3.xsd">
+
+    <!-- 绑定本机的真实网卡 IP，避免绑到 127.0.0.1 -->
+    <TCP
+            bind_addr="${jgroups.bind.address:127.0.0.1}"
+            bind_port="${jgroups.bind.port:7800}"
+            port_range="10"
+            recv_buf_size="20m"
+            send_buf_size="640k"
+            sock_conn_timeout="300"
+            bundler_type="transfer-queue"
+            thread_naming_pattern="cl"
+            thread_pool.min_threads="2"
+            thread_pool.max_threads="30"
+            thread_pool.keep_alive_time="60000"/>
+
+    <!-- 节点发现协议：
+         - 物理机/虚拟机场景：使用 TCPPING 填写种子节点列表
+         - Kubernetes 容器场景：替换为 <dns.DNS_PING dns_query="infinispan-nodes.default.svc.cluster.local"/>
+         - 数据库中介场景：替换为 <JDBC_PING connection_url="..." />
+    -->
+    <TCPPING initial_hosts="${jgroups.tcpping.initial_hosts:192.168.56.1[7800],192.168.56.1[7801]}"
+             port_range="1"/>
+
+    <MERGE3 min_interval="10000" max_interval="30000"/>
+    <FD_SOCK2 offset="50"/>
+    <!-- 心跳与存活检测：超时 6 秒无响应判定宕机 -->
+    <FD_ALL3 timeout="6000" interval="2000"/>
+    <VERIFY_SUSPECT2 timeout="1000"/>
+    <pbcast.NAKACK2 use_mcast_xmit="false"
+                    xmit_interval="200"
+                    xmit_table_num_rows="50"
+                    xmit_table_msgs_per_row="1024"
+                    xmit_table_max_compaction_time="30000"/>
+    <UNICAST3 xmit_interval="200"
+              xmit_table_num_rows="50"
+              xmit_table_msgs_per_row="1024"
+              xmit_table_max_compaction_time="30000"/>
+    <pbcast.STABLE desired_avg_gossip="2000"
+                   max_bytes="1M"/>
+    <pbcast.GMS print_local_addr="true"
+                join_timeout="3000"/>
+    <UFC max_credits="4M" min_threshold="0.4"/>
+    <MFC max_credits="4M" min_threshold="0.4"/>
+    <FRAG4 frag_size="60k"/>
+</config>
