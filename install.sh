@@ -18,7 +18,7 @@ cd ../cloud-framework-vertx
 mvn clean install
 #mvn source:jar install
 
-cd ../cloud-framework-service
+cd ../cloud-framework-redis
 mvn clean install
 #mvn source:jar install
 
