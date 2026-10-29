@@ -4,7 +4,9 @@ import com.byteasy.exception.BizException;
 import com.byteasy.script.JsFunction;
 import com.byteasy.script.JsFunctions;
 import com.byteasy.util.EntityCodeUtil;
+import io.vertx.core.eventbus.EventBus;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -15,6 +17,9 @@ import java.util.List;
 @Component
 @Log4j2
 public class UtilFunction implements JsFunctions {
+
+    @Autowired
+    private EventBus eventBus;
 
     @Override
     public Collection<JsFunction> jsFunctions() {
@@ -63,7 +68,7 @@ public class UtilFunction implements JsFunctions {
                 return """
                         Use mq producer to public a message.
                         函数原型:
-                                 public static String publish(String topic, String key, String message);
+                                 public static void publish(String topic, String message);
                         """;
             }
 
@@ -74,7 +79,7 @@ public class UtilFunction implements JsFunctions {
                 }
                 String json = (String) args[2];
                 json = json.replace("com.oracle.truffle.polyglot.PolyglotMap", HashMap.class.getName());
-//                producer.publish((String) args[0], (String) args[1], json);
+                eventBus.publish((String) args[0], json);
                 return null;
             }
         });
