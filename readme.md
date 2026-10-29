@@ -78,11 +78,11 @@
 
 7.1 环境依赖
 - 前端：nodejs v24.12.0、Vue3
-- 后端：java 25 spring boot：3.5.9 spring cloud alibaba：2025.0.0.0 mybatis plus：3.5.16
+- 后端：java 25 spring boot：4.0.0 spring cloud alibaba：2025.1.0.0 mybatis plus：3.5.17
 - 中间件：Maven、Postgres、Apisix:3.14.1、Nacos:3.1.1
 
 7.2 项目克隆
-- 本项目基础仓库分三个：cloud-framework、cloud-platform、ui-app
+- 本项目基础仓库分三个：cloud-framework、ui-app
 
 7.3 环境初始化
 - Postgres数据库导出文件：[数据导入文件](https://github.com/byteasy/cloud-platform/blob/main/doc/schema/pg/byteasy.sql)
@@ -90,5 +90,5 @@
   在host文件中增加一个映射.
 
 7.4 前后端打包
-- [一键打包脚本](https://github.com/byteasy/cloud-platform/blob/main/doc/sh/autoDeploy.sh) 打包步骤可参照此演示后台的自动部署脚本
+- [一键打包脚本](https://github.com/byteasy/cloud-framework/blob/main/cloud-platform/doc/sh/autoDeploy.sh) 打包步骤可参照此演示后台的自动部署脚本
 
