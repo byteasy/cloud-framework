@@ -109,11 +109,8 @@ public class JsScriptExecutor {
                 Source cachedScript = JsScriptFactory.getScriptSource(jsName, jsScript);
                 resultValue = context.eval(cachedScript);
             } catch (Exception e) {
-                if (e instanceof PolyglotException) {
-                    throw new JsScriptException("动态接口执行失败: " + jsName + " :" + formatJsError((PolyglotException) e), e);
-                } else {
-                    throw new JsScriptException("动态接口行失败: " + jsName, e);
-                }
+                log.error("动态接口执行失败: " + jsName + " :" + formatJsError((PolyglotException) e), e);
+                throw new JsScriptException("动态接口执行失败: " + jsName + " :" + formatJsError((PolyglotException) e), e);
             }
 
             return extractFinalResult(resultValue);

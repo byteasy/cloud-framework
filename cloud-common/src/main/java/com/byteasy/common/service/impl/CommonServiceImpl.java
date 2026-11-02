@@ -19,6 +19,7 @@ import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.platform.entity.FieldDefine;
 import com.byteasy.util.*;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections.CollectionUtils;
@@ -119,14 +120,14 @@ public class CommonServiceImpl implements ICommonService {
             if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
                 oldEntity = getByPrimaryKey(className, primaryKeyValue);
             }
-            update(entityDefine, entity, columnMap, primaryColumn);
+            Map newEntity = update(entityDefine, entity, columnMap, primaryColumn);
             if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
                 publicEvent(EntityChangeEvent.builder().changeType(EntityChangeEvent.ChangeType.UPDATE)
                         .beforeEntities(List.of(oldEntity))
                         .afterEntities(List.of(entity))
                         .entityClass(className).build());
             }
-            return entity;
+            return newEntity;
         }
     }
 
@@ -709,9 +710,12 @@ public class CommonServiceImpl implements ICommonService {
         return jdbcTemplate.update(sql, totalParams.toArray());
     }
 
-    private void update(EntityDefine entityDefine, Map<String, Object> entity, Map<String, FieldDefine> columnMap, FieldDefine primaryColumn) {
+    private Map<String, Object> update(EntityDefine entityDefine, Map<String, Object> entity, Map<String, FieldDefine> columnMap, FieldDefine primaryColumn) {
         Set<String> columns = entity.keySet();
-        if (columns.isEmpty()) return;
+        if (columns.isEmpty()) return Collections.EMPTY_MAP;
+
+        Map<String, Object> newEntity = Maps.newHashMapWithExpectedSize(entity.size());
+        newEntity.putAll(entity);
 
         StringJoiner setJoiner = new StringJoiner(",");
         List<Object> params = new ArrayList<>();
@@ -733,15 +737,18 @@ public class CommonServiceImpl implements ICommonService {
             if (columnMap.containsKey("updaterId")) {
                 setJoiner.add(columnMap.get("updaterId").getFieldName() + "=?");
                 params.add(userInfo.getUserId());
+                newEntity.put("updaterId", userInfo.getUserId());
             }
             if (columnMap.containsKey("updatedBy")) {
                 setJoiner.add(columnMap.get("updatedBy").getFieldName() + "=?");
                 params.add(StringUtils.deleteWhitespace(userInfo.getName()));
+                newEntity.put("updatedBy", StringUtils.deleteWhitespace(userInfo.getName()));
             }
         }
         if (columnMap.containsKey("updatedTime")) {
             setJoiner.add(columnMap.get("updatedTime").getFieldName() + "=?");
             params.add(convertToDbValue(LocalDateTime.now(), columnMap.get("updatedTime")));
+            newEntity.put("updatedTime", LocalDateTime.now());
         }
 
         // 乐观锁：动态列名
@@ -749,6 +756,7 @@ public class CommonServiceImpl implements ICommonService {
         if (hasVersion) {
             String versionColName = columnMap.get("version").getFieldName();
             setJoiner.add(String.format("%s=%s + 1", versionColName, versionColName));
+            newEntity.put("version", MapUtils.getLong(entity, "version") + 1);
         }
 
         params.add(convertToDbValue(entity.get(primaryColumn.getName()), primaryColumn));
@@ -771,8 +779,9 @@ public class CommonServiceImpl implements ICommonService {
 
         int rows = jdbcTemplate.update(sql, params.toArray());
         if (rows < 1) {
-            throw new BizException(I18nUtil.getMessage("saveRecordFailed"));
+            throw new BizException(I18nUtil.getMessage("saveRecordFailed") + "," + I18nUtil.getMessage("refreshDataFirst"));
         }
+        return newEntity;
     }
 
     @Transactional(rollbackFor = Exception.class)

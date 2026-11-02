@@ -1,6 +1,7 @@
 package com.byteasy.platform.api;
 
 import com.byteasy.Result;
+import com.byteasy.api.IBaseEntityService;
 import com.byteasy.platform.Constant;
 import com.byteasy.platform.entity.DictionaryItem;
 import com.byteasy.platform.vo.DictionaryVO;
@@ -9,7 +10,7 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
 @HttpExchange(Constant.SAPI + "/dictionarys")
-public interface DictionaryClient {
+public interface DictionaryClient extends IBaseEntityService<Long, DictionaryItem> {
 
     @GetExchange("/rpc/codes/{code}")
     Result<DictionaryVO> getByCode(@PathVariable("code") String code);

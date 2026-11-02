@@ -50,10 +50,6 @@ public class OpenapiJsScriptController {
 
         String body = bodyMap.get("body").toString();
         Map<String, Object> script = (Map<String, Object>) bodyMap.get("script");
-        try {
-            return jsScriptApiService.debugScript(script, MapUtil.convertToMap(params), headers, body);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
-        }
+        return jsScriptApiService.debugScript(script, MapUtil.convertToMap(params), headers, body);
     }
 }

@@ -15,6 +15,14 @@ public interface Constant {
     String DIC_SETTING_LOGO_IMG = "logoImg";
     String DIC_SETTING_BACKGROUND_IMG = "backgroundImg";
     String DIC_SETTING_TITLE = "title";
+    /**
+     * 密钥，用于外网链接生成与加密
+     */
+    String DIC_SETTING_AES_PWD = "aesPwd";
+    /**
+     * 默认密码
+     */
+    String DEFAULT_AES_PWD = "byteasy#1239";
 
     /**
      * 平台常驻缓存
