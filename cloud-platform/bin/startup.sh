@@ -56,6 +56,7 @@ nohup $JAVA_HOME/bin/java \
     -Dvertx.eventBus.port=10699 \
     -Dnacos.logging.config=classpath:nacos-log4j2.xml \
     -Duser.timezone=Asia/Shanghai \
+    -Dspring.cloud.nacos.discovery.ip=192.168.56.102
     --add-opens java.base/java.io=ALL-UNNAMED \
     --add-opens java.base/sun.net=ALL-UNNAMED \
     --add-opens java.base/java.util.zip=ALL-UNNAMED \
