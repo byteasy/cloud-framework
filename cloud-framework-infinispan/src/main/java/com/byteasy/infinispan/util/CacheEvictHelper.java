@@ -5,8 +5,6 @@ import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.io.Serializable;
 import java.util.function.Predicate;
@@ -66,16 +64,16 @@ public class CacheEvictHelper {
             return;
         }
 
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    doEvictByPrefix(cacheName, prefix);
-                }
-            });
-        } else {
-            doEvictByPrefix(cacheName, prefix);
-        }
+//        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+//            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+//                @Override
+//                public void afterCommit() {
+        doEvictByPrefix(cacheName, prefix);
+//                }
+//            });
+//        } else {
+//            doEvictByPrefix(cacheName, prefix);
+//        }
     }
 
     /**

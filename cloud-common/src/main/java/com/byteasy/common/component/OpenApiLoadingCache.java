@@ -25,6 +25,7 @@ public class OpenApiLoadingCache implements ICacheLoader<String, Openapi> {
 
     public void register(Openapi openapi) {
         openapiService.saveOrUpdate(openapi);
+        invalid(openapi);
     }
 
     @Override
