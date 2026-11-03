@@ -4,12 +4,10 @@ import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
 import com.byteasy.common.controller.ImmutablyController;
+import com.byteasy.platform.entity.Role;
 import com.byteasy.platform.entity.RoleOpenapi;
 import com.byteasy.platform.service.IRoleOpenapiService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Set;
@@ -30,5 +28,11 @@ public class RoleOpenapiController extends ImmutablyController<Long, IRoleOpenap
     @Openapi(title = "查询角色的接口权限")
     public Result<List<RoleOpenapi>> listOpenapiByRoleIds(@RequestBody Set<Long> roleIds) {
         return Result.success(baseService.listOpenapiByRoleIds(roleIds));
+    }
+
+    @GetMapping("/openapis/{openapiCode}")
+    @Openapi(title = "查询接口已分配角色")
+    public Result<List<Role>> listRolesByOpenapi(@PathVariable("openapiCode") String openapiCode) {
+        return Result.success(baseService.listRolesByOpenapi(openapiCode));
     }
 }

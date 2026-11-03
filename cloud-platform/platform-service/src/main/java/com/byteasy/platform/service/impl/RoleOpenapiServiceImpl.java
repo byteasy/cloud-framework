@@ -1,6 +1,7 @@
 package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
+import com.byteasy.platform.entity.Role;
 import com.byteasy.platform.entity.RoleOpenapi;
 import com.byteasy.platform.mapper.RoleOpenapiMapper;
 import com.byteasy.platform.service.IRoleOpenapiService;
@@ -23,5 +24,10 @@ public class RoleOpenapiServiceImpl extends ServiceImpl<RoleOpenapiMapper, RoleO
     @Override
     public List<RoleOpenapi> listOpenapiByRoleIds(Set<Long> roleIds) {
         return baseMapper.listOpenapiByRoleIds(roleIds);
+    }
+
+    @Override
+    public List<Role> listRolesByOpenapi(String openapiCode) {
+        return baseMapper.listRolesByOpenapi(openapiCode);
     }
 }

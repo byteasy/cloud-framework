@@ -1,6 +1,7 @@
 package com.byteasy.platform.service;
 
 import com.baomidou.mybatisplus.spring.service.IService;
+import com.byteasy.platform.entity.Role;
 import com.byteasy.platform.entity.RoleOpenapi;
 
 import java.util.List;
@@ -17,4 +18,6 @@ import java.util.Set;
 public interface IRoleOpenapiService extends IService<RoleOpenapi> {
 
     List<RoleOpenapi> listOpenapiByRoleIds(Set<Long> roleIds);
+
+    List<Role> listRolesByOpenapi(String openapiCode);
 }

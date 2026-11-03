@@ -1,6 +1,7 @@
 package com.byteasy.platform.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.byteasy.platform.entity.Role;
 import com.byteasy.platform.entity.RoleOpenapi;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -19,4 +20,6 @@ import java.util.Set;
 public interface RoleOpenapiMapper extends BaseMapper<RoleOpenapi> {
 
     List<RoleOpenapi> listOpenapiByRoleIds(Set<Long> roleIds);
+
+    List<Role> listRolesByOpenapi(String openapiCode);
 }

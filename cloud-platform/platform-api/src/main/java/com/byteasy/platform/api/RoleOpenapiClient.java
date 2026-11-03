@@ -3,8 +3,11 @@ package com.byteasy.platform.api;
 import com.byteasy.Result;
 import com.byteasy.api.IBaseEntityService;
 import com.byteasy.platform.Constant;
+import com.byteasy.platform.entity.Role;
 import com.byteasy.platform.entity.RoleOpenapi;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
@@ -16,4 +19,7 @@ public interface RoleOpenapiClient extends IBaseEntityService<Long, RoleOpenapi>
 
     @PostExchange("/roleIds")
     Result<List<RoleOpenapi>> listOpenapiByRoleIds(@RequestBody Set<Long> roleIds);
+
+    @GetExchange("/openapis/{openapiCode}")
+    Result<List<Role>> listRolesByOpenapi(@PathVariable("openapiCode") String openapiCode);
 }

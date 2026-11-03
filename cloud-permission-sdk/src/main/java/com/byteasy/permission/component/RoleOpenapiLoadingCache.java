@@ -1,5 +1,6 @@
 package com.byteasy.permission.component;
 
+import com.byteasy.Result;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.infinispan.util.CacheEvictHelper;
 import com.byteasy.platform.Constant;
@@ -43,7 +44,12 @@ public class RoleOpenapiLoadingCache implements ICacheLoader<Long, Set<Long>> {
         } else if (entity instanceof Openapi) {
             Openapi openapi = (Openapi) entity;
             // 反查所有分配openapi的角色，然后失效所有的角色
-            // TODO
+            Result<List<Role>> result = roleOpenapiService.listRolesByOpenapi(openapi.getCode());
+            if (result.isSuccess()) {
+                for (Role role : result.getData()) {
+                    cacheEvictHelper.evictAfterCommit(Constant.PLATFORM_REP_CACHE, RoleOpenapi.class.getName() + ":" + role.getId());
+                }
+            }
         }
     }
 

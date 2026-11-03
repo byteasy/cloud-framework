@@ -13,4 +13,12 @@
         </foreach>
     </select>
 
+    <select id="listRolesByOpenapi" resultType="com.byteasy.platform.entity.Role">
+        SELECT ro.*
+        FROM platform_role ro
+        INNER JOIN platform_role_openapi rol ON rol.role_id = ro.id AND ro.status = 1
+        INNER JOIN platform_openapi api ON rol.openapi_id = api.id
+        WHERE api.code = #{openapiCode}
+    </select>
+
 </mapper>
