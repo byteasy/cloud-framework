@@ -30,7 +30,7 @@ public class OpenapiJsScriptController {
         request.getHeaderNames().asIterator().forEachRemaining(key -> {
             headers.put(key, request.getHeader(key));
         });
-        return jsScriptApiService.runScript(apiCode, MapUtil.convertToMap(params), headers, body);
+        return jsScriptApiService.runScript(apiCode, MapUtil.convertToMap(params), headers, body, false);
     }
 
     @PostMapping("/debug/script")

@@ -46,4 +46,12 @@ public interface Constant {
 
     String I_18_N_FORBIDDEN_OP = "ForbiddenOp";
 
+    /**
+     * Openapi不存在
+     */
+    String ERR_00001 = "E00001";
+    /**
+     * Openapi类型不是Public
+     */
+    String ERR_00002 = "E00002";
 }

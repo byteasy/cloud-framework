@@ -1,6 +1,7 @@
 package com.byteasy.script.service;
 
 import cn.hutool.core.map.MapUtil;
+import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.common.component.OpenApiLoadingCache;
 import com.byteasy.platform.entity.JsScript;
@@ -27,13 +28,25 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
 
     @Override
     @Transactional
-    public Result runScript(String apiCode, Map<String, Object> params, Map<String, String> headers, String body) throws ExecutionException {
+    public Result runScript(String apiCode, Map<String, Object> params, Map<String, String> headers, String body, boolean publicOnly) throws ExecutionException {
         log.info("runApiScript, api: {}, params: {}, headers: {}, body: {}", apiCode, params, headers, body);
 
         Openapi openApi = openApiLoadingCache.load(apiCode);
+
+        if (publicOnly && openApi == null) {
+            // 安全期间，仅返回特殊错误码
+            return Result.error("接口执行失败，错误码：" + Constant.ERR_00001);
+        }
+
         if (openApi == null) {
             log.error("openApi is null, apiCode: {}", apiCode);
             return Result.error("openApi is null, apiCode: " + apiCode);
+        }
+
+        if (publicOnly) {
+            if (!Openapi.PermissionType.PUBLIC.equals(openApi.getPermissionType())) {
+                return Result.error("接口执行失败，错误码：" + Constant.ERR_00002);
+            }
         }
 
         Long scriptId = openApi.getScriptId();

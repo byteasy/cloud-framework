@@ -62,7 +62,7 @@ public class ExecuteOpenapiFunction implements JsFunction {
             throw new BizException("未找到Openapi定义: " + apiCode);
         }
         if (Openapi.Type.SCRIPT.equals(openapi.getType())) {
-            return jsScriptApiService.runScript(apiCode, (Map<String, Object>) args[1], (Map<String, String>) args[2], (String) args[3]);
+            return jsScriptApiService.runScript(apiCode, (Map<String, Object>) args[1], (Map<String, String>) args[2], (String) args[3], false);
         } else {
             try {
                 DiscoveryClient discoveryClient = SpringUtil.getBean(DiscoveryClient.class);
