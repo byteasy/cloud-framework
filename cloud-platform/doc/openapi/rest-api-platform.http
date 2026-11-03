@@ -98,3 +98,20 @@ x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9j
 GET http://localhost:18080/platformSvr/sapi/schemas/database/currentSchema/platform_eb_application
 Content-Type: application/json
 x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiIzMmE2ZDRiYy03ZjA0LTQzYTItOWZjOS0wY2I5OTc2NmE5OTMiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbmlzdHJhdG9yIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
+
+### 缓存管理
+GET http://localhost:18080/platformSvr/sapi/admin/infinispan/caches
+Accept: application/json
+
+
+###
+GET http://localhost:18080/platformSvr/sapi/admin/infinispan/caches/platformRepCache
+Accept: application/json
+
+###
+GET http://localhost:18080/platformSvr/sapi/admin/infinispan/caches/platformRepCache/key?key=com.byteasy.platform.entity.DictionaryItem:platform_settings#aesPwd
+Accept: application/json
+
+###
+DELETE http://localhost:18080/platformSvr/sapi/admin/infinispan/caches/platformRepCache/key?key=com.byteasy.platform.entity.DictionaryItem:platform_settings#aesPwd
+Accept: application/json

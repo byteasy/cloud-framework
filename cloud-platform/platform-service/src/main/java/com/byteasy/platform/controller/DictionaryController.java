@@ -31,7 +31,7 @@ public class DictionaryController extends AuditController<Long, IDictionaryServi
         return Result.success(baseService.selectByCode(code));
     }
 
-    @GetMapping("/rpc/codes/{code}/items/{itemCode}")
+    @GetMapping("/codes/{code}/items/{itemCode}")
     @Openapi(summary = "查询字典项定义")
     public Result<DictionaryItem> selectByCodeAndItemCode(@PathVariable("code") String code, @PathVariable("itemCode") String itemCode) {
         return Result.success(baseService.selectByCodeAndItemCode(code, itemCode));

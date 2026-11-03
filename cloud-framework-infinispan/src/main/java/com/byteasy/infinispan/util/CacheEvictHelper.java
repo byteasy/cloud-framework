@@ -94,4 +94,40 @@ public class CacheEvictHelper {
         cache.keySet().removeIf(prefixPredicate);
         log.info("invalid cache: {} prefix: {}", cacheName, prefix);
     }
+
+    public void evictByContainsAfterCommit(String cacheName, String prefix, String keyWord) {
+        if (keyWord == null || keyWord.isEmpty()) {
+            return;
+        }
+
+//        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+//            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+//                @Override
+//                public void afterCommit() {
+        doEvictByContains(cacheName, prefix, keyWord);
+//                }
+//            });
+//        } else {
+//            doEvictByPrefix(cacheName, prefix);
+//        }
+    }
+
+    /**
+     * 执行按前缀匹配删除
+     */
+    private void doEvictByContains(String cacheName, String prefix, String keyWord) {
+        Cache<Object, Object> cache = cacheManager.getCache(cacheName, false);
+        if (cache == null) {
+            return;
+        }
+
+        // 核心实现：
+        // 1. (Predicate<Object> & Serializable) 交叉类型确保集群模式下 Lambda 可以跨节点网络序列化传输
+        // 2. removeIf 会在底层批量删除所有返回 true 的 entry
+        Predicate<Object> prefixPredicate = (Predicate<Object> & Serializable) key ->
+                key != null && key.toString().startsWith(prefix) && key.toString().contains(keyWord);
+
+        cache.keySet().removeIf(prefixPredicate);
+        log.info("invalid cache: {} prefix: {} keyWord: {}", cacheName, prefix, keyWord);
+    }
 }

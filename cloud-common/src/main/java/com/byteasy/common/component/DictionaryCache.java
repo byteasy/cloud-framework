@@ -1,10 +1,13 @@
 package com.byteasy.common.component;
 
+import com.byteasy.Result;
 import com.byteasy.component.ICacheLoader;
 import com.byteasy.enums.Enable;
+import com.byteasy.exception.BizException;
 import com.byteasy.infinispan.util.CacheEvictHelper;
 import com.byteasy.platform.Constant;
 import com.byteasy.platform.api.DictionaryClient;
+import com.byteasy.platform.api.DictionaryItemClient;
 import com.byteasy.platform.entity.Dictionary;
 import com.byteasy.platform.entity.DictionaryItem;
 import lombok.extern.log4j.Log4j2;
@@ -18,6 +21,8 @@ public class DictionaryCache implements ICacheLoader<String, DictionaryItem> {
 
     @Autowired
     private DictionaryClient dictionaryClient;
+    @Autowired
+    private DictionaryItemClient dictionaryItemClient;
     @Autowired
     private CacheEvictHelper cacheEvictHelper;
 
@@ -47,7 +52,11 @@ public class DictionaryCache implements ICacheLoader<String, DictionaryItem> {
                 value.setValue(defaultValue);
                 value.setLabel(label);
                 value.setStatus(Enable.ENABLE);
-                dictionaryClient.saveOrUpdate(value);
+                log.info("Dictionary item code: {} item: {} not exist, auto create.", keys[0], keys[1]);
+                Result result = dictionaryItemClient.saveOrUpdate(value);
+                if (result.isFailed()) {
+                    throw new BizException(result.getDescription());
+                }
             }
             return value.getValue();
         }
@@ -57,9 +66,7 @@ public class DictionaryCache implements ICacheLoader<String, DictionaryItem> {
     public void invalid(Object entity) {
         if (entity instanceof DictionaryItem) {
             DictionaryItem item = (DictionaryItem) entity;
-            if (Constant.DIC_SETTING_AES_PWD.equals(item.getCode())) {
-                cacheEvictHelper.evictAfterCommit(Constant.PLATFORM_REP_CACHE, DictionaryItem.class.getName() + ":" + Constant.DIC_SETTING_AES_PWD);
-            }
+            cacheEvictHelper.evictByContainsAfterCommit(Constant.PLATFORM_REP_CACHE, DictionaryItem.class.getName(), item.getCode());
         }
     }
 

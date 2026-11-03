@@ -31,6 +31,11 @@ public class RestClientConfig {
     }
 
     @Bean
+    public DictionaryItemClient dictionaryItemClient(HttpServiceProxyFactory platformServiceProxyFactory) {
+        return platformServiceProxyFactory.createClient(DictionaryItemClient.class);
+    }
+
+    @Bean
     public EntityDefineClient entityDefineClient(HttpServiceProxyFactory platformServiceProxyFactory) {
         return platformServiceProxyFactory.createClient(EntityDefineClient.class);
     }

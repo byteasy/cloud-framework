@@ -1,7 +1,11 @@
 package com.byteasy.script;
 
+import cn.hutool.crypto.SecureUtil;
+import cn.hutool.crypto.digest.DigestUtil;
+import com.byteasy.platform.Constant;
 import com.byteasy.util.JacksonUtil;
 import com.byteasy.script.util.JsScriptExecutor;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -49,5 +53,12 @@ public class JsTestDemo {
 
         System.out.println("返回前端JSON：");
         System.out.println(resultJson);
+    }
+
+    @Test
+    public void genAes() {
+        String str1 = "3";
+        String pwd = "byteasy#1239";
+        System.out.println(SecureUtil.aes(DigestUtil.md5(pwd)).encryptHex(str1));
     }
 }
