@@ -68,7 +68,7 @@ public class CommonServiceRouterConfig {
 
             // 3. 从缓存/数据库中读取 EntityDefine 获取归属微服务
             EntityDefine define = entityDefineLoadingCache.load(className);
-            String targetService = (define != null) ? define.getCode() : null;
+            String targetService = (define != null) ? define.getServiceCode() : null;
 
             // 4. 判断是否是本地服务
             // 如果未配置所属微服务，或者所属微服务就是当前应用，走本地执行
