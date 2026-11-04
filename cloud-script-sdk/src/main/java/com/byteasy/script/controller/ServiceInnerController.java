@@ -57,7 +57,7 @@ public class ServiceInnerController {
         for (Method method : ICommonService.class.getMethods()) {
             if (method.getName().equals(dto.getMethodName()) && method.getParameterCount() == args.length) {
                 // 进行反射调用
-                return JacksonUtil.toJson(method.invoke(localCommonService, args), true);
+                return method.invoke(localCommonService, args);
             }
         }
         throw new NoSuchMethodException("未找到匹配的方法: " + dto.getMethodName());

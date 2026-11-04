@@ -1,9 +1,11 @@
 package com.byteasy.common.configuration;
 
 import com.byteasy.common.component.EntityDefineLoadingCache;
+import com.byteasy.common.component.ServiceInstanceLoadingCache;
 import com.byteasy.common.service.ICommonService;
 import com.byteasy.dto.MethodInvokeDTO;
 import com.byteasy.platform.entity.EntityDefine;
+import com.byteasy.platform.entity.ServiceInstance;
 import com.byteasy.util.JacksonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.client.RestClient;
 
 import java.lang.reflect.InvocationHandler;
@@ -19,6 +22,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @Configuration
@@ -33,6 +37,8 @@ public class CommonServiceRouterConfig {
 
     @Autowired
     private EntityDefineLoadingCache entityDefineLoadingCache;
+    @Autowired
+    private ServiceInstanceLoadingCache serviceInstanceLoadingCache;
 
     @Autowired
     private RestClient.Builder restClientBuilder;
@@ -84,30 +90,35 @@ public class CommonServiceRouterConfig {
         /**
          * 借助 Spring Cloud RestClient + Nacos 进行远程泛化调用
          */
-        private Object invokeRemoteService(String targetService, Method method, String className, Object[] args) {
+        private Object invokeRemoteService(String targetService, Method method, String className, Object[] args) throws ExecutionException {
             List<Object> argList = (args != null) ? Arrays.asList(args) : List.of();
             MethodInvokeDTO requestDTO = new MethodInvokeDTO(method.getName(), className, argList);
 
+            ServiceInstance serviceInstance = serviceInstanceLoadingCache.load(targetService);
             // 借助 Nacos 服务名直接发起负载均衡调用
-            String url = "http://" + targetService + "/sapi/inner/service/invoke";
+            String url = "http://" + targetService + serviceInstance.getContextPath() + "/sapi/inner/service/invoke";
 
             Class<?> returnType = method.getReturnType();
+            String body = JacksonUtil.toJson(requestDTO, true);
+            if (body == null) {
+                body = "";
+            }
             if (void.class.equals(returnType)) {
                 restClientBuilder.build()
                         .post()
                         .uri(url)
-                        .body(JacksonUtil.toJson(requestDTO, true))
+                        .body(body)
                         .retrieve()
                         .toBodilessEntity();
                 return null;
             } else {
-                String json = restClientBuilder.build()
+                return restClientBuilder.build()
                         .post()
                         .uri(url)
-                        .body(JacksonUtil.toJson(requestDTO, true))
+                        .body(body)
                         .retrieve()
-                        .body(String.class);
-                return JacksonUtil.parseObj(json);
+                        .body(ParameterizedTypeReference.forType(method.getGenericReturnType()));
+//                return JacksonUtil.parseObj(json);
             }
         }
     }
