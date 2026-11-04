@@ -22,6 +22,9 @@ public class OpenapiServiceImpl extends ServiceImpl<OpenapiMapper, Openapi> impl
 
     @Override
     public Openapi getByUriAndMethod(String actualUri, String uri, Openapi.HttpMethod method) {
+        /**
+         * 根据actualUri做精确匹配查找
+         */
         LambdaQueryWrapper<Openapi> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Openapi::getUri, actualUri);
         queryWrapper.eq(Openapi::getHttpMethod, method);
@@ -31,6 +34,10 @@ public class OpenapiServiceImpl extends ServiceImpl<OpenapiMapper, Openapi> impl
         if (openapi != null) {
             return openapi;
         }
+
+        /**
+         * 根据代码定义的path，可能含有path变量，做匹配查找
+         */
         String[] segments = RequestMappingResolver.splitByPathVariable(uri);
         LambdaQueryWrapper<Openapi> queryWrapper2 = new LambdaQueryWrapper<>();
         for (String segment : segments) {

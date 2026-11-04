@@ -73,7 +73,6 @@ public class CommonServiceRouterConfig {
             // 4. 判断是否是本地服务
             // 如果未配置所属微服务，或者所属微服务就是当前应用，走本地执行
             if (targetService == null || targetService.equalsIgnoreCase(currentServiceName)) {
-                log.debug("本地处理实体 [{}] 的调用: {}", className, method.getName());
                 return method.invoke(localCommonService, args);
             }
 

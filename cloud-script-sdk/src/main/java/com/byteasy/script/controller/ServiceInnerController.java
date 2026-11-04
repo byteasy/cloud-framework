@@ -28,7 +28,7 @@ public class ServiceInnerController {
 
     @PostMapping("/scriptFunctionRunner/run/{name}")
     @Openapi
-    public Object run(@PathVariable String name, @RequestBody String argsString) {
+    public Object run(@PathVariable String name, @RequestBody(required = false) String argsString) {
         Object[] args = JacksonUtil.parseObjArray(argsString);
         ScriptFunctionDTO scriptFunction = factory.getJsFunctionMap().get(name);
         if (scriptFunction == null) {
@@ -47,7 +47,7 @@ public class ServiceInnerController {
 
     @PostMapping("/service/invoke")
     @Openapi
-    public Object invoke(@RequestBody String json) throws Exception {
+    public Object invoke(@RequestBody(required = false) String json) throws Exception {
         MethodInvokeDTO dto = (MethodInvokeDTO) JacksonUtil.parseObj(json);
         log.info("收到跨服务 ICommonService 调用: method={}, className={}", dto.getMethodName(), dto.getClassName());
 
