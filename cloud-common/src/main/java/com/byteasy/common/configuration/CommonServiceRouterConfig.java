@@ -118,7 +118,6 @@ public class CommonServiceRouterConfig {
                         .body(body)
                         .retrieve()
                         .body(ParameterizedTypeReference.forType(method.getGenericReturnType()));
-//                return JacksonUtil.parseObj(json);
             }
         }
     }
