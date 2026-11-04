@@ -1,32 +1,22 @@
 package com.byteasy.script;
 
-import cn.hutool.core.codec.Base64;
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.Constant;
-import com.byteasy.common.component.ServiceInstanceLoadingCache;
-import com.byteasy.common.token.TokenUtil;
-import com.byteasy.common.token.UserInfo;
-import com.byteasy.common.token.UserInfoBuilder;
-import com.byteasy.util.HttpResult;
-import com.byteasy.util.HttpUtil;
-import com.byteasy.util.JacksonUtil;
 import com.byteasy.event.IPlatformReady;
 import com.byteasy.exception.BizException;
 import com.byteasy.platform.api.ScriptFunctionClient;
 import com.byteasy.platform.dto.ScriptFunctionDTO;
+import com.byteasy.util.JacksonUtil;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.ServiceInstance;
-import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import static com.byteasy.util.RandomUtil.random;
 
 @Component
 @Log4j2
@@ -36,6 +26,8 @@ public class JsFunctionFactory implements IPlatformReady {
 
     @Autowired
     private ScriptFunctionClient scriptFunctionService;
+    @Autowired
+    private RestClient.Builder restClientBuilder;
 
     @PostConstruct
     public void init() {
@@ -99,17 +91,12 @@ public class JsFunctionFactory implements IPlatformReady {
             log.info("remote JsFunction service: {} name: {}, group: {}, description: {}", scriptFunction.getServiceCode(), scriptFunction.getName(), scriptFunction.getGroupName(), scriptFunction.getDescription());
             scriptFunction.setFunction((args) -> {
                 try {
-                    DiscoveryClient discoveryClient = SpringUtil.getBean(DiscoveryClient.class);
-                    ServiceInstanceLoadingCache serviceInstanceLoadingCache = SpringUtil.getBean(ServiceInstanceLoadingCache.class);
-
-                    List<ServiceInstance> instances = discoveryClient.getInstances(scriptFunction.getServiceCode());
-                    UserInfo token = TokenUtil.getUserinfo();
-                    ServiceInstance randomService = random(instances);
                     try {
-                        HttpResult<String> httpResult = HttpUtil.post(randomService.getUri().toString() + serviceInstanceLoadingCache.load(scriptFunction.getServiceCode()).getContextPath() + Constant.SAPI + "/scriptFunctionRunner/run/" + scriptFunction.getName()).textBody(JacksonUtil.toJson(args, true))
-                                .header(Constant.USER_INFO, token != null ? Base64.encode(JacksonUtil.toJson(token)) : UserInfoBuilder.builderByMicroService(SpringUtil.getApplicationName(), SpringUtil.getApplicationName()))
-                                .execute(String.class);
-                        String result = httpResult.getData();
+                        String result = restClientBuilder.build().post()
+                                .uri("http://" + scriptFunction.getServiceCode() + Constant.SAPI + "/inner/scriptFunctionRunner/run/" + scriptFunction.getName())
+                                .body(JacksonUtil.toJson(args, true))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .retrieve().body(String.class);
                         return JacksonUtil.parseObj(result);
                     } catch (Exception e) {
                         log.error(scriptFunction.getName() + " remote call err", e);

@@ -15,6 +15,7 @@ import com.baomidou.mybatisplus.extension.plugins.inner.DataPermissionIntercepto
 import com.baomidou.mybatisplus.extension.plugins.inner.DynamicTableNameInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import com.byteasy.common.interceptor.RestClientHeaderInterceptor;
 import com.byteasy.common.interceptor.TypeResolveJacksonHttpMessageConverter;
 import com.byteasy.util.HttpUtil;
 import com.byteasy.util.JacksonUtil;
@@ -172,8 +173,13 @@ public class FrameworkConfig {
     }
 
     @Bean
+    public RestClientHeaderInterceptor restClientHeaderInterceptor() {
+        return new RestClientHeaderInterceptor();
+    }
+
+    @Bean
     @LoadBalanced
-    public RestClient.Builder restClientBuilder(JdkClientHttpRequestFactory jdkClientHttpRequestFactory) {
-        return RestClient.builder().requestFactory(jdkClientHttpRequestFactory).configureMessageConverters(c -> c.registerDefaults().withJsonConverter(new TypeResolveJacksonHttpMessageConverter(JacksonUtil.getObjectMapper())));
+    public RestClient.Builder restClientBuilder(JdkClientHttpRequestFactory jdkClientHttpRequestFactory, RestClientHeaderInterceptor restClientHeaderInterceptor) {
+        return RestClient.builder().requestFactory(jdkClientHttpRequestFactory).requestInterceptor(restClientHeaderInterceptor).configureMessageConverters(c -> c.registerDefaults().withJsonConverter(new TypeResolveJacksonHttpMessageConverter(JacksonUtil.getObjectMapper())));
     }
 }

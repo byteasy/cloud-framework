@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 
 import static com.byteasy.util.FieldDefineUtil.*;
 
-@Service
+@Service("localCommonServiceImpl")
 @Log4j2
 public class CommonServiceImpl implements ICommonService {
 
@@ -124,7 +124,7 @@ public class CommonServiceImpl implements ICommonService {
             if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
                 publicEvent(EntityChangeEvent.builder().changeType(EntityChangeEvent.ChangeType.UPDATE)
                         .beforeEntities(List.of(oldEntity))
-                        .afterEntities(List.of(entity))
+                        .afterEntities(List.of(newEntity))
                         .entityClass(className).build());
             }
             return newEntity;

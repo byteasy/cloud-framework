@@ -9,6 +9,7 @@ import com.byteasy.platform.entity.FieldDefine;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
@@ -20,6 +21,7 @@ import java.util.Comparator;
 public class FieldDefineHelperController {
 
     @Autowired
+    @Qualifier("localCommonServiceImpl")
     private ICommonService commonService;
 
     @GetMapping("/src/{className}")

@@ -1,6 +1,5 @@
 package com.byteasy.platform;
 
-import com.byteasy.common.configuration.RestClientHeaderInterceptor;
 import com.byteasy.platform.api.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,10 +11,9 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 public class RestClientConfig {
 
     @Bean
-    public RestClient plateformServiceRestClient(RestClient.Builder restClientBuilder, RestClientHeaderInterceptor restClientHeaderInterceptor) {
+    public RestClient plateformServiceRestClient(RestClient.Builder restClientBuilder) {
         return restClientBuilder
-                .baseUrl("lb://" + Constant.SERVICE_NAME)
-                .requestInterceptor(restClientHeaderInterceptor)
+                .baseUrl("http://" + Constant.SERVICE_NAME)
                 .build();
     }
 

@@ -1,4 +1,4 @@
-package com.byteasy.common.configuration;
+package com.byteasy.common.interceptor;
 
 import cn.hutool.core.codec.Base64;
 import cn.hutool.extra.spring.SpringUtil;
@@ -15,7 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -23,7 +22,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.io.IOException;
 import java.util.Locale;
 
-@Component
 public class RestClientHeaderInterceptor implements ClientHttpRequestInterceptor {
 
     @Override
