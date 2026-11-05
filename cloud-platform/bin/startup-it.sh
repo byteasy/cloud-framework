@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# 接收命令行参数，默认值为 prod
+ENV=${1:-dev}
+
+# 根据参数设置不同的配置
+case $ENV in
+    prod)
+        PROFILE="prod"
+        ;;
+    dev)
+        PROFILE="dev"
+        ;;
+    it)
+        PROFILE="it"
+        ;;
+    test)
+        PROFILE="test"
+        ;;
+    *)
+        echo "未知环境: $ENV"
+        echo "使用方法: $0 {prod|it|dev|test}"
+        exit 1
+        ;;
+esac
+
+# 1. 载入系统环境变量
+[ -f /etc/profile ] && source /etc/profile
+
+# 2. 如果系统已定义 JAVA_HOME 则复用，否则兜底指定 /data/tools/jdk-25.0.2
+export JAVA_HOME="${JAVA_HOME:-/data/tools/jdk-25.0.4}"
+# 3. 环境变量与目录容错处理 (若未定义 LOG_HOME 则默认当前目录或 /data/logs)
+LOG_HOME="${LOG_HOME:-/data/app/logs}"
+mkdir -p "$LOG_HOME/platform-service"
+
+echo "=========================================="
+echo "启动环境: $PROFILE"
+echo "使用 JDK: $JAVA_HOME"
+echo "日志目录: $LOG_HOME/platform-service"
+echo "=========================================="
+
+# -Dspring.cloud.nacos.discovery.ip=192.168.56.102 如果nacos注册的ip有问题，可以手工指定
+
+nohup $JAVA_HOME/bin/java \
+    -Xms512m -Xmx512m \
+    -DJM.LOG.PATH=$LOG_HOME/platform-service \
+    -DJM.SNAPSHOT.PATH=$LOG_HOME/platform-service \
+    -Dsun.misc.Unsafe.disableMemoryAllocationWarning=true \
+    -Djdk.unsupported.providers.disable=true \
+    -Djava.net.preferIPv4Stack=true \
+    -Dio.netty.tryReflectionSetAccessible=true \
+    -Dconsumer.enabled=false \
+    -Djgroups.bind.address=192.168.3.81 \
+    -Djgroups.bind.port=7800 \
+    -Dvertx.eventBus.host=0.0.0.0 \
+    -Dvertx.eventBus.port=10699 \
+    -Dnacos.logging.config=classpath:nacos-log4j2.xml \
+    -Duser.timezone=Asia/Shanghai \
+    -Dspring.cloud.nacos.discovery.ip=192.168.3.81 \
+    --add-opens java.base/java.io=ALL-UNNAMED \
+    --add-opens java.base/sun.net=ALL-UNNAMED \
+    --add-opens java.base/java.util.zip=ALL-UNNAMED \
+    --add-opens java.management/sun.management=ALL-UNNAMED \
+    --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
+    --add-opens java.base/java.nio=ALL-UNNAMED \
+    --add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+    --add-opens java.base/jdk.internal.platform=ALL-UNNAMED \
+    -jar /data/app/platform/platform-service-1.0.0.jar \
+    --spring.profiles.active=$PROFILE \
+    > $LOG_HOME/platform-service/startup.log 2>&1 &
+
+echo "服务已启动，PID: $!"
