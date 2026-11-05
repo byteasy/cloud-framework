@@ -1,4 +1,4 @@
-package com.byteasy.platform.oauth2.controller;
+package com.byteasy.platform.oauth2.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

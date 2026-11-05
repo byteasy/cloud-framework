@@ -139,7 +139,7 @@ public class JacksonUtil {
                     : OBJECT_MAPPER.writeValueAsString(obj);
         } catch (Exception e) {
             log.error("JacksonUtil.toJson-json序列化出错: {}", obj, e);
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
@@ -161,7 +161,7 @@ public class JacksonUtil {
             return mapper.writer(filters).writeValueAsString(obj);
         } catch (Exception e) {
             log.error("JacksonUtil.toJson-json序列化出错: {}", obj, e);
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
@@ -171,7 +171,7 @@ public class JacksonUtil {
             return OBJECT_MAPPER.readValue(json, tClass);
         } catch (Exception e) {
             log.error("JacksonUtil.parse-json解析出错: {}", json, e);
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
@@ -181,7 +181,7 @@ public class JacksonUtil {
             return OBJECT_WITH_CLASS_MAPPER.readValue(json, Object.class);
         } catch (Exception e) {
             log.error("JacksonUtil.parse-json解析出错: {}", json, e);
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
@@ -220,7 +220,7 @@ public class JacksonUtil {
             return OBJECT_MAPPER.readValue(json, type);
         } catch (Exception e) {
             log.error("JacksonUtil.nativeRead-json解析出错: {}", json, e);
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
@@ -231,7 +231,7 @@ public class JacksonUtil {
             return OBJECT_MAPPER.readValue(json, javaType);
         } catch (Exception e) {
             log.error("JacksonUtil.nativeRead-json解析出错: ", e);
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
@@ -254,12 +254,14 @@ public class JacksonUtil {
 
     public static Map<String, Object> obj2Map(Object object) {
         if (object == null) return Collections.emptyMap();
-        return OBJECT_MAPPER.convertValue(object, new TypeReference<Map<String, Object>>() {});
+        return OBJECT_MAPPER.convertValue(object, new TypeReference<Map<String, Object>>() {
+        });
     }
 
     public static Map<String, String> obj2StringMap(Object object) {
         if (object == null) return Collections.emptyMap();
-        return OBJECT_MAPPER.convertValue(object, new TypeReference<Map<String, String>>() {});
+        return OBJECT_MAPPER.convertValue(object, new TypeReference<Map<String, String>>() {
+        });
     }
 
     public static <T> T obj2Val(Object object, Class<T> clazz) {

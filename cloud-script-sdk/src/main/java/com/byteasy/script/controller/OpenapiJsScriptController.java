@@ -24,7 +24,7 @@ public class OpenapiJsScriptController {
 
     @PostMapping("/{apiCode}")
     @Openapi
-    public Result runScriptApi(@PathVariable String apiCode, @RequestBody String body, HttpServletRequest request) throws ExecutionException {
+    public Result runScriptApi(@PathVariable String apiCode, @RequestBody(required = false) String body, HttpServletRequest request) throws ExecutionException {
         Map<String, String[]> params = request.getParameterMap();
         Map<String, String> headers = new HashMap<>();
         request.getHeaderNames().asIterator().forEachRemaining(key -> {

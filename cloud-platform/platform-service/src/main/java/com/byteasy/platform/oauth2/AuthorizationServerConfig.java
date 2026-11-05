@@ -1,7 +1,9 @@
 package com.byteasy.platform.oauth2;
 
-import com.byteasy.platform.oauth2.controller.CaptchaFilter;
+import com.byteasy.api.ICacheHelper;
 import com.byteasy.platform.oauth2.event.TunaTokenCustomizer;
+import com.byteasy.platform.oauth2.filter.CaptchaFilter;
+import com.byteasy.platform.oauth2.filter.SsoTicketAuthenticationFilter;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -9,6 +11,7 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -21,6 +24,7 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.jackson.SecurityJacksonModules;
@@ -33,6 +37,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -58,35 +63,32 @@ public class AuthorizationServerConfig {
     // 1. 协议端点过滤器链 (处理 /oauth2/authorize, /oauth2/token, /connect/register 等)
     @Bean
     @Order(1)
-    public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http, SsoTicketAuthenticationFilter ssoTicketAuthenticationFilter) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         http.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
-                .with(authorizationServerConfigurer, (configurer) ->
-                        configurer.oidc(Customizer.withDefaults()))
-                .authorizeHttpRequests((authorize) ->
-                        authorize.anyRequest().authenticated())
-                .exceptionHandling((exceptions) -> exceptions
-                        .defaultAuthenticationEntryPointFor(
-                                new LoginUrlAuthenticationEntryPoint("/login"),
-                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
-                        )
-                )
+                .with(authorizationServerConfigurer, (configurer) -> configurer.oidc(Customizer.withDefaults()))
+                .authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated())
+                .exceptionHandling((exceptions) -> exceptions.defaultAuthenticationEntryPointFor(new LoginUrlAuthenticationEntryPoint("/login"), new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
+        http.addFilterAfter(ssoTicketAuthenticationFilter, org.springframework.security.web.context.SecurityContextHolderFilter.class);
         return http.build();
     }
 
     @Bean
     @Order(2)
-    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable).addFilterBefore(new CaptchaFilter(), UsernamePasswordAuthenticationFilter.class).authorizeHttpRequests((authorize) ->
-                        authorize.requestMatchers("/assets/**", "/papi/**", "/sapi/**").permitAll().anyRequest().permitAll())
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http, SsoTicketAuthenticationFilter ssoTicketAuthenticationFilter) throws Exception {
+        http.csrf(AbstractHttpConfigurer::disable).addFilterBefore(new CaptchaFilter(), UsernamePasswordAuthenticationFilter.class)
+                // 三方登录过滤器
+                .addFilterBefore(ssoTicketAuthenticationFilter, CaptchaFilter.class)
+                .authorizeHttpRequests((authorize) -> authorize.requestMatchers("/assets/**", "/papi/**", "/sapi/**").permitAll().anyRequest().permitAll())
                 // Form login handles the redirect to the login page from the authorization server filter chain
-                .formLogin(form -> form.loginPage("/login").permitAll()).headers(headers -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
-                        .xssProtection(HeadersConfigurer.XXssConfig::disable)
-                        .contentSecurityPolicy(HeadersConfigurer.ContentSecurityPolicyConfig::reportOnly)
-                );
+                .formLogin(form -> form.loginPage("/login").permitAll()).headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable).xssProtection(HeadersConfigurer.XXssConfig::disable).contentSecurityPolicy(HeadersConfigurer.ContentSecurityPolicyConfig::reportOnly));
         return http.build();
+    }
+
+    @Bean
+    public SsoTicketAuthenticationFilter ssoTicketAuthenticationFilter(Environment environment, ICacheHelper cacheHelper, UserDetailsService userDetailsService) {
+        return new SsoTicketAuthenticationFilter(environment, cacheHelper, userDetailsService);
     }
 
     @Bean
@@ -100,14 +102,9 @@ public class AuthorizationServerConfig {
         JdbcOAuth2AuthorizationService authorizationService = new JdbcOAuth2AuthorizationService(jdbcTemplate, clientRepository);
         ClassLoader classLoader = getClass().getClassLoader();
         // 1. 配置多态安全验证器：加入你的业务包及用户实体
-        BasicPolymorphicTypeValidator.Builder ptvBuilder = BasicPolymorphicTypeValidator.builder()
-                .allowIfBaseType(Object.class)
-                .allowIfSubType("org.springframework.security.")
-                .allowIfSubType("com.byteasy."); // 允许你自己的业务包
+        BasicPolymorphicTypeValidator.Builder ptvBuilder = BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).allowIfSubType("org.springframework.security.").allowIfSubType("com.byteasy."); // 允许你自己的业务包
 
-        JsonMapper jsonMapper = JsonMapper.builder()
-                .addModules(SecurityJacksonModules.getModules(classLoader, ptvBuilder))
-                .build();
+        JsonMapper jsonMapper = JsonMapper.builder().addModules(SecurityJacksonModules.getModules(classLoader, ptvBuilder)).build();
         JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationRowMapper rowMapper = new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationRowMapper(clientRepository, jsonMapper);
         authorizationService.setAuthorizationRowMapper(rowMapper);
         return authorizationService;
@@ -131,9 +128,7 @@ public class AuthorizationServerConfig {
             PublicKey publicKey = loadPublicKey(publicKeyPath);
 
             // 2. 构建 RSAKey（Nimbus JWK 格式）
-            RSAKey rsaKey = new RSAKey.Builder((java.security.interfaces.RSAPublicKey) publicKey)
-                    .privateKey((java.security.interfaces.RSAPrivateKey) privateKey)
-                    .keyID(UUID.randomUUID().toString()) // 可选：固定 keyID 提升缓存效率
+            RSAKey rsaKey = new RSAKey.Builder((java.security.interfaces.RSAPublicKey) publicKey).privateKey((java.security.interfaces.RSAPrivateKey) privateKey).keyID(UUID.randomUUID().toString()) // 可选：固定 keyID 提升缓存效率
                     // .keyID("fixed-key-id-123") // 生产环境建议固定 keyID
                     .build();
 
@@ -151,10 +146,7 @@ public class AuthorizationServerConfig {
         ClassPathResource resource = new ClassPathResource(classPath);
         try (InputStream is = resource.getInputStream()) {
             // 读取 PEM 文件并去除头部/尾部、换行符
-            String privateKeyPem = new String(is.readAllBytes())
-                    .replace("-----BEGIN PRIVATE KEY-----", "")
-                    .replace("-----END PRIVATE KEY-----", "")
-                    .replaceAll("\\s+", ""); // 去除所有空白字符（换行/空格）
+            String privateKeyPem = new String(is.readAllBytes()).replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "").replaceAll("\\s+", ""); // 去除所有空白字符（换行/空格）
 
             // Base64 解码并构建 PKCS8 规范
             byte[] keyBytes = Base64.getDecoder().decode(privateKeyPem);
@@ -172,10 +164,7 @@ public class AuthorizationServerConfig {
         ClassPathResource resource = new ClassPathResource(classPath);
         try (InputStream is = resource.getInputStream()) {
             // 读取 PEM 文件并去除头部/尾部、换行符
-            String publicKeyPem = new String(is.readAllBytes())
-                    .replace("-----BEGIN PUBLIC KEY-----", "")
-                    .replace("-----END PUBLIC KEY-----", "")
-                    .replaceAll("\\s+", "");
+            String publicKeyPem = new String(is.readAllBytes()).replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "").replaceAll("\\s+", "");
 
             // Base64 解码并构建 X509 规范
             byte[] keyBytes = Base64.getDecoder().decode(publicKeyPem);

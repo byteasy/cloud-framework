@@ -4,6 +4,7 @@ import cn.hutool.core.map.MapUtil;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.common.component.OpenApiLoadingCache;
+import com.byteasy.enums.Enable;
 import com.byteasy.platform.entity.JsScript;
 import com.byteasy.platform.entity.Openapi;
 import com.byteasy.script.component.JsScriptFactory;
@@ -41,6 +42,11 @@ public class JsScriptApiServiceImpl implements IJsScriptApiService {
         if (openApi == null) {
             log.error("openApi is null, apiCode: {}", apiCode);
             return Result.error("openApi is null, apiCode: " + apiCode);
+        }
+
+        if (!Enable.ENABLE.equals(openApi.getStatus())) {
+            log.error("openApi is disable, apiCode: {}", apiCode);
+            return Result.error("openApi is disable, apiCode: {}" + apiCode);
         }
 
         if (publicOnly) {
