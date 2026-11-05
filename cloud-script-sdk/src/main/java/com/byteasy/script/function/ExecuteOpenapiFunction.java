@@ -65,6 +65,7 @@ public class ExecuteOpenapiFunction implements JsFunction {
             return jsScriptApiService.runScript(apiCode, (Map<String, Object>) args[1], (Map<String, String>) args[2], (String) args[3], false);
         } else {
             try {
+                // TODO
                 DiscoveryClient discoveryClient = SpringUtil.getBean(DiscoveryClient.class);
                 List<ServiceInstance> instances = discoveryClient.getInstances(openapi.getServiceCode());
                 Map<String, String> header = new HashMap<>();

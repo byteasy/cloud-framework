@@ -3,8 +3,10 @@ package com.byteasy.platform.controller;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
+import com.byteasy.platform.configuration.PlatformProperties;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,10 +23,10 @@ import java.time.format.DateTimeFormatter;
 @RequestMapping(Constant.SAPI + "/files")
 public class FileUploadController {
 
-    @Value("${platform.dataRootDir}")
-    private String dataRootDir;
     @Value("${server.servlet.context-path}")
     private String contextPath;
+    @Autowired
+    private PlatformProperties platformProperties;
 
     @PostMapping("/public")
     @Openapi(summary = "上传公开访问文件", entityName = "com.byteasy.platform.entity.File")
@@ -33,7 +35,7 @@ public class FileUploadController {
 
         String path = now.getYear() + File.separator + now.getMonthValue() + File.separator + now.format(DateTimeFormatter.ofPattern("ddHHmmss")) +
                 "." + FilenameUtils.getExtension(file.getOriginalFilename());
-        FileUtils.copyInputStreamToFile(file.getInputStream(), new File(dataRootDir + File.separator + com.byteasy.platform.Constant.UPLOAD_DIR_PUBLIC, path));
+        FileUtils.copyInputStreamToFile(file.getInputStream(), new File(platformProperties.getDataRootDir() + File.separator + com.byteasy.platform.Constant.UPLOAD_DIR_PUBLIC, path));
 
         String accessPath = contextPath + File.separator + path;
         return Result.success(accessPath.replace("\\", "/"));
@@ -46,7 +48,7 @@ public class FileUploadController {
 
         String path = now.getYear() + File.separator + now.getMonthValue() + File.separator + now.format(DateTimeFormatter.ofPattern("ddHHmmss")) +
                 "." + FilenameUtils.getExtension(file.getOriginalFilename());
-        FileUtils.copyInputStreamToFile(file.getInputStream(), new File(dataRootDir + File.separator + com.byteasy.platform.Constant.UPLOAD_DIR_PRIVATE, path));
+        FileUtils.copyInputStreamToFile(file.getInputStream(), new File(platformProperties.getDataRootDir() + File.separator + com.byteasy.platform.Constant.UPLOAD_DIR_PRIVATE, path));
 
         String accessPath = contextPath + File.separator + path;
         return Result.success(accessPath.replace("\\", "/"));
