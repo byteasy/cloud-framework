@@ -63,6 +63,7 @@ public class ThirdLoginController {
                 Map<String, Object> data = (Map<String, Object>) result.getData();
                 // 不过通过那种方式，调用第三方平台获取accessToken然后获取用户信息，或者从传递过来的ToKen解密，均在脚本中实现，最后返回标准的结果集Userinfo
                 ExternalUser userinfo = CastUtil.mapToBean(data, ExternalUser.class);
+                // 有对应的账号，直接跳转到对应页面即可
                 if (StringUtils.isNotEmpty(userinfo.getUsername())) {
                     // 生成一次性短时凭证 Ticket (30秒有效)
                     String ssoTicket = "BT_SSO_TICKET_" + UUID.randomUUID().toString().replace("-", "");
@@ -76,6 +77,11 @@ public class ThirdLoginController {
 
                     response.sendRedirect(request.getContextPath() + "/index.html#" + (userinfo.getPath() != null ? userinfo.getPath() : ""));
                     return;
+                } else {
+                    // 没有绑定的账号，跳转到注册页面或者定义页面，补全信息后创建账号登录
+                    if (StringUtils.isNotEmpty(userinfo.getPath())) {
+                        response.sendRedirect(request.getContextPath() + userinfo.getPath());
+                    }
                 }
             }
         } catch (Exception e) {
