@@ -148,3 +148,31 @@ http://tuna.net/platformSvr/papi/sso/4TyH9fMA2/callback?token=eyJhbGciOi...&path
 第三方回调报 redirect_uri mismatch？
 排查：使用模式一（标准 OAuth2）时，成熟的第三方平台通常会强校验 redirect_uri 是否与在他们开放平台后台配置的白名单完全匹配，请检查后台白名单配置是否遗漏或协议（HTTP/HTTPS）不一致。
 ```
+
+### 5. 下面以github的跳转自动登录为例做详细说明
+
+1. 登录http://byteasy.cn后代，进入低代码平台的Openapi管理界面，创建Openapi登录脚本接口，主要作用：根据第三方系统传递过来的参数，完成安全校验，获取第三方系统用户信息，映射或者自动创建本平台的账号，完成绑定。
+   ![创建Openapi执行脚本](https://pic3.zhimg.com/80/v2-f8cf6c876bbd7d2483e9f2d59bfa4744_720w.webp)
+2. 编写处理github自动登录脚本
+```text
+var code = params.code;
+var state = params.state;
+var path = params.path;
+logInfo("state: {}", state);
+// 这里仅做演示，具体如何调用github的api获取具体的账号信息，此处省略
+var result = {};
+// 这里直接绑定github的所有的用户为administrator
+result.username = "administrator";
+// 指定跳转过来的页面路由，自动登录成功后，会自动跳转到这个页面，此处也可以改为回调地址传参获取不同页面地址
+result.path = "/SystemManage/PlatformManage/PlatformConfig";
+result.path = path;
+
+result;
+```
+3. 登录github，进入settings --> applications --> My GitHub Apps --> OAuth Apps --> New OAuth app,输入自己的域名及对应的回调地址（https://www.byteasy.cn/platformSvr/papi/sso/4TyH9fMA2/callback）
+   ![创建github Oauth app](https://pic4.zhimg.com/80/v2-d4922f227bece745a9049ca84da12fdb_720w.webp)
+   ![创建github Oauth app](https://picx.zhimg.com/80/v2-2604bae7c4b40317018003d2be39cb1b_720w.webp)
+   ![创建github Oauth app](https://pic3.zhimg.com/80/v2-e761b8c8854c1f0cf42433b24d1260a2_720w.webp)
+4. 创建好OAuth app后，记录自己的clientId，然后构造跳转链接：
+   https://link.zhihu.com/?target=https%3A//github.com/login/oauth/authorize%3Fclient_id%3DOv23li4LnQADaqv95N4Z%26scope%3Dread%3Auser%26state%3Dtest_github_123%26redirect_uri%3Dhttps%253A%252F%252Fwww.byteasy.cn%252FplatformSvr%252Fpapi%252Fsso%252F4TyH9fMA2%252Fcallback
+   点击上述链接，完成自动登录。
