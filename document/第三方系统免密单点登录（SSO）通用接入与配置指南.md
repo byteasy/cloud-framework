@@ -181,5 +181,5 @@ platform:
    ![创建github Oauth app](https://picx.zhimg.com/80/v2-2604bae7c4b40317018003d2be39cb1b_720w.webp)
    ![创建github Oauth app](https://pic3.zhimg.com/80/v2-e761b8c8854c1f0cf42433b24d1260a2_720w.webp)
 5. 创建好OAuth app后，记录自己的clientId，然后构造跳转链接：
-   https://link.zhihu.com/?target=https%3A//github.com/login/oauth/authorize%3Fclient_id%3DOv23li4LnQADaqv95N4Z%26scope%3Dread%3Auser%26state%3Dtest_github_123%26redirect_uri%3Dhttps%253A%252F%252Fwww.byteasy.cn%252FplatformSvr%252Fpapi%252Fsso%252F4TyH9fMA2%252Fcallback
+   https://github.com/login/oauth/authorize?client_id=Ov23li4LnQADaqv95N4Z&scope=read:user&state=test_github_123&redirect_uri=https%3A%2F%2Fwww.byteasy.cn%2FplatformSvr%2Fpapi%2Fsso%2F4TyH9fMA2%2Fcallback
    点击上述链接，完成自动登录。
