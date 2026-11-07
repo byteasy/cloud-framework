@@ -7,7 +7,7 @@
     </jgroups>
 
     <cache-container name="byteasy-container" default-cache="users" statistics="true">
-        <transport stack="tcp-stack" cluster="byteasy-embedded-cluster" node-name="${HOSTNAME:node-default}"/>
+        <transport stack="tcp-stack" />
         <!-- 序列化白名单配置 -->
         <serialization>
             <allow-list>

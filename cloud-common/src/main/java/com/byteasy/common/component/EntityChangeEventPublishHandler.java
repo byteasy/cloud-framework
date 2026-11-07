@@ -1,14 +1,11 @@
 package com.byteasy.common.component;
 
-import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.entity.EntityDefine;
-import com.byteasy.platform.entity.Openapi;
 import com.byteasy.util.JacksonUtil;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -37,13 +34,6 @@ public class EntityChangeEventPublishHandler implements IEntityChangeHandler {
         } else {
             log.warn("Entity: {} is not define.", event.getEntityClass());
         }
-    }
-
-    @PostConstruct
-    public void init() {
-        eventBus.consumer(Openapi.class.getName(), message -> {
-            log.info("name: {} consumer: {}", SpringUtil.getApplicationName(), message.body());
-        });
     }
 
 }

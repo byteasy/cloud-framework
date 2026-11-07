@@ -105,11 +105,11 @@ Accept: application/json
 
 
 ###
-GET http://localhost:18080/platformSvr/sapi/admin/infinispan/caches/platformRepCache
+GET http://localhost:18080/platformSvr/sapi/admin/infinispan/caches/__vertx.nodeInfo
 Accept: application/json
 
 ###
-GET http://localhost:18080/platformSvr/sapi/admin/infinispan/caches/platformRepCache/key?key=com.byteasy.platform.entity.DictionaryItem:platform_settings#aesPwd
+GET http://localhost:18080/platformSvr/sapi/admin/infinispan/caches/__vertx.nodeInfo/key?key=node-${random.uuid}
 Accept: application/json
 
 ###
