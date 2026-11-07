@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.byteasy.annotations.FieldMeta;
 import com.byteasy.entity.AuditEntity;
+import com.byteasy.enums.IBaseEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -57,7 +58,47 @@ public class EntityDefine extends AuditEntity<Long> {
     @TableField("trackable")
     private Boolean trackable;
 
-    @FieldMeta(name = "说明", showOrder = 108, maxLength = 1024)
+    @FieldMeta(name = "是否审计", showOrder = 108)
+    @TableField("auditable")
+    private Boolean auditable;
+
+    @FieldMeta(name = "可见性", showOrder = 109)
+    @TableField("visibility")
+    private Visibility visibility;
+
+    @FieldMeta(name = "说明", showOrder = 110, maxLength = 1024)
     @TableField("remark")
     private String remark;
+
+    public enum Visibility implements IBaseEnum<Integer> {
+        PRIVATE(0, "私有"),
+        PUBLIC(1, "公开"),
+        ;
+        public final Integer value;
+        public final String desc;
+
+        Visibility(Integer value, String desc) {
+            this.value = value;
+            this.desc = desc;
+        }
+
+        @Override
+        public Integer getValue() {
+            return this.value;
+        }
+
+        public static Visibility fromValue(String value) {
+            for (Visibility status : Visibility.values()) {
+                if (status.value.equals(value)) {
+                    return status;
+                }
+            }
+            throw new IllegalArgumentException("无效的状态值: " + value);
+        }
+
+        @Override
+        public String getName() {
+            return desc;
+        }
+    }
 }

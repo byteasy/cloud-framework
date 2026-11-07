@@ -10,6 +10,8 @@ create table platform_entity_define
     url                  varchar(512)          default null,
     cacheable            bool                  default false,
     trackable            bool                  default false,
+    auditable            bool                  default false,
+    visibility           SMALLINT     NOT NULL DEFAULT 0,
 
     remark               varchar(2048)         default null,
     creator_id           varchar(64)  not null,
@@ -31,6 +33,8 @@ comment on column platform_entity_define.name is '名称';
 comment on column platform_entity_define.url is '请求接口地址';
 comment on column platform_entity_define.cacheable is '是否缓存';
 comment on column platform_entity_define.trackable is '是否跟踪变化';
+comment on column platform_entity_define.auditable is '是否记录变化进行审计';
+comment on column platform_entity_define.visibility is '可见性：0：私有 1：公开';
 comment on column platform_entity_define.remark is '说明';
 comment on column platform_entity_define.creator_id is '创建人编号';
 comment on column platform_entity_define.created_by is '创建人';

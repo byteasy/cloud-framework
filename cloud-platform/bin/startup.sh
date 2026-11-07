@@ -52,7 +52,7 @@ nohup $JAVA_HOME/bin/java \
     -Dconsumer.enabled=false \
     -Djgroups.bind.address=192.168.56.102 \
     -Djgroups.bind.port=7800 \
-    -Dvertx.eventBus.host=0.0.0.0 \
+    -Dvertx.eventBus.host=192.168.56.102 \
     -Dvertx.eventBus.port=10699 \
     -Dnacos.logging.config=classpath:nacos-log4j2.xml \
     -Duser.timezone=Asia/Shanghai \
