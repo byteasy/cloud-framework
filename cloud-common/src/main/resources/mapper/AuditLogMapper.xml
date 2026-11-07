@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byteasy.common.mapper.IAuditLogMapper">
+
+    <!-- 基础 ResultMap 映射 -->
+    <resultMap id="BaseResultMap" type="com.byteasy.entity.AuditLog">
+        <id column="id" property="id" />
+        <result column="entity_id" property="entityId" />
+        <result column="change_type" property="changeType" />
+        <result column="entity_content" property="entityContent" />
+        <!-- 继承自 ImmutablyEntity 的公共审计字段（按你基类的实际属性名对齐） -->
+        <result column="create_time" property="createTime" />
+        <result column="create_by" property="createBy" />
+    </resultMap>
+
+    <!-- 通用查询字段列 -->
+    <sql id="Base_Column_List">
+        id, entity_id, change_type, entity_content, create_time, create_by
+    </sql>
+
+    <!-- 1. 批量插入（表名动态传入必须使用 ${tableName}，不可用 #{tableName}） -->
+    <insert id="batchInsert">
+        INSERT INTO ${tableName} (
+        entity_id,
+        change_type,
+        entity_content,
+        create_time,
+        create_by
+        ) VALUES
+        <foreach collection="auditLogs" item="item" separator=",">
+            (
+            #{item.entityId},
+            #{item.changeType},
+            #{item.entityContent},
+            #{item.createTime},
+            #{item.createBy}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 2. 分页列表查询 -->
+    <select id="queryForList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM ${tableName}
+        <where>
+            <if test="entityId != null">
+                AND entity_id = #{entityId}
+            </if>
+            <if test="start != null">
+                AND create_time &gt;= #{start}
+            </if>
+            <if test="end != null">
+                AND create_time &lt;= #{end}
+            </if>
+        </where>
+        ORDER BY id DESC
+        LIMIT #{current}, #{pageSize}
+    </select>
+
+    <!-- 3. 查询分页总记录数 -->
+    <select id="countForPage" resultType="long">
+        SELECT COUNT(1)
+        FROM ${tableName}
+        <where>
+            <if test="entityId != null">
+                AND entity_id = #{entityId}
+            </if>
+            <if test="start != null">
+                AND create_time &gt;= #{start}
+            </if>
+            <if test="end != null">
+                AND create_time &lt;= #{end}
+            </if>
+        </where>
+    </select>
+
+</mapper>

@@ -4,7 +4,6 @@ import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.util.JacksonUtil;
-import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,19 +20,22 @@ public class EntityChangeEventPublishHandler implements IEntityChangeHandler {
 
     @Override
     public String type() {
-        return "EntityChangeEventPublishHandler";
+        return EntityChangeEventPublishHandler.class.getName();
     }
 
     @Override
     public void handle(String src, EntityChangeEvent event) {
         EntityDefine entityDefine = entityDefineLoadingCache.load(event.getEntityClass());
         if (entityDefine != null) {
+            // 广播所有实体变更的通知
             if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
-                eventBus.publish(event.getEntityClass(), JacksonUtil.toJson(event), new DeliveryOptions().setLocalOnly(false));
+                eventBus.publish(event.getEntityClass(), JacksonUtil.toJson(event));
             }
+
         } else {
             log.warn("Entity: {} is not define.", event.getEntityClass());
         }
+
     }
 
 }

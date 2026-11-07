@@ -33,4 +33,8 @@ public interface Constant {
      * OAuth2免登录cookie名称
      */
     String OAUTH2_COOKIE_THIRD_TOKEN_NAME = "BT_SSO_TICKET";
+
+    /**
+     *
+     */
 }

@@ -20,7 +20,7 @@ public class EntityCacheEvictHandler implements IEntityChangeHandler {
 
     @Override
     public String type() {
-        return "EntityCacheEvictHandler";
+        return EntityCacheEvictHandler.class.getName();
     }
 
     @Override

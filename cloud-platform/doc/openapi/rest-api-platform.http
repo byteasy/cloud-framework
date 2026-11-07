@@ -105,11 +105,11 @@ Accept: application/json
 
 
 ###
-GET http://localhost:18080/platformSvr/sapi/admin/infinispan/caches/__vertx.nodeInfo
+GET http://192.168.56.102:18080/platformSvr/sapi/admin/infinispan/caches/__vertx.subs
 Accept: application/json
 
 ###
-GET http://localhost:18080/platformSvr/sapi/admin/infinispan/caches/__vertx.nodeInfo/key?key=node-${random.uuid}
+GET http://192.168.56.102:18080/platformSvr/sapi/admin/infinispan/caches/__vertx.subs/key?key=platform-service
 Accept: application/json
 
 ###

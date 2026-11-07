@@ -2,19 +2,23 @@ package com.byteasy.common.service.impl;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.byteasy.util.NameConvertUtil;
+import com.byteasy.common.service.IDatabaseMetaService;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;
-import com.byteasy.common.service.IDatabaseMetaService;
+import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.platform.entity.FieldDefine;
+import com.byteasy.util.NameConvertUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -100,6 +104,45 @@ public class PostgresMetaServiceImpl implements IDatabaseMetaService {
         } else {
             // 3. 表存在：进行 DDL 增量对比与修改
             updateTableColumns(fullTableName, schema, tableName, columns);
+        }
+    }
+
+    @Override
+    public void createAuditSchema(EntityDefine entityDefine) {
+        String schema = getCurrentSchema();
+        String tableName = entityDefine.getTableName() + "_audit_log";
+        String checkTableSql = "SELECT count(1) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?";
+        Integer tableCount = jdbcTemplate.queryForObject(checkTableSql, Integer.class, schema, tableName);
+        boolean isTableExist = tableCount != null && tableCount > 0;
+
+        String fullTableName = String.format("\"%s\".\"%s\"", schema, tableName);
+
+        if (!isTableExist) {
+            List<String> sqls = new ArrayList<>();
+            sqls.add("create table " + fullTableName +
+                    """
+                            (
+                                id             bigserial primary key,
+                                entity_id      BIGINT      NOT NULL,
+                                change_type    SMALLINT    NOT NULL DEFAULT 0,
+                                entity_content TEXT        not null,
+                                creator_id     varchar(64) not null,
+                                created_by     varchar(64) not null,
+                                created_time   timestamp   not null default current_timestamp
+                            );
+                    """);
+            sqls.add("comment on column " + fullTableName + ".id is '编号'");
+            sqls.add("comment on column " + fullTableName + ".entity_id is '实体编码'");
+            sqls.add("comment on column " + fullTableName + ".change_type is '变更类型：0：新增 1：编辑 2：删除'");
+            sqls.add("comment on column " + fullTableName + ".entity_content is '变更内容'");
+            sqls.add("comment on column " + fullTableName + ".creator_id is '创建人编号'");
+            sqls.add("comment on column " + fullTableName + ".created_by is '创建人'");
+            sqls.add("comment on column " + fullTableName + ".created_time is '创建时间'");
+            sqls.add("comment on table " + fullTableName + " is '审计日志定义表'");
+            sqls.add("create unique index idx_" + tableName + "_entity_id_time ON " + fullTableName + " using btree (entity_id, created_time)");
+            for (String sql : sqls) {
+                jdbcTemplate.execute(sql);
+            }
         }
     }
 
