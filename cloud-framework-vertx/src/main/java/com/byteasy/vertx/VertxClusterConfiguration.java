@@ -29,6 +29,7 @@ public class VertxClusterConfiguration {
             InfinispanClusterManager mgr = new InfinispanClusterManager((DefaultCacheManager) cacheManager);
             VertxOptions options = new VertxOptions();
             options.setEventBusOptions(new EventBusOptions()
+                    .setHost(eventBusHost).setPort(eventBusPort)
                     .setClusterPublicPort(eventBusPort)
                     .setClusterPublicHost(eventBusHost));
 
