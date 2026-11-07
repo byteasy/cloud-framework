@@ -21,8 +21,7 @@
          - Kubernetes 容器场景：替换为 <dns.DNS_PING dns_query="infinispan-nodes.default.svc.cluster.local"/>
          - 数据库中介场景：替换为 <JDBC_PING connection_url="..." />
     -->
-    <TCPPING initial_hosts="${jgroups.tcpping.initial_hosts:192.168.56.1[7800],192.168.56.1[7801]}"
-             port_range="1"/>
+    <TCPPING initial_hosts="${jgroups.tcpping.initial_hosts:192.168.56.1[7800],192.168.56.102[7800]}" port_range="1"/>
 
     <MERGE3 min_interval="10000" max_interval="30000"/>
     <FD_SOCK2 offset="50"/>
