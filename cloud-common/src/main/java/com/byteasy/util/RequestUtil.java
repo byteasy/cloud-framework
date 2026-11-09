@@ -144,13 +144,17 @@ public class RequestUtil {
         });
 
         // 2. 二选一逻辑路由
-        if (hasAdvanceQuery) {
+        String oneKeySearch = getSingleValue(multiMap, "oneKeySearch", null);
+        if (hasAdvanceQuery && StringUtils.isNotBlank(oneKeySearch)) {
+            wrapper.and(andWrapper -> {
+                buildAdvanceWrapper(andWrapper, multiMap, fieldDefineMap);
+            }).and(andWrapper -> {
+                buildOneKeySearchWrapper(andWrapper, oneKeySearch, fieldDefineMap);
+            });
+        } else if (hasAdvanceQuery && StringUtils.isBlank(oneKeySearch)) {
             buildAdvanceWrapper(wrapper, multiMap, fieldDefineMap);
-        } else {
-            String oneKeySearch = getSingleValue(multiMap, "oneKeySearch", null);
-            if (StringUtils.isNotBlank(oneKeySearch)) {
-                buildOneKeySearchWrapper(wrapper, oneKeySearch, fieldDefineMap);
-            }
+        } else if (!hasAdvanceQuery && StringUtils.isNotEmpty(oneKeySearch)) {
+            buildOneKeySearchWrapper(wrapper, oneKeySearch, fieldDefineMap);
         }
 
         // 3. 处理排序 Order By
