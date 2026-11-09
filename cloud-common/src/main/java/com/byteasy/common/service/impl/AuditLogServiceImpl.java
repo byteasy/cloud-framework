@@ -24,7 +24,7 @@ public class AuditLogServiceImpl implements IAuditLogService {
     }
 
     @Override
-    public Page<AuditLog> page(EntityDefine entityDefine, Long entityId, LocalDateTime start, LocalDateTime end, long current, long pageSize) {
+    public Page<AuditLog> page(EntityDefine entityDefine, String entityId, LocalDateTime start, LocalDateTime end, long current, long pageSize) {
         List<AuditLog> list = auditLogMapper.queryForList(entityDefine.getTableName() + "_audit_log", entityId, start, end, current, pageSize);
         long total = auditLogMapper.countForPage(entityDefine.getTableName() + "_audit_log", entityId, start, end);
         return new Page<AuditLog>().setRecords(list).setTotal(total);

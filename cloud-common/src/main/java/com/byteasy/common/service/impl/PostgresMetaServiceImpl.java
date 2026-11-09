@@ -123,7 +123,7 @@ public class PostgresMetaServiceImpl implements IDatabaseMetaService {
                     """
                             (
                                 id             bigserial primary key,
-                                entity_id      BIGINT      NOT NULL,
+                                entity_id      varchar(64) NOT NULL,
                                 change_type    SMALLINT    NOT NULL DEFAULT 0,
                                 entity_content TEXT        not null,
                                 creator_id     varchar(64) not null,

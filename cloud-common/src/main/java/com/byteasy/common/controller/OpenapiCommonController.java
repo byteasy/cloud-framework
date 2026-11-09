@@ -11,19 +11,18 @@ import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.Status;
 import com.byteasy.annotations.Openapi;
-import com.byteasy.util.CastUtil;
-import com.byteasy.util.JacksonUtil2;
 import com.byteasy.common.component.EntityDefineLoadingCache;
 import com.byteasy.common.component.FieldDefineLoadingCache;
-import com.byteasy.util.FieldDefineUtil;
+import com.byteasy.common.service.IAuditLogService;
+import com.byteasy.common.service.ICommonService;
+import com.byteasy.entity.AuditLog;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.RelationType;
 import com.byteasy.enums.YesNo;
 import com.byteasy.exception.BizException;
-import com.byteasy.common.service.ICommonService;
+import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.platform.entity.FieldDefine;
-import com.byteasy.util.I18nUtil;
-import com.byteasy.util.XlsxUtil;
+import com.byteasy.util.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -64,6 +63,8 @@ public class OpenapiCommonController {
     private FieldDefineLoadingCache fieldDefineLoadingCache;
     @Autowired
     private EntityDefineLoadingCache entityDefineLoadingCache;
+    @Autowired
+    private IAuditLogService auditLogService;
 
     @GetMapping("/{className}")
     @Openapi(summary = "分页查询")
@@ -122,6 +123,20 @@ public class OpenapiCommonController {
         commonService.batchDelete(className, JacksonUtil2.nativeRead(body, new TypeReference<List<Map<String, Object>>>() {
         }));
         return Result.success();
+    }
+
+    @GetMapping("/{className}/audit/log")
+    @Openapi(summary = "审计日志")
+    public Result<Page<AuditLog>> pageAuditLog(@PathVariable("className") String className) {
+        EntityDefine entityDefine = entityDefineLoadingCache.load(className);
+        Map<String, String[]> paramsMap = RequestUtil.getParameterMap();
+        String entityId = paramsMap.containsKey("id") ? paramsMap.get("id")[0] : null;
+
+        LocalDateTime startTime = RequestUtil.getParameter("startTime", LocalDateTime.class);
+        LocalDateTime endTime = RequestUtil.getParameter("endTime", LocalDateTime.class);
+
+        Page page = RequestUtil.getPage();
+        return Result.success(auditLogService.page(entityDefine, entityId, startTime, endTime, (page.getCurrent() - 1) * page.getSize(), page.getSize()));
     }
 
     @GetMapping("/{className}/excel/template")

@@ -1,7 +1,7 @@
 create table ${table_name}_audit_log
 (
     id             bigserial primary key,
-    entity_id      BIGINT      NOT NULL,
+    entity_id      varchar(64)      NOT NULL,
     change_type    SMALLINT    NOT NULL DEFAULT 0,
     entity_content TEXT        not null,
 

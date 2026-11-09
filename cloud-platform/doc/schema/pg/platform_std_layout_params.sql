@@ -11,6 +11,7 @@ CREATE TABLE platform_std_layout_params
     api_import_preview                   VARCHAR(512),
     api_import_batch_save                VARCHAR(512),
     api_export                           VARCHAR(512),
+    api_audit_log                        VARCHAR(512),
 
     title_column_name                    VARCHAR(255)         default 'name',
     query_params                         VARCHAR(1024),
@@ -61,6 +62,7 @@ COMMENT ON COLUMN platform_std_layout_params.api_download_import_template IS '�
 COMMENT ON COLUMN platform_std_layout_params.api_import_preview IS '导入预览API';
 COMMENT ON COLUMN platform_std_layout_params.api_import_batch_save IS '批量导入保存API';
 COMMENT ON COLUMN platform_std_layout_params.api_export IS '导出API';
+COMMENT ON COLUMN platform_std_layout_params.api_audit_log IS '查询审计日志';
 COMMENT ON COLUMN platform_std_layout_params.title_column_name IS '卡片标题列';
 COMMENT ON COLUMN platform_std_layout_params.query_params IS '默认查询参数';
 COMMENT ON COLUMN platform_std_layout_params.form_width IS '表单页面宽度';

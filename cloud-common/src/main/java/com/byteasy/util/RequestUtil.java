@@ -563,4 +563,13 @@ public class RequestUtil {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         return attributes != null ? attributes.getRequest() : null;
     }
+
+    public static Map<String, String[]> getParameterMap() {
+        HttpServletRequest request = getHttpServletRequest();
+        if (request != null) {
+            return request.getParameterMap();
+        }
+        return Collections.EMPTY_MAP;
+    }
+
 }

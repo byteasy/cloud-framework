@@ -44,7 +44,7 @@ public class JacksonUtil {
                 .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .enable(StreamWriteFeature.WRITE_BIGDECIMAL_AS_PLAIN)
-                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL).withContentInclusion(JsonInclude.Include.NON_NULL))
                 .defaultTimeZone(TimeZone.getDefault())
                 .enable(EnumFeature.WRITE_ENUMS_USING_TO_STRING)
                 .enable(EnumFeature.READ_ENUMS_USING_TO_STRING)

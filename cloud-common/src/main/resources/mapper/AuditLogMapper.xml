@@ -9,13 +9,14 @@
         <result column="change_type" property="changeType" />
         <result column="entity_content" property="entityContent" />
         <!-- 继承自 ImmutablyEntity 的公共审计字段（按你基类的实际属性名对齐） -->
-        <result column="create_time" property="createTime" />
-        <result column="create_by" property="createBy" />
+        <result column="creator_id" property="creatorId" />
+        <result column="created_by" property="createdBy" />
+        <result column="created_time" property="createdTime" />
     </resultMap>
 
     <!-- 通用查询字段列 -->
     <sql id="Base_Column_List">
-        id, entity_id, change_type, entity_content, create_time, create_by
+        id, entity_id, change_type, entity_content, creator_id, created_by, created_time
     </sql>
 
     <!-- 1. 批量插入（表名动态传入必须使用 ${tableName}，不可用 #{tableName}） -->
@@ -24,16 +25,18 @@
         entity_id,
         change_type,
         entity_content,
-        create_time,
-        create_by
+        creator_id,
+        created_by,
+        created_time
         ) VALUES
         <foreach collection="auditLogs" item="item" separator=",">
             (
             #{item.entityId},
             #{item.changeType},
             #{item.entityContent},
-            #{item.createTime},
-            #{item.createBy}
+            #{item.creatorId},
+            #{item.createdBy},
+            #{item.createdTime}
             )
         </foreach>
     </insert>
@@ -48,14 +51,14 @@
                 AND entity_id = #{entityId}
             </if>
             <if test="start != null">
-                AND create_time &gt;= #{start}
+                AND created_time &gt;= #{start}
             </if>
             <if test="end != null">
-                AND create_time &lt;= #{end}
+                AND created_time &lt;= #{end}
             </if>
         </where>
         ORDER BY id DESC
-        LIMIT #{current}, #{pageSize}
+        LIMIT #{pageSize} OFFSET #{current}
     </select>
 
     <!-- 3. 查询分页总记录数 -->
@@ -67,10 +70,10 @@
                 AND entity_id = #{entityId}
             </if>
             <if test="start != null">
-                AND create_time &gt;= #{start}
+                AND created_time &gt;= #{start}
             </if>
             <if test="end != null">
-                AND create_time &lt;= #{end}
+                AND created_time &lt;= #{end}
             </if>
         </where>
     </select>

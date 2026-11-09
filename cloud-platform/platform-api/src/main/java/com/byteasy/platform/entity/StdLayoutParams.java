@@ -164,4 +164,8 @@ public class StdLayoutParams extends AuditEntity<Long> {
     @FieldMeta(name = "页面编号", showOrder = 133)
     @TableField("eb_page_id")
     private Long ebPageId;
+
+    @FieldMeta(name = "查询审计日志", showOrder = 134)
+    @TableField("api_audit_log")
+    private String apiAuditLog;
 }

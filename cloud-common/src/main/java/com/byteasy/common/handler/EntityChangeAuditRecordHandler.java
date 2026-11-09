@@ -1,20 +1,29 @@
-package com.byteasy.common.component;
+package com.byteasy.common.handler;
 
 import cn.hutool.core.map.MapUtil;
+import com.byteasy.common.component.EntityDefineLoadingCache;
+import com.byteasy.common.component.RepositoryMutationAspect;
 import com.byteasy.common.service.IAuditLogService;
 import com.byteasy.common.service.impl.CommonServiceImpl;
+import com.byteasy.common.token.TokenUtil;
+import com.byteasy.common.token.UserInfo;
+import com.byteasy.entity.AuditLog;
+import com.byteasy.entity.Entity;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.dto.CreateAuditLogTableDTO;
 import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.util.CastUtil;
 import com.byteasy.util.JacksonUtil;
+import com.google.common.collect.Lists;
 import io.vertx.core.eventbus.EventBus;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -91,9 +100,11 @@ public class EntityChangeAuditRecordHandler implements IEntityChangeHandler {
             if (entityDefine.getAuditable() != null && entityDefine.getAuditable()) {
                 switch (event.getChangeType()) {
                     case UPDATE, INSERT -> {
-
+                        saveAuditLog(entityDefine, event.getChangeType(), event.getAfterEntities());
                     }
-                    case DELETE -> {}
+                    case DELETE -> {
+                        saveAuditLog(entityDefine, event.getChangeType(), event.getBeforeEntities());
+                    }
                 }
             }
         } else {
@@ -103,5 +114,34 @@ public class EntityChangeAuditRecordHandler implements IEntityChangeHandler {
 
     private void sendCreateEntityAuditTable(CreateAuditLogTableDTO entityDefine) {
         eventBus.send(entityDefine.getServiceCode(), JacksonUtil.toJson(entityDefine, true));
+    }
+
+    private void saveAuditLog(EntityDefine entityDefine, EntityChangeEvent.ChangeType changeType, List list) {
+        if (list == null || list.isEmpty()) {
+            return;
+        }
+        List<AuditLog> auditLogs = Lists.newArrayListWithCapacity(list.size());
+        for (Object entity : list) {
+            AuditLog auditLog = new AuditLog();
+            auditLog.setChangeType(changeType);
+            auditLog.setCreatedTime(LocalDateTime.now());
+            UserInfo userInfo = TokenUtil.getUserinfo();
+
+            // Job更新数据，拿不到userInfo
+            if (userInfo != null) {
+                auditLog.setCreatedBy(StringUtils.deleteWhitespace(userInfo.getName()));
+                auditLog.setCreatorId(userInfo.getUserId());
+            }
+            if (entity instanceof Map) {
+                auditLog.setEntityId(MapUtil.getStr((Map) entity, "id"));
+            } else if (entity instanceof Entity<?>) {
+                Entity e = (Entity) entity;
+                auditLog.setEntityId(String.valueOf(e.getId()));
+            }
+            auditLog.setEntityContent(JacksonUtil.toJson(entity));
+            auditLogs.add(auditLog);
+        }
+
+        auditLogService.batchInsert(entityDefine, auditLogs);
     }
 }

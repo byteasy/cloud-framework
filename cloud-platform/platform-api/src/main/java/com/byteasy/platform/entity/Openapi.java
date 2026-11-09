@@ -153,6 +153,7 @@ public class Openapi extends AuditEntity<Long> {
         IMPORT_PREVIEW(5, "导入预览"),
         SAVE_OR_UPDATE_BATCH(6, "批量导入"),
         EXPORT_EXCEL(7, "导出"),
+        PAGE_AUDIT_LOG(13, "审计日志查询"),
         SCRIPT(8, "脚本"),
         GET_BY_PRIMARY_KEY(9, "主键查询"),
         LIST(10, "条件查询"),

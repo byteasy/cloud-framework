@@ -1,5 +1,6 @@
-package com.byteasy.common.component;
+package com.byteasy.common.handler;
 
+import com.byteasy.common.component.RepositoryMutationAspect;
 import com.byteasy.common.service.impl.CommonServiceImpl;
 import com.byteasy.component.CacheFactory;
 import com.byteasy.event.EntityChangeEvent;

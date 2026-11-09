@@ -1,5 +1,6 @@
-package com.byteasy.common.component;
+package com.byteasy.common.handler;
 
+import com.byteasy.common.component.EntityDefineLoadingCache;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.entity.EntityDefine;

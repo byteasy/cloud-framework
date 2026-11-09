@@ -24,14 +24,14 @@ public interface IAuditLogMapper extends BaseMapper<AuditLog> {
                      @Param("auditLogs") Collection<AuditLog> auditLogs);
 
     List<AuditLog> queryForList(@Param("tableName") String tableName,
-                                @Param("entityId") Long entityId,
+                                @Param("entityId") String entityId,
                                 @Param("start") LocalDateTime start,
                                 @Param("end") LocalDateTime end,
                                 @Param("current") long current,
                                 @Param("pageSize") long pageSize);
 
     long countForPage(@Param("tableName") String tableName,
-                      @Param("entityId") Long entityId,
+                      @Param("entityId") String entityId,
                       @Param("start") LocalDateTime start,
                       @Param("end") LocalDateTime end);
 }

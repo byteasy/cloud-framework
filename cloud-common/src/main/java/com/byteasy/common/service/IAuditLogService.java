@@ -11,7 +11,7 @@ public interface IAuditLogService {
     void batchInsert(EntityDefine entityDefine, Collection<AuditLog> auditLogs);
 
     Page<AuditLog> page(EntityDefine entityDefine,
-                        Long entityId,
+                        String entityId,
                         LocalDateTime start,
                         LocalDateTime end,
                         long current,

@@ -1,5 +1,7 @@
 package com.byteasy.event;
 
+import com.byteasy.entity.AuditLog;
+import com.byteasy.enums.IBaseEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,10 +20,35 @@ import java.util.List;
 @AllArgsConstructor
 public class EntityChangeEvent {
 
-    public enum ChangeType {
-        INSERT,
-        UPDATE,
-        DELETE
+    public enum ChangeType implements IBaseEnum<Integer> {
+        INSERT(0, "新增"), UPDATE(1, "修改"), DELETE(2, "删除"),
+        ;
+        public final Integer value;
+        public final String desc;
+
+        ChangeType(Integer value, String desc) {
+            this.value = value;
+            this.desc = desc;
+        }
+
+        @Override
+        public Integer getValue() {
+            return this.value;
+        }
+
+        public static ChangeType fromValue(String value) {
+            for (ChangeType status : ChangeType.values()) {
+                if (status.value.equals(value)) {
+                    return status;
+                }
+            }
+            throw new IllegalArgumentException("无效的枚举值: " + value);
+        }
+
+        @Override
+        public String getName() {
+            return desc;
+        }
     }
 
     /**

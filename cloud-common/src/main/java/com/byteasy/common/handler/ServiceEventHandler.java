@@ -1,4 +1,4 @@
-package com.byteasy.common.component;
+package com.byteasy.common.handler;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.byteasy.common.service.IDatabaseMetaService;
