@@ -1,4 +1,3 @@
-![Byteasy项目演示](https://github.com/byteasy/cloud-platform/blob/main/platform-service/src/main/resources/static/assets/logo.png)
 # Byteasy 易码之道（码道）
 
 ## 一、项目简介
