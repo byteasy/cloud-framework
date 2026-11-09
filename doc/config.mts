@@ -6,6 +6,7 @@ export default defineConfig({
 
     title: "Byteasy",
     description: "易码之道（码道）",
+    base: './',
     themeConfig: {
         nav: [
             { text: '首页', link: '/' },
