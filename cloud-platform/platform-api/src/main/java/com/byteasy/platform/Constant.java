@@ -35,6 +35,7 @@ public interface Constant {
     String OAUTH2_COOKIE_THIRD_TOKEN_NAME = "BT_SSO_TICKET";
 
     /**
-     *
+     * 实体变更通知
      */
+    String TOPIC_ENTITY_CHANGE = "entity_change";
 }

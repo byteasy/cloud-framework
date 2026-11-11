@@ -66,7 +66,11 @@ public class EntityDefine extends AuditEntity<Long> {
     @TableField("visibility")
     private Visibility visibility;
 
-    @FieldMeta(name = "说明", showOrder = 110, maxLength = 1024)
+    @FieldMeta(name = "是否全文检索", showOrder = 110)
+    @TableField("full_index")
+    private Boolean fullIndex;
+
+    @FieldMeta(name = "说明", showOrder = 111, maxLength = 1024)
     @TableField("remark")
     private String remark;
 

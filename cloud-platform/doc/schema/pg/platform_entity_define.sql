@@ -12,6 +12,7 @@ create table platform_entity_define
     trackable            bool                  default false,
     auditable            bool                  default false,
     visibility           SMALLINT     NOT NULL DEFAULT 0,
+    full_index           bool                  default false,
 
     remark               varchar(2048)         default null,
     creator_id           varchar(64)  not null,
@@ -35,6 +36,7 @@ comment on column platform_entity_define.cacheable is '是否缓存';
 comment on column platform_entity_define.trackable is '是否跟踪变化';
 comment on column platform_entity_define.auditable is '是否记录变化进行审计';
 comment on column platform_entity_define.visibility is '可见性：0：私有 1：公开';
+comment on column platform_entity_define.full_index is '是否全文检索';
 comment on column platform_entity_define.remark is '说明';
 comment on column platform_entity_define.creator_id is '创建人编号';
 comment on column platform_entity_define.created_by is '创建人';

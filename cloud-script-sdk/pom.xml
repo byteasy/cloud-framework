@@ -10,7 +10,6 @@
     </parent>
 
     <artifactId>cloud-script-sdk</artifactId>
-    <version>1.0.0</version>
 
     <dependencies>
 

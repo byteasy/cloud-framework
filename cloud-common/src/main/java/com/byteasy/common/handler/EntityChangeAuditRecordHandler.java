@@ -1,5 +1,6 @@
 package com.byteasy.common.handler;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.map.MapUtil;
 import com.byteasy.common.component.EntityDefineLoadingCache;
 import com.byteasy.common.component.RepositoryMutationAspect;
@@ -8,7 +9,6 @@ import com.byteasy.common.service.impl.CommonServiceImpl;
 import com.byteasy.common.token.TokenUtil;
 import com.byteasy.common.token.UserInfo;
 import com.byteasy.entity.AuditLog;
-import com.byteasy.entity.Entity;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
 import com.byteasy.platform.dto.CreateAuditLogTableDTO;
@@ -132,12 +132,7 @@ public class EntityChangeAuditRecordHandler implements IEntityChangeHandler {
                 auditLog.setCreatedBy(StringUtils.deleteWhitespace(userInfo.getName()));
                 auditLog.setCreatorId(userInfo.getUserId());
             }
-            if (entity instanceof Map) {
-                auditLog.setEntityId(MapUtil.getStr((Map) entity, "id"));
-            } else if (entity instanceof Entity<?>) {
-                Entity e = (Entity) entity;
-                auditLog.setEntityId(String.valueOf(e.getId()));
-            }
+            auditLog.setEntityId(String.valueOf(BeanUtil.getFieldValue(entity, "id")));
             auditLog.setEntityContent(JacksonUtil.toJson(entity));
             auditLogs.add(auditLog);
         }

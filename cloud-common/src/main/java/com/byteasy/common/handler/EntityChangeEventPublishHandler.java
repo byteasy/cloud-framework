@@ -3,6 +3,7 @@ package com.byteasy.common.handler;
 import com.byteasy.common.component.EntityDefineLoadingCache;
 import com.byteasy.event.EntityChangeEvent;
 import com.byteasy.event.IEntityChangeHandler;
+import com.byteasy.platform.Constant;
 import com.byteasy.platform.entity.EntityDefine;
 import com.byteasy.util.JacksonUtil;
 import io.vertx.core.eventbus.EventBus;
@@ -30,7 +31,7 @@ public class EntityChangeEventPublishHandler implements IEntityChangeHandler {
         if (entityDefine != null) {
             // 广播所有实体变更的通知
             if (entityDefine.getTrackable() != null && entityDefine.getTrackable()) {
-                eventBus.publish(event.getEntityClass(), JacksonUtil.toJson(event));
+                eventBus.publish(Constant.TOPIC_ENTITY_CHANGE, JacksonUtil.toJson(event));
             }
 
         } else {

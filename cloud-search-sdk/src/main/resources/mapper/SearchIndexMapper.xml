@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.byteasy.search.mapper.SearchIndexMapper">
+
+    <!-- 1. 单条记录插入或幂等更新 (UPSERT) -->
+    <insert id="upsertIndex">
+        INSERT INTO platform_search_index (class_name,
+                                           entity_id,
+                                           entity_code,
+                                           title,
+                                           summary,
+                                           search_vector,
+                                           updated_time)
+        VALUES (#{dto.className},
+                #{dto.entityId},
+                #{dto.entityCode},
+                #{dto.title},
+                #{dto.summary},
+            <![CDATA[
+                setweight(to_tsvector('simple', coalesce(#{dto.titleSegmented}, '')), 'A') ||
+                setweight(to_tsvector('simple', coalesce(#{dto.summarySegmented}, '')), 'B') ||
+                setweight(to_tsvector('simple', coalesce(#{dto.specsDetailSegmented}, '')), 'C') ||
+                setweight(to_tsvector('simple', coalesce(#{dto.remarkSegmented}, '')), 'D')
+            ]]>,
+                CURRENT_TIMESTAMP) ON CONFLICT (class_name, entity_id)
+        DO
+        UPDATE SET
+            entity_code = EXCLUDED.entity_code,
+            title = EXCLUDED.title,
+            summary = EXCLUDED.summary,
+            search_vector = EXCLUDED.search_vector,
+            updated_time = CURRENT_TIMESTAMP
+    </insert>
+
+    <!-- 2. 批量记录插入或幂等更新 (Batch UPSERT) -->
+    <insert id="batchUpsertIndex">
+        INSERT INTO platform_search_index (
+        class_name,
+        entity_id,
+        entity_code,
+        title,
+        summary,
+        search_vector,
+        updated_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.className},
+            #{item.entityId},
+            #{item.entityCode},
+            #{item.title},
+            #{item.summary},
+            <![CDATA[
+            setweight(to_tsvector('simple', coalesce(#{item.titleSegmented}, '')), 'A') ||
+            setweight(to_tsvector('simple', coalesce(#{item.summarySegmented}, '')), 'B') ||
+            setweight(to_tsvector('simple', coalesce(#{item.specsDetailSegmented}, '')), 'C') ||
+            setweight(to_tsvector('simple', coalesce(#{item.remarkSegmented}, '')), 'D')
+            ]]>,
+            CURRENT_TIMESTAMP
+            )
+        </foreach>
+        ON CONFLICT (class_name, entity_id)
+        DO UPDATE SET
+        entity_code   = EXCLUDED.entity_code,
+        title         = EXCLUDED.title,
+        summary       = EXCLUDED.summary,
+        search_vector = EXCLUDED.search_vector,
+        updated_time  = CURRENT_TIMESTAMP
+    </insert>
+
+    <!-- 3. 全文检索（性能极致优化：先过滤排序分页，再仅对分页数据执行 ts_headline 渲染） -->
+    <select id="searchFullText" resultType="com.byteasy.search.dto.SearchResultVO">
+        WITH matched_data AS (
+        SELECT
+        p.class_name,
+        p.entity_id,
+        p.entity_code,
+        p.title,
+        p.summary,
+        p.updated_time,
+        ts_rank(p.search_vector, q.query) AS score,
+        q.query AS matched_query
+        FROM
+        platform_search_index p,
+        websearch_to_tsquery('simple', #{keyword}) q(query)
+        WHERE
+        <![CDATA[ p.search_vector @@ q.query ]]>
+        <if test="className != null and className != ''">
+            AND p.class_name = #{className}
+        </if>
+        ORDER BY
+        score DESC,
+        p.updated_time DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+        )
+        SELECT
+        m.class_name AS className,
+        m.entity_id AS entityId,
+        m.entity_code AS entityCode,
+        m.title AS title,
+        m.summary AS summary,
+        m.score AS score,
+        m.updated_time AS updatedTime
+        FROM matched_data m
+    </select>
+
+    <!-- 4. 查询总命中数 (用于分页组件) -->
+    <select id="countFullText" resultType="long">
+        SELECT
+        COUNT(1)
+        FROM
+        platform_search_index p,
+        websearch_to_tsquery('simple', #{keyword}) q(query)
+        WHERE
+        <![CDATA[ p.search_vector @@ q.query ]]>
+        <if test="className != null and className != ''">
+            AND p.class_name = #{className}
+        </if>
+    </select>
+
+    <!-- 5. 删除实体索引 -->
+    <delete id="deleteIndex">
+        DELETE FROM platform_search_index
+        WHERE class_name = #{className} AND entity_id = #{entityId}
+    </delete>
+
+</mapper>
