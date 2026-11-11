@@ -42,6 +42,10 @@ cd ../cloud-permission-sdk
 mvn clean install
 #mvn source:jar install
 
+cd ../cloud-search-sdk
+mvn clean install
+#mvn source:jar install
+
 cd ../cloud-service-starter
 mvn clean install
 #mvn source:jar install
