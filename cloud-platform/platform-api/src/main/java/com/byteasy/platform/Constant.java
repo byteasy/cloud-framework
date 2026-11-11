@@ -1,5 +1,7 @@
 package com.byteasy.platform;
 
+import java.io.File;
+
 public interface Constant {
     String SERVICE_NAME = "platform-service";
 
@@ -38,4 +40,9 @@ public interface Constant {
      * 实体变更通知
      */
     String TOPIC_ENTITY_CHANGE = "entity_change";
+
+    /**
+     * 上传文件夹路径前缀
+     */
+    String PUBLIC_UPLOAD_DIR_PREFIX = File.separator + "upload";
 }

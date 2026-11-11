@@ -6,9 +6,11 @@
     "/platformSvr/.well-known/*",
     "/platformSvr/login",
     "/platformSvr/login*",
-    "/platformSvr/papi/captcha/*",
+    "/platformSvr/papi/*",
     "/platformSvr/assets/*",
-    "/platformSvr/avatar/*"
+    "/platformSvr/upload/*",
+    "/platformSvr/common/*",
+    "/platformSvr/favicon.ico"
   ],
   "name": "oauth2&OIDC",
   "desc": "html静态资源代理",
@@ -24,8 +26,15 @@
     "TRACE",
     "PURGE"
   ],
-  "host": "www.byteasy.cn",
-  "upstream_id": "605959366272615964",
+  "host": "tuna.net",
+  "plugins": {
+    "proxy-rewrite": {
+      "headers": {
+        "Forwarded": "proto=http;host=tuna.net"
+      }
+    }
+  },
+  "upstream_id": "626213204787201565",
   "labels": {
     "API_VERSION": "1.0"
   },

@@ -33,9 +33,12 @@ public class FileUploadController {
     public Result<String> uploadPublicFile(@RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
         LocalDateTime now = LocalDateTime.now();
 
-        String path = now.getYear() + File.separator + now.getMonthValue() + File.separator + now.format(DateTimeFormatter.ofPattern("ddHHmmss")) +
+        String path = com.byteasy.platform.Constant.PUBLIC_UPLOAD_DIR_PREFIX
+                + File.separator + now.getYear()
+                + File.separator + now.getMonthValue()
+                + File.separator + now.format(DateTimeFormatter.ofPattern("ddHHmmss")) +
                 "." + FilenameUtils.getExtension(file.getOriginalFilename());
-        FileUtils.copyInputStreamToFile(file.getInputStream(), new File(platformProperties.getDataRootDir() + File.separator + com.byteasy.platform.Constant.UPLOAD_DIR_PUBLIC, path));
+        FileUtils.copyInputStreamToFile(file.getInputStream(), new File(platformProperties.getDataRootDir() + com.byteasy.platform.Constant.UPLOAD_DIR_PUBLIC, path));
 
         String accessPath = contextPath + File.separator + path;
         return Result.success(accessPath.replace("\\", "/"));
@@ -48,7 +51,7 @@ public class FileUploadController {
 
         String path = now.getYear() + File.separator + now.getMonthValue() + File.separator + now.format(DateTimeFormatter.ofPattern("ddHHmmss")) +
                 "." + FilenameUtils.getExtension(file.getOriginalFilename());
-        FileUtils.copyInputStreamToFile(file.getInputStream(), new File(platformProperties.getDataRootDir() + File.separator + com.byteasy.platform.Constant.UPLOAD_DIR_PRIVATE, path));
+        FileUtils.copyInputStreamToFile(file.getInputStream(), new File(platformProperties.getDataRootDir() + com.byteasy.platform.Constant.UPLOAD_DIR_PRIVATE, path));
 
         String accessPath = contextPath + File.separator + path;
         return Result.success(accessPath.replace("\\", "/"));
