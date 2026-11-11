@@ -40,7 +40,7 @@ public class FileUploadController {
                 "." + FilenameUtils.getExtension(file.getOriginalFilename());
         FileUtils.copyInputStreamToFile(file.getInputStream(), new File(platformProperties.getDataRootDir() + com.byteasy.platform.Constant.UPLOAD_DIR_PUBLIC, path));
 
-        String accessPath = contextPath + File.separator + path;
+        String accessPath = contextPath + path;
         return Result.success(accessPath.replace("\\", "/"));
     }
 
