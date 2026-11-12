@@ -4,6 +4,7 @@ import cn.hutool.core.map.MapUtil;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
+import com.byteasy.infinispan.util.CacheEvictHelper;
 import com.byteasy.platform.service.DictionaryUtil;
 import com.byteasy.util.I18nUtil;
 import com.google.common.collect.Maps;
@@ -20,14 +21,18 @@ public class PlatformSettingController {
 
     @Autowired
     private DictionaryUtil dictionaryUtil;
+    @Autowired
+    private CacheEvictHelper cacheEvictHelper;
 
     @PostMapping("/config")
     @Openapi(summary = "保存平台配置", entityName = "com.byteasy.platform.entity.ThemeSetting")
     public Result saveConfig(@RequestBody Map<String, String> map) {
         dictionaryUtil.saveOrUpdate(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_FAVICON, MapUtil.getStr(map, DIC_SETTING_FAVICON, "/platformSvr/assets/favicon.ico"));
         dictionaryUtil.saveOrUpdate(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_LOGO_IMG, MapUtil.getStr(map, DIC_SETTING_LOGO_IMG, "/platformSvr/assets/logo.png"));
+        dictionaryUtil.saveOrUpdate(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_LOGO_IMG_WHITE, MapUtil.getStr(map, DIC_SETTING_LOGO_IMG_WHITE, "/platformSvr/assets/white-logo.png"));
         dictionaryUtil.saveOrUpdate(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_BACKGROUND_IMG, MapUtil.getStr(map, DIC_SETTING_BACKGROUND_IMG, "/platformSvr/assets/login-background.svg"));
         dictionaryUtil.saveOrUpdate(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_TITLE, MapUtil.getStr(map, DIC_SETTING_TITLE, I18nUtil.getMessage("login.pageTitle")));
+        cacheEvictHelper.evictAfterCommit(PLATFORM_REP_CACHE, "com.byteasy.platform.entity.PlatformSettings:title");
         return Result.success(map);
     }
 
@@ -37,6 +42,7 @@ public class PlatformSettingController {
         Map<String, String> config = Maps.newHashMap();
         config.put(DIC_SETTING_FAVICON, dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_FAVICON, "/platformSvr/assets/favicon.ico"));
         config.put(DIC_SETTING_LOGO_IMG, dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_LOGO_IMG, "/platformSvr/assets/logo.png"));
+        config.put(DIC_SETTING_LOGO_IMG_WHITE, dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_LOGO_IMG_WHITE, "/platformSvr/assets/white-logo.png"));
         config.put(DIC_SETTING_BACKGROUND_IMG, dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_BACKGROUND_IMG, "/platformSvr/assets/login-background.svg"));
         config.put(DIC_SETTING_TITLE, dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_TITLE, I18nUtil.getMessage("login.pageTitle")));
         return Result.success(config);

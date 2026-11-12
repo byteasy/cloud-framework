@@ -14,7 +14,14 @@ public interface Constant {
 
     String DICTIONARY_PLATFORM_SETTING = "platform_settings";
     String DIC_SETTING_FAVICON = "favicon";
+    /**
+     * 亮色主题Logo 字体黑色
+     */
     String DIC_SETTING_LOGO_IMG = "logoImg";
+    /**
+     * 暗色主题Logo，字体白色
+     */
+    String DIC_SETTING_LOGO_IMG_WHITE = "logoImgWhite";
     String DIC_SETTING_BACKGROUND_IMG = "backgroundImg";
     String DIC_SETTING_TITLE = "title";
     /**

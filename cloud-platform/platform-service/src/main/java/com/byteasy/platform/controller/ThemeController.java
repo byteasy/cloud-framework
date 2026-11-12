@@ -8,22 +8,21 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.StreamUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
 
 import static com.byteasy.platform.Constant.DICTIONARY_PLATFORM_SETTING;
+import static com.byteasy.platform.Constant.DIC_SETTING_TITLE;
 
 @RestController
-@RequestMapping(Constant.PAPI + "/img")
+@RequestMapping(Constant.PAPI + "/theme")
 @Log4j2
 public class ThemeController {
 
@@ -37,13 +36,14 @@ public class ThemeController {
 
     private static final String DEFAULT_FAVICON_PATH = "static/assets/favicon.ico";
 
-    @GetMapping("/{name}")
-    public void getThemeFile(HttpServletResponse response, @PathVariable("name") String name) throws IOException {
+    @GetMapping(value = "/title", produces = "text/plain;charset=UTF-8")
+    @Cacheable(cacheNames = com.byteasy.platform.Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.PlatformSettings:title'")
+    public String getSystemTitle() {
+        return dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_TITLE, "Byteasy");
+    }
 
-        if (!platformProperties.getThemePermitFileList().contains(name)) {
-            writeDefaultClassPathFile(response, DEFAULT_FAVICON_PATH);
-            return;
-        }
+    @GetMapping("/img/{name}")
+    public void getThemeFile(HttpServletResponse response, @PathVariable("name") String name) throws IOException {
 
         String path = dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, name, null);
         if (path.endsWith("ico")) {
