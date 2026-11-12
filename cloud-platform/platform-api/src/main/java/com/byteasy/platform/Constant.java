@@ -22,8 +22,18 @@ public interface Constant {
      * 暗色主题Logo，字体白色
      */
     String DIC_SETTING_LOGO_IMG_WHITE = "logoImgWhite";
+    /**
+     * 登录背景图片
+     */
     String DIC_SETTING_BACKGROUND_IMG = "backgroundImg";
+    /**
+     * 系统的标题
+     */
     String DIC_SETTING_TITLE = "title";
+    /**
+     * 全局搜索的跳转路由
+     */
+    String DIC_SEARCH_ROUTE = "fullSearchRoute";
     /**
      * 密钥，用于外网链接生成与加密
      */

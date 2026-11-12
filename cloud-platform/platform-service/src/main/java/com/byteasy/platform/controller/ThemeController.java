@@ -14,12 +14,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.StreamUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.*;
 
-import static com.byteasy.platform.Constant.DICTIONARY_PLATFORM_SETTING;
-import static com.byteasy.platform.Constant.DIC_SETTING_TITLE;
+import static com.byteasy.platform.Constant.*;
 
 @RestController
 @RequestMapping(Constant.PAPI + "/theme")
@@ -34,10 +36,8 @@ public class ThemeController {
     @Autowired
     private PlatformProperties platformProperties;
 
-    private static final String DEFAULT_FAVICON_PATH = "static/assets/favicon.ico";
-
     @GetMapping(value = "/title", produces = "text/plain;charset=UTF-8")
-    @Cacheable(cacheNames = com.byteasy.platform.Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.PlatformSettings:title'")
+    @Cacheable(cacheNames = com.byteasy.platform.Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.DictionaryItem:title'")
     public String getSystemTitle() {
         return dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_TITLE, "Byteasy");
     }

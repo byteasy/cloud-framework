@@ -4,11 +4,11 @@ import cn.hutool.core.map.MapUtil;
 import com.byteasy.Constant;
 import com.byteasy.Result;
 import com.byteasy.annotations.Openapi;
-import com.byteasy.infinispan.util.CacheEvictHelper;
 import com.byteasy.platform.service.DictionaryUtil;
 import com.byteasy.util.I18nUtil;
 import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -21,8 +21,6 @@ public class PlatformSettingController {
 
     @Autowired
     private DictionaryUtil dictionaryUtil;
-    @Autowired
-    private CacheEvictHelper cacheEvictHelper;
 
     @PostMapping("/config")
     @Openapi(summary = "保存平台配置", entityName = "com.byteasy.platform.entity.ThemeSetting")
@@ -32,7 +30,6 @@ public class PlatformSettingController {
         dictionaryUtil.saveOrUpdate(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_LOGO_IMG_WHITE, MapUtil.getStr(map, DIC_SETTING_LOGO_IMG_WHITE, "/platformSvr/assets/white-logo.png"));
         dictionaryUtil.saveOrUpdate(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_BACKGROUND_IMG, MapUtil.getStr(map, DIC_SETTING_BACKGROUND_IMG, "/platformSvr/assets/login-background.svg"));
         dictionaryUtil.saveOrUpdate(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_TITLE, MapUtil.getStr(map, DIC_SETTING_TITLE, I18nUtil.getMessage("login.pageTitle")));
-        cacheEvictHelper.evictAfterCommit(PLATFORM_REP_CACHE, "com.byteasy.platform.entity.PlatformSettings:title");
         return Result.success(map);
     }
 
@@ -46,5 +43,16 @@ public class PlatformSettingController {
         config.put(DIC_SETTING_BACKGROUND_IMG, dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_BACKGROUND_IMG, "/platformSvr/assets/login-background.svg"));
         config.put(DIC_SETTING_TITLE, dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_TITLE, I18nUtil.getMessage("login.pageTitle")));
         return Result.success(config);
+    }
+
+    /**
+     * 全文检索的跳转路由
+     *
+     * @return
+     */
+    @GetMapping(value = "/searchRoute", produces = "text/plain;charset=UTF-8")
+    @Cacheable(cacheNames = com.byteasy.platform.Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.DictionaryItem:searchRoute'")
+    public String getSearchRoute() {
+        return dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SEARCH_ROUTE, "");
     }
 }

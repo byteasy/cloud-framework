@@ -105,11 +105,11 @@ Accept: application/json
 
 
 ###
-GET http://192.168.56.102:18080/platformSvr/sapi/admin/infinispan/caches/__vertx.subs
+GET http://192.168.56.102:18080/platformSvr/sapi/admin/infinispan/caches/platformRepCache
 Accept: application/json
 
 ###
-GET http://192.168.56.102:18080/platformSvr/sapi/admin/infinispan/caches/__vertx.subs/key?key=platform-service
+GET http://192.168.56.102:18080/platformSvr/sapi/admin/infinispan/caches/platformRepCache/key?key=com.byteasy.platform.entity.DictionaryItem:title
 Accept: application/json
 
 ###
