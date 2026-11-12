@@ -50,9 +50,9 @@ public class PlatformSettingController {
      *
      * @return
      */
-    @GetMapping(value = "/searchRoute", produces = "text/plain;charset=UTF-8")
+    @GetMapping(value = "/searchRoute")
     @Cacheable(cacheNames = com.byteasy.platform.Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.DictionaryItem:fullSearchRoute'")
-    public String getSearchRoute() {
-        return dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SEARCH_ROUTE, "");
+    public Result<String> getSearchRoute() {
+        return Result.success(dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SEARCH_ROUTE, ""));
     }
 }
