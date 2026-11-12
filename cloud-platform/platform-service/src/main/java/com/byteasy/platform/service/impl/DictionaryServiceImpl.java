@@ -76,7 +76,7 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
     }
 
     @Override
-    @Cacheable(cacheNames = com.byteasy.platform.Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.DictionaryItem:' + #itemCode")
+    @Cacheable(cacheNames = com.byteasy.platform.Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.DictionaryItem:' + #code + ':' + #itemCode")
     public DictionaryItem selectByCodeAndItemCode(String code, String itemCode) {
         DictionaryVO dictionaryVO = selectByCode(code);
         if (dictionaryVO == null) {
