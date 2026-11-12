@@ -77,7 +77,7 @@ public class ThemeController {
                     log.warn("配置的自定义 name 文件不存在: {}, 自动回退默认图标", customFile.getAbsolutePath());
                 }
             } else {
-                writeDefaultClassPathFile(response, path.substring(1));
+                writeDefaultClassPathFile(response, "static/" + path);
             }
         } else {
             response.sendError(HttpStatus.NOT_FOUND.value(), "Not found");
