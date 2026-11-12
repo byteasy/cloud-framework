@@ -6,6 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
 
+import static com.byteasy.platform.Constant.*;
+
 @Component
 @ConfigurationProperties(prefix = "platform")
 @RefreshScope
@@ -23,4 +25,8 @@ public class PlatformProperties {
      * 文件根目录
      */
     private String dataRootDir;
+    /**
+     * 允许访问的下载文件白名单
+     */
+    private String themePermitFileList = DIC_SETTING_FAVICON + "," + DIC_SETTING_LOGO_IMG + "," + DIC_SETTING_BACKGROUND_IMG;
 }
