@@ -14,6 +14,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
@@ -75,6 +76,7 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
     }
 
     @Override
+    @Cacheable(cacheNames = com.byteasy.platform.Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.DictionaryItem:' + #itemCode")
     public DictionaryItem selectByCodeAndItemCode(String code, String itemCode) {
         DictionaryVO dictionaryVO = selectByCode(code);
         if (dictionaryVO == null) {

@@ -8,7 +8,6 @@ import com.byteasy.platform.service.DictionaryUtil;
 import com.byteasy.util.I18nUtil;
 import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -51,7 +50,6 @@ public class PlatformSettingController {
      * @return
      */
     @GetMapping(value = "/searchRoute")
-    @Cacheable(cacheNames = com.byteasy.platform.Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.DictionaryItem:fullSearchRoute'")
     public Result<String> getSearchRoute() {
         return Result.success(dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SEARCH_ROUTE, ""));
     }

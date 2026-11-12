@@ -37,7 +37,6 @@ public class ThemeController {
     private PlatformProperties platformProperties;
 
     @GetMapping(value = "/title", produces = "text/plain;charset=UTF-8")
-    @Cacheable(cacheNames = com.byteasy.platform.Constant.PLATFORM_REP_CACHE, key = "'com.byteasy.platform.entity.DictionaryItem:title'")
     public String getSystemTitle() {
         return dictionaryUtil.getStr(DICTIONARY_PLATFORM_SETTING, DIC_SETTING_TITLE, "Byteasy");
     }

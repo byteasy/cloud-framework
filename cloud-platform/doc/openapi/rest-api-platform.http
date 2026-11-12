@@ -122,4 +122,4 @@ x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9j
 Accept: application/json
 
 ###
-GET http://localhost:18080/platformSvr/sapi/platformSettings/searchRoute
+GET http://192.168.56.102:18080/platformSvr/sapi/platformSettings/searchRoute
