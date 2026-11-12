@@ -109,7 +109,7 @@ GET http://192.168.56.102:18080/platformSvr/sapi/admin/infinispan/caches/platfor
 Accept: application/json
 
 ###
-GET http://192.168.56.102:18080/platformSvr/sapi/admin/infinispan/caches/platformRepCache/key?key=com.byteasy.platform.entity.DictionaryItem:title
+GET http://192.168.56.102:18080/platformSvr/sapi/admin/infinispan/caches/platformRepCache/key?key=com.byteasy.platform.entity.DictionaryItem:fullSearchRoute
 Accept: application/json
 
 ###
@@ -120,3 +120,6 @@ Accept: application/json
 GET http://localhost:18080/platformSvr/sapi/search?keyword=platformSvr
 x-userinfo: eyJuYW1lIjoi5rWL6K+VIiwiZW1haWwiOiIxNTMxNTA4NjI2NUAxNjMuY29tIiwibG9jYWxlIjoiemgiLCJzdWIiOiIzMmE2ZDRiYy03ZjA0LTQzYTItOWZjOS0wY2I5OTc2NmE5OTMiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJhZG1pbmlzdHJhdG9yIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1vYmlsZSI6IjE1MzE1MDg2MjY1In0=
 Accept: application/json
+
+###
+GET http://localhost:18080/platformSvr/sapi/platformSettings/searchRoute
