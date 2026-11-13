@@ -2,10 +2,13 @@ package com.byteasy.platform.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
-import com.byteasy.util.CastUtil;
+import com.byteasy.platform.dto.ResourceGroupDTO;
 import com.byteasy.platform.entity.ResourceGroup;
 import com.byteasy.platform.mapper.ResourceGroupMapper;
+import com.byteasy.platform.service.IResourceCategoryService;
 import com.byteasy.platform.service.IResourceGroupService;
+import com.byteasy.util.CastUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -23,6 +26,9 @@ import java.util.Set;
  */
 @Service
 public class ResourceGroupServiceImpl extends ServiceImpl<ResourceGroupMapper, ResourceGroup> implements IResourceGroupService {
+
+    @Autowired
+    private IResourceCategoryService resourceCategoryService;
 
     @Override
     public Map<Long, ResourceGroup> selectByIds(Set<Long> ids) {
@@ -55,5 +61,17 @@ public class ResourceGroupServiceImpl extends ServiceImpl<ResourceGroupMapper, R
         LambdaQueryWrapper<ResourceGroup> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ResourceGroup::getCategoryId, categoryIds);
         return list(queryWrapper);
+    }
+
+    @Override
+    public ResourceGroupDTO findByClassName(String className) {
+        ResourceGroupDTO resourceGroup = baseMapper.findByClassName(className);
+        if (resourceGroup != null) {
+            resourceGroup.setChildCategory(resourceCategoryService.getById(resourceGroup.getCategoryId()));
+            if (resourceGroup.getChildCategory().getParentId() != null) {
+                resourceGroup.setRootCategory(resourceCategoryService.getById(resourceGroup.getChildCategory().getParentId()));
+            }
+        }
+        return resourceGroup;
     }
 }

@@ -6,6 +6,7 @@ import com.byteasy.util.JacksonUtil;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
 import jakarta.annotation.PreDestroy;
+import lombok.extern.log4j.Log4j2;
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
@@ -85,8 +86,12 @@ public class LeaderConsumerCoordinator {
         if (activeConsumer == null) {
             activeConsumer = vertx.eventBus().consumer(Constant.TOPIC_ENTITY_CHANGE, message -> {
                 vertx.executeBlocking(() -> {
-                    searchIndexService.handle(JacksonUtil.nativeRead(message.body(), new TypeReference<EntityChangeEvent>() {
-                    }));
+                    try {
+                        searchIndexService.handle(JacksonUtil.nativeRead(message.body(), new TypeReference<EntityChangeEvent>() {
+                        }));
+                    } catch (Exception e) {
+                        log.error("searchIndexService.handle err", e);
+                    }
                     return null;
                 }, false);
             });

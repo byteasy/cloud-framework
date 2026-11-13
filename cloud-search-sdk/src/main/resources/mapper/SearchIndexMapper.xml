@@ -5,119 +5,191 @@
 <mapper namespace="com.byteasy.search.mapper.SearchIndexMapper">
 
     <!-- 1. 单条记录插入或幂等更新 (UPSERT) -->
+    <!-- 注意：ON CONFLICT 更新时不覆盖 created_by 和 created_time -->
     <insert id="upsertIndex">
-        INSERT INTO platform_search_index (class_name,
-                                           entity_id,
-                                           entity_code,
-                                           title,
-                                           summary,
-                                           search_vector,
-                                           updated_time)
-        VALUES (#{dto.className},
-                #{dto.entityId},
-                #{dto.entityCode},
-                #{dto.title},
-                #{dto.summary},
+        INSERT INTO platform_search_index (
+            category_id,
+            group_id,
+            class_name,
+            entity_id,
+            entity_code,
+            title,
+            summary,
+            search_vector,
+            updated_by,
+            updated_time,
+            created_by,
+            created_time
+        ) VALUES (
+                     #{dto.categoryId, jdbcType=BIGINT},
+                     #{dto.groupId, jdbcType=BIGINT},
+                     #{dto.className, jdbcType=VARCHAR},
+                     #{dto.entityId, jdbcType=VARCHAR},
+                     #{dto.entityCode, jdbcType=VARCHAR},
+                     #{dto.title, jdbcType=VARCHAR},
+                     #{dto.summary, jdbcType=VARCHAR},
             <![CDATA[
-                setweight(to_tsvector('simple', coalesce(#{dto.titleSegmented}, '')), 'A') ||
-                setweight(to_tsvector('simple', coalesce(#{dto.summarySegmented}, '')), 'B') ||
-                setweight(to_tsvector('simple', coalesce(#{dto.specsDetailSegmented}, '')), 'C') ||
-                setweight(to_tsvector('simple', coalesce(#{dto.remarkSegmented}, '')), 'D')
+                     setweight(to_tsvector('simple', coalesce(#{dto.titleSegmented, jdbcType=VARCHAR}, '')), 'A') ||
+                     setweight(to_tsvector('simple', coalesce(#{dto.summarySegmented, jdbcType=VARCHAR}, '')), 'B') ||
+                     setweight(to_tsvector('simple', coalesce(#{dto.specsDetailSegmented, jdbcType=VARCHAR}, '')), 'C') ||
+                     setweight(to_tsvector('simple', coalesce(#{dto.remarkSegmented, jdbcType=VARCHAR}, '')), 'D')
             ]]>,
-                CURRENT_TIMESTAMP) ON CONFLICT (class_name, entity_id)
-        DO
-        UPDATE SET
-            entity_code = EXCLUDED.entity_code,
-            title = EXCLUDED.title,
-            summary = EXCLUDED.summary,
-            search_vector = EXCLUDED.search_vector,
-            updated_time = CURRENT_TIMESTAMP
+                     #{dto.updatedBy, jdbcType=VARCHAR},
+                     CURRENT_TIMESTAMP,
+                     #{dto.createdBy, jdbcType=VARCHAR},
+                     coalesce(#{dto.createdTime, jdbcType=TIMESTAMP}, CURRENT_TIMESTAMP)
+                 )
+            ON CONFLICT (class_name, entity_id)
+        DO UPDATE SET
+            category_id   = EXCLUDED.category_id,
+                           group_id      = EXCLUDED.group_id,
+                           entity_code   = EXCLUDED.entity_code,
+                           title         = EXCLUDED.title,
+                           summary       = EXCLUDED.summary,
+                           search_vector = EXCLUDED.search_vector,
+                           updated_by    = EXCLUDED.updated_by,
+                           updated_time  = CURRENT_TIMESTAMP
     </insert>
 
     <!-- 2. 批量记录插入或幂等更新 (Batch UPSERT) -->
     <insert id="batchUpsertIndex">
         INSERT INTO platform_search_index (
+        category_id,
+        group_id,
         class_name,
         entity_id,
         entity_code,
         title,
         summary,
         search_vector,
-        updated_time
+        updated_by,
+        updated_time,
+        created_by,
+        created_time
         ) VALUES
         <foreach collection="list" item="item" separator=",">
             (
-            #{item.className},
-            #{item.entityId},
-            #{item.entityCode},
-            #{item.title},
-            #{item.summary},
+            #{item.categoryId, jdbcType=BIGINT},
+            #{item.groupId, jdbcType=BIGINT},
+            #{item.className, jdbcType=VARCHAR},
+            #{item.entityId, jdbcType=VARCHAR},
+            #{item.entityCode, jdbcType=VARCHAR},
+            #{item.title, jdbcType=VARCHAR},
+            #{item.summary, jdbcType=VARCHAR},
             <![CDATA[
-            setweight(to_tsvector('simple', coalesce(#{item.titleSegmented}, '')), 'A') ||
-            setweight(to_tsvector('simple', coalesce(#{item.summarySegmented}, '')), 'B') ||
-            setweight(to_tsvector('simple', coalesce(#{item.specsDetailSegmented}, '')), 'C') ||
-            setweight(to_tsvector('simple', coalesce(#{item.remarkSegmented}, '')), 'D')
+            setweight(to_tsvector('simple', coalesce(#{item.titleSegmented, jdbcType=VARCHAR}, '')), 'A') ||
+            setweight(to_tsvector('simple', coalesce(#{item.summarySegmented, jdbcType=VARCHAR}, '')), 'B') ||
+            setweight(to_tsvector('simple', coalesce(#{item.specsDetailSegmented, jdbcType=VARCHAR}, '')), 'C') ||
+            setweight(to_tsvector('simple', coalesce(#{item.remarkSegmented, jdbcType=VARCHAR}, '')), 'D')
             ]]>,
-            CURRENT_TIMESTAMP
+            #{item.updatedBy, jdbcType=VARCHAR},
+            CURRENT_TIMESTAMP,
+            #{item.createdBy, jdbcType=VARCHAR},
+            coalesce(#{item.createdTime, jdbcType=TIMESTAMP}, CURRENT_TIMESTAMP)
             )
         </foreach>
         ON CONFLICT (class_name, entity_id)
         DO UPDATE SET
-        entity_code   = EXCLUDED.entity_code,
-        title         = EXCLUDED.title,
-        summary       = EXCLUDED.summary,
+        category_id = EXCLUDED.category_id,
+        group_id = EXCLUDED.group_id,
+        entity_code = EXCLUDED.entity_code,
+        title = EXCLUDED.title,
+        summary = EXCLUDED.summary,
         search_vector = EXCLUDED.search_vector,
-        updated_time  = CURRENT_TIMESTAMP
+        updated_by = EXCLUDED.updated_by,
+        updated_time = CURRENT_TIMESTAMP
     </insert>
 
-    <!-- 3. 全文检索（性能极致优化：先过滤排序分页，再仅对分页数据执行 ts_headline 渲染） -->
+    <sql id="searchWhereCondition">
+        <where>
+            <!-- 1. 关键词条件分支：直接判断 rawKeyword，不依赖 isHasKeyword() -->
+            <if test="rawKeyword != null and rawKeyword.trim() != ''">
+                <choose>
+                    <!-- 按标题：走 idx_search_title_trgm (pg_trgm 索引，支持任意子串模糊匹配) -->
+                    <when test="searchType == 'title'">
+                        AND p.title ILIKE concat('%', #{rawKeyword}, '%')
+                    </when>
+                    <!-- 全文 / 人员 / 文档等：走 idx_search_vector 或 idx_search_cat_vector -->
+                    <otherwise>
+                        AND <![CDATA[ p.search_vector @@ websearch_to_tsquery('simple', #{segmentedKeyword}) ]]>
+                    </otherwise>
+                </choose>
+            </if>
+
+            <!-- 2. 分类 Tab 过滤（走联合索引前导列 category_id） -->
+            <if test="categoryId != null">
+                AND p.category_id = #{categoryId}
+            </if>
+
+            <!-- 3. 子领域/分组过滤 -->
+            <if test="groupId != null">
+                AND p.group_id = #{groupId}
+            </if>
+
+            <!-- 4. 实体类名过滤 -->
+            <if test="className != null and className != ''">
+                AND p.class_name = #{className}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 3. 多场景统一检索 -->
     <select id="searchFullText" resultType="com.byteasy.search.dto.SearchResultVO">
-        WITH matched_data AS (
         SELECT
-        p.class_name,
-        p.entity_id,
-        p.entity_code,
-        p.title,
-        p.summary,
-        p.updated_time,
-        ts_rank(p.search_vector, q.query) AS score,
-        q.query AS matched_query
+        p.category_id  AS categoryId,
+        p.group_id     AS groupId,
+        p.class_name   AS className,
+        p.entity_id    AS entityId,
+        p.entity_code  AS entityCode,
+        p.title        AS title,
+        p.summary      AS summary,
+        p.created_by   AS createdBy,
+        p.created_time AS createdTime,
+        p.updated_by   AS updatedBy,
+        p.updated_time AS updatedTime,
+        <!-- 直接判断 rawKeyword 和 segmentedKeyword -->
+        <choose>
+            <when test="rawKeyword != null and rawKeyword.trim() != '' and searchType != 'title'">
+                ts_rank(p.search_vector, websearch_to_tsquery('simple', #{segmentedKeyword})) AS score
+            </when>
+            <otherwise>
+                0.0::real AS score
+            </otherwise>
+        </choose>
         FROM
-        platform_search_index p,
-        websearch_to_tsquery('simple', #{keyword}) q(query)
-        WHERE
-        <![CDATA[ p.search_vector @@ q.query ]]>
-        <if test="className != null and className != ''">
-            AND p.class_name = #{className}
-        </if>
-        ORDER BY
-        score DESC,
-        p.updated_time DESC
+        platform_search_index p
+        <include refid="searchWhereCondition"/>
+        <!-- 4 种排序方式白名单严格映射（精准命中对应索引） -->
+        <choose>
+            <when test="sortType == 'latest_update'">
+                ORDER BY p.updated_time DESC
+            </when>
+            <when test="sortType == 'latest_create'">
+                ORDER BY p.created_time DESC
+            </when>
+            <when test="sortType == 'earliest_create'">
+                ORDER BY p.created_time ASC
+            </when>
+            <!-- 默认 relevance（相关度优先）：若无关键词则自动退化为按更新时间倒序 -->
+            <otherwise>
+                <choose>
+                    <when test="rawKeyword != null and rawKeyword.trim() != '' and searchType != 'title'">
+                        ORDER BY score DESC, p.updated_time DESC
+                    </when>
+                    <otherwise>
+                        ORDER BY p.updated_time DESC
+                    </otherwise>
+                </choose>
+            </otherwise>
+        </choose>
         LIMIT #{pageSize} OFFSET #{offset}
-        )
-        SELECT
-        m.class_name AS className,
-        m.entity_id AS entityId,
-        m.entity_code AS entityCode,
-        m.title AS title,
-        m.summary AS summary,
-        m.score AS score,
-        m.updated_time AS updatedTime
-        FROM matched_data m
     </select>
 
     <!-- 4. 查询总命中数 (用于分页组件) -->
     <select id="countFullText" resultType="long">
-        SELECT
-        COUNT(1)
-        FROM
-        platform_search_index p,
-        websearch_to_tsquery('simple', #{keyword}) q(query)
-        WHERE
-        <![CDATA[ p.search_vector @@ q.query ]]>
-        <if test="className != null and className != ''">
-            AND p.class_name = #{className}
-        </if>
+        SELECT COUNT(1)
+        FROM platform_search_index p
+        <include refid="searchWhereCondition"/>
     </select>
 
     <!-- 5. 删除实体索引 -->

@@ -77,4 +77,9 @@ public class RestClientConfig {
     public JsScriptClient jsScriptClient(HttpServiceProxyFactory platformServiceProxyFactory) {
         return platformServiceProxyFactory.createClient(JsScriptClient.class);
     }
+
+    @Bean
+    public ResourceGroupClient resourceGroupClient(HttpServiceProxyFactory platformServiceProxyFactory) {
+        return platformServiceProxyFactory.createClient(ResourceGroupClient.class);
+    }
 }

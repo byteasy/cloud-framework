@@ -1,6 +1,7 @@
 package com.byteasy.platform.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.byteasy.platform.dto.ResourceGroupDTO;
 import com.byteasy.platform.entity.ResourceGroup;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -19,4 +20,6 @@ import java.util.Set;
 public interface ResourceGroupMapper extends BaseMapper<ResourceGroup> {
 
     List<ResourceGroup> selectByRoleIds(Set<Long> roleIds);
+
+    ResourceGroupDTO findByClassName(String className);
 }

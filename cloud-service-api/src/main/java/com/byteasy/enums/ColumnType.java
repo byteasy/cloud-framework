@@ -3,6 +3,7 @@ package com.byteasy.enums;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -76,7 +77,7 @@ public enum ColumnType implements IBaseEnum<Integer> {
             return ColumnType.STRING;
         } else if (LocalDate.class.equals(cls)) {
             return ColumnType.LOCAL_DATE;
-        } else if (LocalDateTime.class.equals(cls)) {
+        } else if (LocalDateTime.class.equals(cls) || OffsetDateTime.class.equals(cls)) {
             return ColumnType.LOCAL_DATE_TIME;
         } else if (Map.class.isAssignableFrom(cls) || isCustomClassByClassLoader(cls)) {
             return ColumnType.JSON;

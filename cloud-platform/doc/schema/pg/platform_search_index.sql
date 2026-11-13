@@ -1,77 +1,38 @@
--- 1. 创建统一搜索索引表
+CREATE EXTENSION IF NOT EXISTS btree_gin;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- 1. 建表（修正了 TIMESTAMPT -> TIMESTAMPTZ）
 CREATE TABLE platform_search_index
 (
-    class_name    VARCHAR(64)  NOT NULL,  -- 实体类型（如 Product, Article, Order）
-    entity_id     VARCHAR(64)  NOT NULL,  -- 业务主键 ID
-    entity_code   VARCHAR(128) NOT NULL,  -- 业务单号/编码
-    title         VARCHAR(512),           -- 检索展示主标题
-    summary       TEXT,                   -- 检索展示摘要
-    search_vector tsvector,               -- 预计算全文索引向量
-    updated_time  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-
-    PRIMARY KEY (class_name, entity_id)
+    category_id   BIGINT       NOT NULL,   -- 一级领域分类（对应顶部Tabs：图片/文档/流程/人员等）
+    group_id      BIGINT       NOT NULL,   -- 子领域/空间分组
+    class_name    VARCHAR(64)  NOT NULL,   -- 实体类型
+    entity_id     VARCHAR(64)  NOT NULL,   -- 业务主键 ID
+    entity_code   VARCHAR(128) NOT NULL,   -- 业务单号/编码
+    title         VARCHAR(512),            -- 检索展示主标题
+    summary       TEXT,                    -- 检索展示摘要
+    search_vector tsvector,                -- 预计算全文索引向量
+    updated_by    VARCHAR(64)  DEFAULT NULL,
+    updated_time  TIMESTAMPTZ  DEFAULT CURRENT_TIMESTAMP,
+    created_by    VARCHAR(64)  NOT NULL,
+    created_time  TIMESTAMPTZ  DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (class_name, entity_id)    -- 已自动包含 (class_name, entity_id) 唯一索引
 );
 
--- 2. 核心倒排索引（加速全文检索）
+-- 2. 核心全文检索倒排索引（“全部”Tab + “相关度优先”）
 CREATE INDEX idx_search_vector ON platform_search_index USING GIN(search_vector);
 ALTER INDEX idx_search_vector SET (fastupdate = on, gin_pending_list_limit = 65536);
--- 3. 辅助索引：支持根据实体类型过滤并按更新时间倒序展示
-CREATE INDEX idx_search_class_updated ON platform_search_index(class_name, updated_time DESC);
 
+-- 3. 分类 + 全文联合 GIN 索引（“按人员/按文档”及各分类Tab搜索、首页分类预览）
+CREATE INDEX idx_search_cat_vector ON platform_search_index USING GIN(category_id, search_vector);
+ALTER INDEX idx_search_cat_vector SET (fastupdate = on, gin_pending_list_limit = 65536);
 
--- 4. 优化后的生产检索 SQL（带防御与高效高亮）
-SELECT
-    class_name,
-    entity_id,
-    entity_code,
-    title,
-    summary,
-    -- 权重得分计算
-    ts_rank(search_vector, query) AS score,
-    -- 原生 HTML 高亮
-    ts_headline('simple', coalesce(summary, title), query, 'StartSel=<em>, StopSel=</em>, MaxWords=50, MinWords=15') AS highlight_summary
-FROM
-    platform_search_index,
-    -- 采用 websearch_to_tsquery 防止用户输入特殊字符引起 SQL 语法崩溃
-    websearch_to_tsquery('simple', :keyword) query
-WHERE
-    search_vector @@ query
--- 可选：过滤特定业务实体
--- AND class_name = :className
-ORDER BY
-    score DESC,
-    updated_time DESC
-    LIMIT :pageSize OFFSET :offset;
+-- 4. 分类 + 时间排序索引（支撑“最近更新”、“最新创建”、“最早创建”）
+CREATE INDEX idx_search_cat_updated ON platform_search_index(category_id, updated_time DESC);
+CREATE INDEX idx_search_cat_created ON platform_search_index(category_id, created_time DESC);
 
+-- 5. 全局空搜兜底排序索引（不限分类且无关键词时，直接翻页不走全表扫描）
+CREATE INDEX idx_search_updated_time ON platform_search_index(updated_time DESC);
 
--- 5. 插入 / 幂等更新 SQL
-INSERT INTO platform_search_index (
-    class_name,
-    entity_id,
-    entity_code,
-    title,
-    summary,
-    search_vector,
-    updated_time
-) VALUES (
-             :className,
-             :entityId,
-             :entityCode,
-             :title,
-             :summary,
-             -- 多字段不同权重拼接（A:高 -> D:低）
-             setweight(to_tsvector('simple', coalesce(:title, '')), 'A') ||
-             setweight(to_tsvector('simple', coalesce(:entityCode, '')), 'A') ||
-             setweight(to_tsvector('simple', coalesce(:categoryName, '')), 'B') ||
-             setweight(to_tsvector('simple', coalesce(:summary, '')), 'B') ||
-             setweight(to_tsvector('simple', coalesce(:specsDetail, '')), 'C') ||
-             setweight(to_tsvector('simple', coalesce(:remark, '')), 'D'),
-             CURRENT_TIMESTAMP
-         )
-    ON CONFLICT (class_name, entity_id)
-DO UPDATE SET
-    entity_code   = EXCLUDED.entity_code,   -- 补齐编码更新
-           title         = EXCLUDED.title,
-           summary       = EXCLUDED.summary,
-           search_vector = EXCLUDED.search_vector,
-           updated_time  = CURRENT_TIMESTAMP;
+-- 6. 标题三元组模糊索引（支撑“按标题”及长文件名/编号的任意子串 ILIKE '%xxx%' 检索）
+CREATE INDEX idx_search_title_trgm ON platform_search_index USING GIN(title gin_trgm_ops);

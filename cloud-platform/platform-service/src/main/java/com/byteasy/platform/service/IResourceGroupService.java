@@ -1,6 +1,7 @@
 package com.byteasy.platform.service;
 
 import com.baomidou.mybatisplus.spring.service.IService;
+import com.byteasy.platform.dto.ResourceGroupDTO;
 import com.byteasy.platform.entity.ResourceGroup;
 
 import java.util.List;
@@ -24,4 +25,6 @@ public interface IResourceGroupService extends IService<ResourceGroup> {
     void removeByCategoryIds(Set<Long> ids);
 
     List<ResourceGroup> selectByCategoryId(Set<Long> categoryIds);
+
+    ResourceGroupDTO findByClassName(String className);
 }

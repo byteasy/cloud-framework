@@ -1,9 +1,14 @@
 package com.byteasy.platform.controller;
 
 import com.byteasy.Constant;
+import com.byteasy.Result;
+import com.byteasy.annotations.Openapi;
 import com.byteasy.common.controller.AuditController;
+import com.byteasy.platform.dto.ResourceGroupDTO;
 import com.byteasy.platform.entity.ResourceGroup;
 import com.byteasy.platform.service.IResourceGroupService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,4 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(Constant.SAPI + "/resourceGroups")
 public class ResourceGroupController extends AuditController<Long, IResourceGroupService, ResourceGroup> {
 
+    @GetMapping("/entity/{className}")
+    @Openapi
+    public Result<ResourceGroupDTO> findGroupByClassName(@PathVariable("className") String className) {
+        return Result.success(baseService.findByClassName(className));
+    }
 }

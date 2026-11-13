@@ -13,4 +13,12 @@
         </foreach>
         order by g.show_order asc
     </select>
+
+    <select id="findByClassName" resultType="com.byteasy.platform.dto.ResourceGroupDTO">
+        SELECT g.*
+        FROM platform_entity_define e
+                 INNER JOIN platform_resource r ON r.id = e.resource_id
+                 INNER JOIN platform_resource_group g ON g.id = r.group_id
+        WHERE e.code = #{className}
+    </select>
 </mapper>
