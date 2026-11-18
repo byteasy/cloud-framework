@@ -67,18 +67,23 @@ public class ResourceGroup extends AuditEntity<Long> {
     @FieldMeta(showOrder = 107, isRequire = true)
     private YesNo isMicroapp;
 
+    @Schema(description = "是否隐藏")
+    @TableField("is_hide")
+    @FieldMeta(showOrder = 108, isRequire = true)
+    private Boolean isHide;
+
     @Schema(description = "入口地址")
     @TableField("entry")
-    @FieldMeta(showOrder = 108, isRequire = true, maxLength = 512)
+    @FieldMeta(showOrder = 109, isRequire = true, maxLength = 512)
     private String entry;
 
     @Schema(description = "拓展属性")
     @TableField("props")
-    @FieldMeta(showOrder = 109, isRequire = false, maxLength = 512)
+    @FieldMeta(showOrder = 110, isRequire = false, maxLength = 512)
     private String props;
 
     @Schema(description = "备注")
     @TableField("remark")
-    @FieldMeta(showOrder = 110, isRequire = false, maxLength = 512)
+    @FieldMeta(showOrder = 111, isRequire = false, maxLength = 512)
     private String remark;
 }
