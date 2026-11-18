@@ -7,7 +7,7 @@
         FROM platform_resource_group g
         INNER JOIN platform_resource r ON g.id = r.group_id
         INNER JOIN platform_role_resource rr ON r.id = rr.resource_id
-        WHERE g.is_hide = false and rr.role_id IN
+        WHERE rr.role_id IN
         <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
             #{roleId}
         </foreach>
