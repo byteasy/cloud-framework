@@ -1,6 +1,7 @@
 package com.byteasy.common.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.byteasy.dto.AuditLogDTO;
 import com.byteasy.entity.AuditLog;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -23,12 +24,14 @@ public interface IAuditLogMapper extends BaseMapper<AuditLog> {
     void batchInsert(@Param("tableName") String tableName,
                      @Param("auditLogs") Collection<AuditLog> auditLogs);
 
-    List<AuditLog> queryForList(@Param("tableName") String tableName,
-                                @Param("entityId") String entityId,
-                                @Param("start") LocalDateTime start,
-                                @Param("end") LocalDateTime end,
-                                @Param("current") long current,
-                                @Param("pageSize") long pageSize);
+    AuditLogDTO queryForLatestOne(@Param("tableName") String tableName, @Param("id") Long id);
+
+    List<AuditLogDTO> queryForList(@Param("tableName") String tableName,
+                                   @Param("entityId") String entityId,
+                                   @Param("start") LocalDateTime start,
+                                   @Param("end") LocalDateTime end,
+                                   @Param("current") long current,
+                                   @Param("pageSize") long pageSize);
 
     long countForPage(@Param("tableName") String tableName,
                       @Param("entityId") String entityId,

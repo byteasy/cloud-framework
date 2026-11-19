@@ -15,6 +15,7 @@ import com.byteasy.common.component.EntityDefineLoadingCache;
 import com.byteasy.common.component.FieldDefineLoadingCache;
 import com.byteasy.common.service.IAuditLogService;
 import com.byteasy.common.service.ICommonService;
+import com.byteasy.dto.AuditLogDTO;
 import com.byteasy.entity.AuditLog;
 import com.byteasy.enums.ColumnType;
 import com.byteasy.enums.RelationType;
@@ -127,7 +128,7 @@ public class OpenapiCommonController {
 
     @GetMapping("/{className}/audit/log")
     @Openapi(summary = "审计日志")
-    public Result<Page<AuditLog>> pageAuditLog(@PathVariable("className") String className) {
+    public Result<Page<AuditLogDTO>> pageAuditLog(@PathVariable("className") String className) {
         EntityDefine entityDefine = entityDefineLoadingCache.load(className);
         Map<String, String[]> paramsMap = RequestUtil.getParameterMap();
         String entityId = paramsMap.containsKey("id") ? paramsMap.get("id")[0] : null;

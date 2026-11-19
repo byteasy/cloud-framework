@@ -3,7 +3,7 @@
 <mapper namespace="com.byteasy.common.mapper.IAuditLogMapper">
 
     <!-- 基础 ResultMap 映射 -->
-    <resultMap id="BaseResultMap" type="com.byteasy.entity.AuditLog">
+    <resultMap id="BaseResultMap" type="com.byteasy.dto.AuditLogDTO">
         <id column="id" property="id" />
         <result column="entity_id" property="entityId" />
         <result column="change_type" property="changeType" />
@@ -40,6 +40,16 @@
             )
         </foreach>
     </insert>
+
+    <!-- 2. 分页列表查询 -->
+    <select id="queryForLatestOne" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM ${tableName}
+        WHERE id &lt; #{id}
+        ORDER BY id DESC
+        LIMIT 1
+    </select>
 
     <!-- 2. 分页列表查询 -->
     <select id="queryForList" resultMap="BaseResultMap">
